@@ -1,7 +1,15 @@
 [project]
 name = "proyecto-enci"
 version = "0.1.0"
-description = "Add your description here"
+description = "Proyecto de Contabilidad ENCI"
+authors = [
+    { name = "elikat", email = "205855200+EliKat2005@users.noreply.github.com" }
+]
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "django>=5.2.8",
+    "mysqlclient>=2.2.7",
+]
+[build-system]
+build-backend = "setuptools.build_meta"

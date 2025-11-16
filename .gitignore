@@ -6,5 +6,25 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
-.venv
+# Entornos virtuales de Python
+.venv/
+venv/
+.env
+
+# Archivos del `uv init` original que no usaremos
+main.py
+
+# Archivos generados por Django
+*.log
+*.pot
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+/node_modules/
+/staticfiles_build/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.swp
