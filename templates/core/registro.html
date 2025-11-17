@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro | Proyecto ENCI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+    
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        
+        <div class="w-full max-w-lg">
+            
+            <!-- Tarjeta de Glassmorphism -->
+            <div class="bg-white/30 backdrop-blur-lg rounded-2xl shadow-2xl p-8 transition-all duration-300">
+
+                <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Crear una Cuenta</h2>
+
+                <!-- Formulario de Registro -->
+                <form method="post" action="{% url 'registro' %}">
+                    {% csrf_token %}
+                    
+                    <!-- --------------------------------------------------- -->
+                    <!-- BLOQUE PARA MOSTRAR MENSAJES DE DJANGO (success, warning) -->
+                    <!-- --------------------------------------------------- -->
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <div class="{% if message.tags == 'warning' %}bg-yellow-500/80 border-yellow-700{% elif message.tags == 'success' %}bg-green-600/80 border-green-700{% else %}bg-red-500/80 border-red-700{% endif %} text-white px-4 py-3 rounded-lg" role="alert">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Errores generales del formulario -->
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-500/80 text-white p-3 rounded-lg mb-4 text-sm">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Nombres -->
+                        <div class="mb-4">
+                            <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nombres</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <p class="text-red-700 text-xs mt-1">{{ form.first_name.errors.as_text }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Apellidos -->
+                        <div class="mb-4">
+                            <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <p class="text-red-700 text-xs mt-1">{{ form.last_name.errors.as_text }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Usuario -->
+                    <div class="mb-4">
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <p class="text-red-700 text-xs mt-1">{{ form.username.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-4">
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="text-red-700 text-xs mt-1">{{ form.email.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Contraseña -->
+                    <div class="mb-4">
+                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <p class="text-red-700 text-xs mt-1">{{ form.password.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Confirmar Contraseña -->
+                    <div class="mb-6">
+                        <label for="{{ form.password_confirm.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
+                        {{ form.password_confirm }}
+                        {% if form.password_confirm.errors %}
+                            <p class="text-red-700 text-xs mt-1">{{ form.password_confirm.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Soy estudiante + Código -->
+                    <div class="mb-4">
+                        <label class="inline-flex items-center">
+                            {{ form.soy_estudiante }}
+                            <span class="ml-2 text-sm text-gray-700">Soy estudiante</span>
+                        </label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.codigo_invite.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Código de invitación (proporcionado por tu docente)</label>
+                        {{ form.codigo_invite }}
+                        {% if form.codigo_invite.errors %}
+                            <p class="text-red-700 text-xs mt-1">{{ form.codigo_invite.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">
+                            Registrarse
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+            
+            <p class="text-center text-white/70 text-sm mt-6">
+                ¿Ya tienes una cuenta? <a href="{% url 'login' %}" class="font-medium text-white hover:underline">Inicia sesión</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Script para añadir clases de Tailwind a los campos del formulario -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputs = [
+                '{{ form.first_name.id_for_label }}',
+                '{{ form.last_name.id_for_label }}',
+                '{{ form.username.id_for_label }}',
+                '{{ form.email.id_for_label }}',
+                '{{ form.password.id_for_label }}',
+                '{{ form.password_confirm.id_for_label }}'
+            ];
+            const classes = 'block w-full px-4 py-3 bg-white/50 border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500';
+
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.className = classes;
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

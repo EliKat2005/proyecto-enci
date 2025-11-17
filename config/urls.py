@@ -7,6 +7,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Más adelante, aquí incluiremos las URLs de nuestras apps:
-    # path('', include('core.urls')),
+    path('', include('core.urls')),
     # path('contabilidad/', include('contabilidad.urls')),
 ]

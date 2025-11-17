@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Docente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> /* Ensure table rows don't overlap panels */
+        .table-fixed { table-layout: fixed; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <h1 class="text-2xl font-semibold mb-4">Dashboard - Estudiantes Referidos</h1>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                {% if 'success' in message.tags %}
+                    <div class="px-4 py-2 rounded bg-green-200 text-sm">{{ message }}</div>
+                {% else %}
+                    <div class="px-4 py-2 rounded bg-yellow-200 text-sm">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-lg font-medium mb-3">Estudiantes Referidos</h2>
+        <div class="overflow-x-auto">
+        <table class="w-full table-fixed">
+            <thead>
+                <tr class="text-left">
+                    <th class="px-3 py-2">Usuario</th>
+                    <th class="px-3 py-2">Email</th>
+                    <th class="px-3 py-2">Registrado</th>
+                    <th class="px-3 py-2">Invitación</th>
+                    <th class="px-3 py-2">Estado</th>
+                    <th class="px-3 py-2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in referrals %}
+                <tr class="border-t align-top">
+                    <td class="px-3 py-2 w-1/6">{{ r.student.username }}</td>
+                    <td class="px-3 py-2 w-2/6">{{ r.student.email }}</td>
+                    <td class="px-3 py-2 w-1/6">{{ r.created_at }}</td>
+                    <td class="px-3 py-2 w-1/6">{% if r.invitation %}{{ r.invitation.code }}{% else %}-{% endif %}</td>
+                    <td class="px-3 py-2 w-1/6">{% if r.activated %}<span class="text-green-600">Activado</span>{% else %}<span class="text-yellow-600">Pendiente</span>{% endif %}</td>
+                    <td class="px-3 py-2 w-1/6">
+                        <form method="post" class="inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="operation" value="referral_action">
+                            <input type="hidden" name="referral_id" value="{{ r.pk }}">
+                            {% if not r.activated %}
+                                <button name="action" value="activar" class="px-3 py-1 bg-green-600 text-white rounded">Activar</button>
+                            {% else %}
+                                <button name="action" value="desactivar" class="px-3 py-1 bg-red-600 text-white rounded">Desactivar</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-3 py-4 text-center text-gray-600">No hay estudiantes referidos aún.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Panel de Invitaciones -->
+    <div class="mt-2 bg-white shadow rounded p-4">
+        <h2 class="text-xl font-semibold mb-3">Gestionar códigos de invitación</h2>
+
+        <!-- Crear nuevo código -->
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            <input type="hidden" name="operation" value="create_invitation">
+            <label class="block mb-2">Max usos: <input type="number" name="max_uses" min="1" value="1" class="ml-2 border rounded px-2 py-1"></label>
+            <label class="block mb-2">Expira (opcional): <input type="datetime-local" name="expires_at" class="ml-2 border rounded px-2 py-1"></label>
+            <button class="px-3 py-1 bg-blue-600 text-white rounded">Generar código</button>
+        </form>
+
+        <!-- Lista de códigos existentes -->
+        <div class="overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="text-left">
+                    <th class="px-3 py-2">Código</th>
+                    <th class="px-3 py-2">Usos</th>
+                    <th class="px-3 py-2">Expira</th>
+                    <th class="px-3 py-2">Activo</th>
+                    <th class="px-3 py-2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invitations %}
+                <tr class="border-t align-top">
+                    <td class="px-3 py-2">{{ inv.code }}</td>
+                    <td class="px-3 py-2">{{ inv.uses_count }} / {{ inv.max_uses }}</td>
+                    <td class="px-3 py-2">{% if inv.expires_at %}{{ inv.expires_at }}{% else %}-{% endif %}</td>
+                    <td class="px-3 py-2">{% if inv.active %}<span class="text-green-600">Sí</span>{% else %}<span class="text-red-600">No</span>{% endif %}</td>
+                    <td class="px-3 py-2">
+                        <form method="post" class="inline-block mr-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="operation" value="invitation_action">
+                            <input type="hidden" name="invitation_id" value="{{ inv.pk }}">
+                            {% if not inv.active %}
+                                <button name="inv_action" value="activar" class="px-3 py-1 bg-green-600 text-white rounded">Activar</button>
+                            {% else %}
+                                <button name="inv_action" value="desactivar" class="px-3 py-1 bg-yellow-600 text-white rounded">Desactivar</button>
+                            {% endif %}
+                        </form>
+                        <form method="post" class="inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="operation" value="invitation_action">
+                            <input type="hidden" name="invitation_id" value="{{ inv.pk }}">
+                            <button name="inv_action" value="eliminar" class="px-3 py-1 bg-red-600 text-white rounded">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-3 py-4 text-center text-gray-600">No hay códigos aún.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

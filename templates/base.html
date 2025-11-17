@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Proyecto Contable ENCI{% endblock %}</title>
+    <!-- Cargamos Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos base */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <nav class="bg-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <!-- Logo -->
+                        <a href="{% url 'home' %}" class="flex items-center py-4 px-2">
+                            <span class="font-semibold text-gray-500 text-lg">Contabilidad ENCI</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Items del Navbar (Derecha) -->
+                <div class="flex items-center space-x-3">
+                    {% if user.is_authenticated %}
+                        <span class="py-2 px-2 text-gray-500">Hola, {{ user.username }}</span>
+                        <form method="post" action="{% url 'logout' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="py-2 px-2 font-medium text-white bg-red-500 rounded hover:bg-red-400 transition duration-300">Logout</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="py-2 px-2 font-medium text-gray-500 rounded hover:bg-gray-200 transition duration-300">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="max-w-6xl mx-auto p-6">
+        {% block content %}
+        <!-- El contenido de otras plantillas irá aquí -->
+        {% endblock %}
+    </main>
+
+</body>
+</html>

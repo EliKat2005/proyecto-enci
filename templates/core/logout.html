@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Sesión Cerrada | ENCI{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg mt-10 text-center">
+    <h2 class="text-2xl font-bold text-gray-700 mb-4">Has cerrado sesión</h2>
+    <p class="text-gray-600 mb-6">Gracias por usar el Sistema Contable ENCI.</p>
+    <a href="{% url 'login' %}" class="inline-block py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+        Volver a iniciar sesión
+    </a>
+</div>
+{% endblock %}

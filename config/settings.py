@@ -112,5 +112,26 @@ STATIC_URL = 'static/'
 # Más adelante, aquí definiremos nuestro modelo de perfil
 # AUTH_USER_MODEL = 'core.User' # (No descomentar aún)
 
+# --- REDIRECCIÓN DE LOGIN ---
+# Aquí le decimos a Django a dónde ir DESPUÉS de un login exitoso.
+# Usamos el 'name' de nuestra URL en core.urls
+LOGIN_REDIRECT_URL = 'home'
+# URL de login usada por `login_required` y otras utilidades.
+# Puede ser el nombre de la URL ('login') o la ruta ('/login/').
+LOGIN_URL = 'login'
+
+# --------------------------------------------------------------------------
+# ¡¡¡ ESTE ES EL NUEVO BLOQUE QUE ACABO DE AÑADIR !!!
+# --------------------------------------------------------------------------
+# Le decimos a Django que use nuestro "guardia" personalizado.
+AUTHENTICATION_BACKENDS = [
+    'core.backends.ActiveStudentBackend', # Nuestro guardia (Revisa 'esta_activo')
+    'django.contrib.auth.backends.ModelBackend', # El guardia de Django (necesario para el Admin)
+]
+
 # --- TIPO DE CAMPO AUTO-INCREMENTAL ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Seguridad: expirar la sesión al cerrar el navegador (útil para entornos de usuario compartido)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Nota recomendada: en producción habilita `SESSION_COOKIE_SECURE = True`

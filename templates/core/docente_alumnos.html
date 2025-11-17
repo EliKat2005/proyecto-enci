@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Estudiantes | ENCI{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow mt-6">
+    <h1 class="text-2xl font-semibold mb-4">Gestión de Estudiantes</h1>
+
+    <form method="get" class="mb-4">
+        <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Buscar por usuario, nombre o email" class="px-3 py-2 border rounded w-1/3">
+        <button class="ml-2 px-3 py-2 bg-indigo-600 text-white rounded">Buscar</button>
+    </form>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for perfil in page_obj %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ perfil.user.username }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ perfil.user.first_name }} {{ perfil.user.last_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ perfil.user.email }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{% if perfil.esta_activo %}Sí{% else %}No{% endif %}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="profile_id" value="{{ perfil.id }}">
+                            {% if perfil.esta_activo %}
+                                <input type="hidden" name="action" value="desactivar">
+                                <button type="submit" class="px-3 py-1 bg-yellow-500 text-white rounded">Desactivar</button>
+                            {% else %}
+                                <input type="hidden" name="action" value="activar">
+                                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Activar</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No se encontraron estudiantes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}" class="px-3 py-1 bg-gray-200 rounded">Anterior</a>
+        {% endif %}
+        <span class="mx-2">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}" class="px-3 py-1 bg-gray-200 rounded">Siguiente</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
