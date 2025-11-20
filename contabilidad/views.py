@@ -241,6 +241,21 @@ def add_account(request, empresa_id):
         messages.error(request, 'Código y descripción son obligatorios.')
         return redirect('contabilidad:company_plan', empresa_id=empresa.id)
 
+    # Validar unicidad del código dentro de la empresa
+    if EmpresaPlanCuenta.objects.filter(empresa=empresa, codigo=codigo).exists():
+        messages.error(request, f'Ya existe una cuenta con el código {codigo} en esta empresa.')
+        return redirect('contabilidad:company_plan', empresa_id=empresa.id)
+
+    # Validar que 'tipo' y 'naturaleza' sean valores permitidos
+    valid_tipos = [t[0] for t in EmpresaPlanCuenta._meta.get_field('tipo').choices]
+    valid_naturalezas = [n[0] for n in EmpresaPlanCuenta._meta.get_field('naturaleza').choices]
+    if tipo and tipo not in valid_tipos:
+        messages.error(request, 'Tipo de cuenta inválido.')
+        return redirect('contabilidad:company_plan', empresa_id=empresa.id)
+    if naturaleza and naturaleza not in valid_naturalezas:
+        messages.error(request, 'Naturaleza de cuenta inválida.')
+        return redirect('contabilidad:company_plan', empresa_id=empresa.id)
+
     padre = None
     if padre_id:
         try:

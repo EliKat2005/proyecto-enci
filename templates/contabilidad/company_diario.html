@@ -6,7 +6,13 @@
 <div class="max-w-5xl mx-auto py-8">
   <div class="bg-white shadow rounded-lg p-6 mb-6">
     <h1 class="text-2xl font-bold">Libro Diario - {{ empresa.nombre }}</h1>
-    <p class="text-sm text-gray-600">Propietario visible: {{ empresa.original.owner.get_full_name|default:empresa.owner.username if empresa.original and empresa.original.owner else empresa.owner.get_full_name|default:empresa.owner.username }}</p>
+    <p class="text-sm text-gray-600">Propietario visible:
+      {% if empresa.original and empresa.original.owner %}
+        {{ empresa.original.owner.get_full_name|default:empresa.original.owner.username }}
+      {% else %}
+        {{ empresa.owner.get_full_name|default:empresa.owner.username }}
+      {% endif %}
+    </p>
 
     <div class="mt-4">
       <h3 class="font-semibold">Asientos</h3>

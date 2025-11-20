@@ -122,6 +122,16 @@
                     <span class="sr-only">Estado:</span> Visible a docente: No
                   {% endif %}
                 </button>
+                <noscript>
+                  <form method="post" action="{% url 'contabilidad:toggle_visibility' e.id %}" style="display:inline">
+                    {% csrf_token %}
+                    {% if e.visible_to_supervisor %}
+                      <button type="submit" class="px-3 py-1 bg-yellow-500 text-white rounded">Visible a docente: Sí</button>
+                    {% else %}
+                      <button type="submit" class="px-3 py-1 bg-gray-300 text-gray-800 rounded">Visible a docente: No</button>
+                    {% endif %}
+                  </form>
+                </noscript>
                 <a href="{% url 'contabilidad:delete_company' e.id %}" class="px-3 py-1 bg-red-600 text-white rounded">Eliminar</a>
               {% endif %}
             </div>
