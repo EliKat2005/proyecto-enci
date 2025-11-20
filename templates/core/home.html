@@ -3,48 +3,87 @@
 {% block title %}Dashboard | ENCI{% endblock %}
 
 {% block content %}
-<div class="bg-white p-8 rounded-lg shadow-lg">
-    <h1 class="text-3xl font-bold text-gray-700 mb-4">
-        Bienvenido al Sistema Contable
-    </h1>
-    
-    <p class="text-lg text-gray-600 mb-6">
-        Hola, <strong class="text-blue-600">{{ user.username }}</strong>.
-        Has iniciado sesión correctamente.
-    </p>
+<div class="max-w-7xl mx-auto py-8 px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main column (left, span 2) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Bienvenido, {{ user.first_name|default:user.username }}</h1>
+                        <p class="mt-1 text-sm text-gray-600">Accede a tus empresas y los paneles contables desde aquí.</p>
+                    </div>
+                    <div class="text-right">
+                        {% if is_docente %}
+                            <a href="{% url 'docente_dashboard' %}" class="inline-block px-3 py-2 bg-indigo-600 text-white rounded">Docente</a>
+                        {% endif %}
+                        {% if is_admin %}
+                            <a href="/admin/" class="inline-block px-3 py-2 bg-gray-700 text-white rounded ml-2">Admin</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
 
-    {% if is_docente %}
-    <div class="mb-6">
-        <a href="{% url 'docente_dashboard' %}" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Ir al Dashboard de Docente</a>
-    </div>
-    {% endif %}
+            <!-- Empresas y acciones principales -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Tus empresas</h2>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'contabilidad:create_company' %}" class="px-3 py-2 bg-indigo-600 text-white rounded">Crear nueva empresa</a>
+                        <a href="{% url 'contabilidad:my_companies' %}" class="px-3 py-2 bg-gray-100 text-gray-800 rounded">Ver todas</a>
+                    </div>
+                </div>
 
-    {% if is_admin %}
-    <div class="mb-6">
-        <a href="/admin/" class="inline-block px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800">Ir al Panel de Administración</a>
-    </div>
-    {% endif %}
+                {% include 'contabilidad/_company_list.html' with empresas=empresas is_docente=is_docente %}
 
-    <h2 class="text-2xl font-semibold text-gray-700 mb-3">Módulos Disponibles:</h2>
-    
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Card 1: Plan de Cuentas -->
-        <a href="#" class="block p-6 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition duration-300">
-            <h3 class="font-semibold text-xl mb-2">Plan de Cuentas</h3>
-            <p>Ver y gestionar el catálogo de cuentas.</p>
-        </a>
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Importar empresa por código</h3>
+                    <form method="post" action="{% url 'contabilidad:import_company' %}" class="flex items-center gap-3">
+                        {% csrf_token %}
+                        <input name="join_code" placeholder="Código de plantilla" class="px-3 py-2 border rounded w-64">
+                        <button class="px-3 py-2 bg-green-600 text-white rounded">Importar</button>
+                    </form>
+                </div>
+            </div>
 
-        <!-- Card 2: Libro Diario -->
-        <a href="#" class="block p-6 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition duration-300">
-            <h3 class="font-semibold text-xl mb-2">Libro Diario</h3>
-            <p>Registrar nuevos asientos contables.</p>
-        </a>
+            <!-- Placeholder / Announcements or Help -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-gray-800">Recursos y ayuda</h3>
+                <p class="mt-2 text-sm text-gray-600">Encuentra guías y material didáctico para trabajar con las empresas ficticias y entender los flujos contables.</p>
+            </div>
+        </div>
 
-        <!-- Card 3: Reportes -->
-        <a href="#" class="block p-6 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition duration-300">
-            <h3 class="font-semibold text-xl mb-2">Reportes</h3>
-            <p>Generar estados financieros.</p>
-        </a>
+        <!-- Sidebar (right) -->
+        <aside class="space-y-6">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h4 class="font-semibold text-gray-800 mb-2">Acciones rápidas</h4>
+                <div class="flex flex-col space-y-2">
+                    <a href="{% url 'contabilidad:create_company' %}" class="px-3 py-2 bg-indigo-600 text-white rounded text-center">Crear empresa</a>
+                    <a href="#" class="px-3 py-2 bg-gray-100 text-gray-800 rounded text-center">Abrir último plan de cuentas</a>
+                    <a href="#" class="px-3 py-2 bg-gray-100 text-gray-800 rounded text-center">Registrar asiento</a>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h4 class="font-semibold text-gray-800 mb-2">Atajos</h4>
+                <ul class="text-sm text-gray-600 space-y-2">
+                    {% if is_docente or is_admin %}
+                        <li><a href="{% url 'contabilidad:supervised_companies' %}" class="text-blue-600">Empresas supervisadas</a></li>
+                    {% endif %}
+                    <li><a href="{% url 'notifications' %}" class="text-blue-600">Notificaciones</a></li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h4 class="font-semibold text-gray-800 mb-2">Consejos</h4>
+                {% if is_docente %}
+                    <p class="text-sm text-gray-600">Como docente, crea plantillas y genera códigos para que tus estudiantes importen copias aisladas. Revisa las empresas supervisadas y proporciona feedback puntual.</p>
+                {% else %}
+                    <p class="text-sm text-gray-600">Como estudiante, crea empresas para practicar libremente. Cuando quieras compartir una empresa con tu docente, activa la opción "Visible a docente" junto a la empresa.</p>
+                {% endif %}
+            </div>
+        </aside>
     </div>
 </div>
+
 {% endblock %}

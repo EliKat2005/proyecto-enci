@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Plan de Cuentas - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8">
+  <div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h1 class="text-2xl font-bold">Plan de Cuentas - {{ empresa.nombre }}</h1>
+    <p class="text-sm text-gray-600">Propietario visible: {{ empresa.original.owner.get_full_name|default:empresa.owner.username if empresa.original and empresa.original.owner else empresa.owner.get_full_name|default:empresa.owner.username }}</p>
+
+    <div class="mt-4">
+      <h3 class="font-semibold">Cuentas</h3>
+      {% if cuentas %}
+        <table class="min-w-full mt-2 border">
+          <thead class="bg-gray-100"><tr><th class="px-3 py-2">Código</th><th class="px-3 py-2">Descripción</th><th class="px-3 py-2">Tipo</th></tr></thead>
+          <tbody>
+            {% for c in cuentas %}
+              <tr class="border-t"><td class="px-3 py-2">{{ c.codigo }}</td><td class="px-3 py-2">{{ c.descripcion }}</td><td class="px-3 py-2">{{ c.get_tipo_display }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="text-gray-600">No hay cuentas definidas.</div>
+      {% endif %}
+    </div>
+
+    <div class="mt-6">
+      <h3 class="font-semibold">Comentarios del docente</h3>
+      {% if comments %}
+        <ul class="space-y-3 mt-2">
+          {% for com in comments %}
+            <li class="p-3 bg-gray-50 rounded">
+              <div class="text-sm text-gray-700">{{ com.content }}</div>
+              <div class="text-xs text-gray-500 mt-1">Por {{ com.author.get_full_name|default:com.author.username }} • {{ com.created_at|date:"d/m/Y H:i" }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="text-gray-600 mt-2">Aún no hay comentarios del docente.</div>
+      {% endif %}
+
+      {% if is_supervisor %}
+        <form method="post" action="{% url 'contabilidad:add_comment' empresa.id 'PL' %}" class="mt-4">
+          {% csrf_token %}
+          <textarea name="content" rows="3" class="w-full border rounded p-2" placeholder="Dejar comentario (sugerencias, observaciones)"></textarea>
+          <div class="mt-2"><button class="px-3 py-2 bg-blue-600 text-white rounded">Agregar comentario</button></div>
+        </form>
+      {% endif %}
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

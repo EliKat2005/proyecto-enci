@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from .models import UserProfile, Referral, AuditLog, Invitation
+from contabilidad.models import Empresa
 # -----------------------------
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import get_object_or_404
@@ -41,6 +42,7 @@ def home_view(request):
         'user': request.user,
         'is_docente': is_docente,
         'is_admin': is_admin,
+        'empresas': Empresa.objects.filter(owner=request.user)
     }
     return render(request, 'core/home.html', contexto)
 

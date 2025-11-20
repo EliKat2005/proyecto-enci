@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Empresa - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8">
+  <div class="bg-white shadow rounded-lg p-6 mb-6 flex items-start justify-between">
+      <div>
+      <h1 class="text-2xl font-bold text-gray-800">{{ empresa.nombre }}</h1>
+      <p class="text-sm text-gray-600 mt-1">{{ empresa.descripcion|default:'Sin descripción' }}</p>
+
+      <div class="mt-4 text-sm text-gray-500">
+        <span class="mr-4"><strong>Propietario:</strong>
+          {% if empresa.original and empresa.original.owner %}
+            {{ empresa.original.owner.get_full_name|default:empresa.original.owner.username }}
+          {% else %}
+            {{ empresa.owner.get_full_name|default:empresa.owner.username }}
+          {% endif %}
+        </span>
+        <span><strong>Creada:</strong>
+          {% if empresa.original and empresa.original.created_at %}
+            {{ empresa.original.created_at|date:"d \\de F \\de Y H:i" }}
+          {% else %}
+            {{ empresa.created_at|date:"d \\de F \\de Y H:i" }}
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+      <div class="flex items-center space-x-3">
+      {% comment %}Mostrar Generar Join Code solo a superuser o a docentes propietarios{% endcomment %}
+      {% if user.is_superuser %}
+        <a href="{% url 'contabilidad:generate_join_code' empresa.id %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Generar Join Code
+        </a>
+      {% else %}
+        {% if is_docente and empresa.owner == user %}
+          <a href="{% url 'contabilidad:generate_join_code' empresa.id %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Generar Join Code
+          </a>
+        {% endif %}
+      {% endif %}
+      {% if can_edit %}
+        <a href="{% url 'contabilidad:delete_company' empresa.id %}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Eliminar</a>
+      {% endif %}
+      <a href="{% url 'contabilidad:my_companies' %}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200">Volver a mis Empresas</a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+          <!-- icon -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path></svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-lg">Plan de Cuentas</h3>
+          <p class="text-sm text-gray-500">Ver y gestionar el catálogo de cuentas para esta empresa.</p>
+        </div>
+      </div>
+      <div class="mt-4">
+        <a href="{% url 'contabilidad:company_plan' empresa.id %}" class="inline-block px-3 py-2 bg-blue-600 text-white rounded">Abrir</a>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21H4a2 2 0 01-2-2V7a2 2 0 012-2h4l2-2h4l2 2h4a2 2 0 012 2v12a2 2 0 01-2 2z"></path></svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-lg">Libro Diario</h3>
+          <p class="text-sm text-gray-500">Registrar y revisar asientos contables de esta empresa.</p>
+        </div>
+      </div>
+      <div class="mt-4">
+        <a href="{% url 'contabilidad:company_diario' empresa.id %}" class="inline-block px-3 py-2 bg-green-600 text-white rounded">Abrir</a>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-md transition">
+      <div class="flex items-center">
+        <div class="flex-shrink-0 w-12 h-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mr-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10"></path></svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-lg">Reportes</h3>
+          <p class="text-sm text-gray-500">Generar estados financieros y reportes para esta empresa.</p>
+        </div>
+      </div>
+      <div class="mt-4">
+        <a href="#" class="inline-block px-3 py-2 bg-yellow-500 text-white rounded">Abrir</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

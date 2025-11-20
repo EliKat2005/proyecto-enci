@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar eliminación - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-12">
+  <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="px-6 py-5 bg-red-50 border-b">
+      <h2 class="text-xl font-bold text-red-700">Confirmar eliminación</h2>
+      <p class="text-sm text-red-600">Acción irreversible</p>
+    </div>
+
+    <div class="p-6">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-gray-800">Eliminar empresa "{{ empresa.nombre }}"</h3>
+          <p class="mt-2 text-sm text-gray-600">Esta acción eliminará la empresa y todos sus datos asociados (cuentas, asientos y transacciones). Esta operación <strong>no</strong> se puede deshacer.</p>
+
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-4 bg-gray-50 rounded">
+              <p class="text-sm text-gray-500"><strong>Propietario</strong></p>
+              <p class="text-sm text-gray-800">{{ empresa.owner.get_full_name|default:empresa.owner.username }}</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded">
+              <p class="text-sm text-gray-500"><strong>Creada</strong></p>
+              <p class="text-sm text-gray-800">{{ empresa.created_at|date:"d \de F \de Y H:i" }}</p>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center space-x-3">
+            <form method="post" action="{% url 'contabilidad:delete_company' empresa.id %}" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"></path></svg>
+                Sí, eliminar
+              </button>
+            </form>
+
+            <a href="{% url 'contabilidad:company_detail' empresa.id %}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200">Cancelar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

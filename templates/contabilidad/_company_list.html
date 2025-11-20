@@ -1,0 +1,138 @@
+{% comment %}Include que renderiza una lista de empresas llamada `empresas` y usa `user` en contexto.{% endcomment %}
+<div class="bg-white shadow rounded p-4">
+  {% if empresas and empresas.count > 0 %}
+    <ul>
+      {% for e in empresas %}
+        <li class="border-b py-3">
+          <div class="flex justify-between items-center">
+            <div>
+              <a href="{% url 'contabilidad:company_detail' e.id %}" class="font-semibold text-blue-600">{{ e.nombre }}</a>
+              <div class="text-sm text-gray-600">Propietario: 
+            <script id="contabilidad-visibility-js">
+            ;(function(){
+              if (typeof document === 'undefined') return;
+              if (document.getElementById('contabilidad-visibility-initialized')) return;
+              document.getElementById('contabilidad-visibility-initialized') || document.body.insertAdjacentHTML('beforeend','<div id="contabilidad-visibility-initialized" style="display:none"></div>');
+
+              function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+              }
+
+              const apiTemplate = "{% url 'contabilidad:toggle_visibility_api' 0 %}"; // ends with 0/
+
+              function setButtonState(btn, visible) {
+                btn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+                btn.dataset.visible = visible ? '1' : '0';
+                if (visible) {
+                  btn.classList.remove('bg-gray-300','text-gray-800');
+                  btn.classList.add('bg-yellow-500','text-white');
+                  btn.title = 'Visible a tu docente. Pulsa para ocultar.';
+                  btn.innerHTML = '<span class="sr-only">Estado:</span> Visible a docente: Sí';
+                } else {
+                  btn.classList.remove('bg-yellow-500','text-white');
+                  btn.classList.add('bg-gray-300','text-gray-800');
+                  btn.title = 'No visible a tu docente. Pulsa para mostrar.';
+                  btn.innerHTML = '<span class="sr-only">Estado:</span> Visible a docente: No';
+                }
+              }
+
+              // Initialize button visuals on load
+              document.querySelectorAll('.visibility-toggle-btn').forEach(function(btn){
+                const visible = btn.dataset.visible === '1';
+                setButtonState(btn, visible);
+              });
+
+              // aria-live region for announcements
+              if (!document.getElementById('contabilidad-aria-live')) {
+                const live = document.createElement('div');
+                live.id = 'contabilidad-aria-live';
+                live.setAttribute('aria-live','polite');
+                live.setAttribute('aria-atomic','true');
+                live.style.position = 'absolute';
+                live.style.left = '-9999px';
+                document.body.appendChild(live);
+              }
+
+              document.addEventListener('click', function(evt){
+                const btn = evt.target.closest && evt.target.closest('.visibility-toggle-btn');
+                if (!btn) return;
+                evt.preventDefault();
+                const empresaId = btn.dataset.empresaId;
+                if (!empresaId) return;
+
+                const url = apiTemplate.replace('/0/', '/' + empresaId + '/');
+                const csrftoken = getCookie('csrftoken');
+
+                btn.disabled = true;
+                fetch(url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                  },
+                  body: JSON.stringify({})
+                }).then(function(resp){
+                  if (!resp.ok) throw resp;
+                  return resp.json();
+                }).then(function(data){
+                  const visible = !!data.visible;
+                  setButtonState(btn, visible);
+                  document.getElementById('contabilidad-aria-live').textContent = data.message || (visible ? 'Visibilidad habilitada' : 'Visibilidad deshabilitada');
+                }).catch(function(err){
+                  console.error('Toggle visibility failed', err);
+                  document.getElementById('contabilidad-aria-live').textContent = 'No se pudo actualizar la visibilidad.';
+                }).finally(function(){
+                  btn.disabled = false;
+                });
+              });
+            })();
+            </script>
+                {% if e.original and e.original.owner %}
+                  {{ e.original.owner.get_full_name|default:e.original.owner.username }}
+                {% else %}
+                  {{ e.owner.get_full_name|default:e.owner.username }}
+                {% endif %}
+                • {% if e.is_template %}Plantilla{% else %}Empresa{% endif %}
+              </div>
+            </div>
+            <div class="space-x-2">
+              <a href="{% url 'contabilidad:company_detail' e.id %}" class="px-3 py-1 bg-gray-200 text-gray-800 rounded">Ver</a>
+              {% if user.is_superuser %}
+                <a href="{% url 'contabilidad:generate_join_code' e.id %}" class="px-3 py-1 bg-blue-500 text-white rounded">Generar join code</a>
+              {% else %}
+                {% if is_docente and e.owner == user %}
+                  <a href="{% url 'contabilidad:generate_join_code' e.id %}" class="px-3 py-1 bg-blue-500 text-white rounded">Generar join code</a>
+                {% endif %}
+              {% endif %}
+
+              {% if e.owner == user and not is_docente %}
+                <button
+                  type="button"
+                  class="visibility-toggle-btn px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  data-empresa-id="{{ e.id }}"
+                  aria-pressed="{% if e.visible_to_supervisor %}true{% else %}false{% endif %}"
+                  title="{% if e.visible_to_supervisor %}Visible a tu docente. Pulsa para ocultar.{% else %}No visible a tu docente. Pulsa para mostrar.{% endif %}"
+                  data-visible="{% if e.visible_to_supervisor %}1{% else %}0{% endif %}">
+                  {% if e.visible_to_supervisor %}
+                    <span class="sr-only">Estado:</span> Visible a docente: Sí
+                  {% else %}
+                    <span class="sr-only">Estado:</span> Visible a docente: No
+                  {% endif %}
+                </button>
+                <a href="{% url 'contabilidad:delete_company' e.id %}" class="px-3 py-1 bg-red-600 text-white rounded">Eliminar</a>
+              {% endif %}
+            </div>
+          </div>
+          {% if e.join_code %}
+            <div class="mt-2 text-sm text-gray-700">Join code: <strong>{{ e.join_code }}</strong></div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-gray-600">No tienes empresas todavía.</div>
+  {% endif %}
+</div>
