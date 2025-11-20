@@ -268,6 +268,47 @@ class EmpresaPlanCuenta(models.Model):
     def __str__(self):
         return f"{self.codigo} - {self.descripcion} [{self.empresa.nombre}]"
 
+    @property
+    def level(self):
+        """Estima la profundidad estructural de la cuenta según el código.
+
+        Ej: '1' -> 0 (Elemento), '1.1' -> 1 (Grupo), '1.1.01' -> 2 (Subgrupo/Cuenta), etc.
+        """
+        try:
+            return self.codigo.count('.')
+        except Exception:
+            return 0
+
+    @property
+    def structural_type(self):
+        """Devuelve una etiqueta estructural basada en la profundidad.
+
+        0 -> Elemento
+        1 -> Grupo
+        2 -> Subgrupo
+        3 -> Cuenta
+        >=4 -> Subcuenta
+        """
+        lvl = self.level
+        if lvl <= 0:
+            return 'Elemento'
+        if lvl == 1:
+            return 'Grupo'
+        if lvl == 2:
+            return 'Subgrupo'
+        if lvl == 3:
+            return 'Cuenta'
+        return 'Subcuenta'
+
+    @property
+    def estado_label(self):
+        """Etiqueta legible para el campo booleano `estado_situacion`.
+
+        True => 'Balance' (Estado de Situación Financiera)
+        False => 'Resultado'
+        """
+        return 'Balance' if bool(self.estado_situacion) else 'Resultado'
+
 
 class EmpresaAsiento(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='asientos')

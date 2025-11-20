@@ -6,19 +6,114 @@
 <div class="max-w-5xl mx-auto py-8">
   <div class="bg-white shadow rounded-lg p-6 mb-6">
     <h1 class="text-2xl font-bold">Plan de Cuentas - {{ empresa.nombre }}</h1>
-    <p class="text-sm text-gray-600">Propietario visible: {{ empresa.original.owner.get_full_name|default:empresa.owner.username if empresa.original and empresa.original.owner else empresa.owner.get_full_name|default:empresa.owner.username }}</p>
+    <p class="text-sm text-gray-600">Propietario visible:
+      {% if empresa.original and empresa.original.owner %}
+        {{ empresa.original.owner.get_full_name|default:empresa.original.owner.username }}
+      {% else %}
+        {{ empresa.owner.get_full_name|default:empresa.owner.username }}
+      {% endif %}
+    </p>
 
     <div class="mt-4">
+      {% if can_edit %}
+        <div class="mb-4 p-3 bg-gray-50 rounded">
+          <h4 class="font-semibold">Agregar nueva cuenta</h4>
+          <form method="post" action="{% url 'contabilidad:add_account' empresa.id %}" class="grid grid-cols-1 gap-2 sm:grid-cols-3 mt-2">
+            {% csrf_token %}
+            <div>
+              <label class="text-sm">Código <span class="text-red-500">*</span></label>
+              <input name="codigo" required class="w-full border rounded p-2" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-sm">Descripción <span class="text-red-500">*</span></label>
+              <input name="descripcion" required class="w-full border rounded p-2" />
+            </div>
+            <div>
+              <label class="text-sm">Tipo</label>
+              <select name="tipo" class="w-full border rounded p-2">
+                <option value="Activo">Activo</option>
+                <option value="Pasivo">Pasivo</option>
+                <option value="Patrimonio">Patrimonio</option>
+                <option value="Ingreso">Ingreso</option>
+                <option value="Costo">Costo</option>
+                <option value="Gasto">Gasto</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm">Naturaleza</label>
+              <select name="naturaleza" class="w-full border rounded p-2">
+                <option value="Deudora">Deudora</option>
+                <option value="Acreedora">Acreedora</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm">Estado (Balance)</label>
+              <div class="mt-1"><label class="inline-flex items-center"><input type="checkbox" name="estado_situacion" value="1" class="mr-2">Aplica en Estado de Situación Financiera</label></div>
+            </div>
+            <div>
+              <label class="text-sm">Auxiliar</label>
+              <div class="mt-1"><label class="inline-flex items-center"><input type="checkbox" name="es_auxiliar" value="1" class="mr-2">Es cuenta auxiliar</label></div>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="text-sm">Padre (opcional)</label>
+              <select name="padre" class="w-full border rounded p-2">
+                <option value="">-- Ninguno --</option>
+                {% for p in cuentas %}
+                  <option value="{{ p.id }}">{{ p.codigo }} — {{ p.descripcion }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <div class="mt-2"><button class="px-3 py-2 bg-green-600 text-white rounded">Crear cuenta</button></div>
+            </div>
+          </form>
+        </div>
+      {% endif %}
       <h3 class="font-semibold">Cuentas</h3>
       {% if cuentas %}
-        <table class="min-w-full mt-2 border">
-          <thead class="bg-gray-100"><tr><th class="px-3 py-2">Código</th><th class="px-3 py-2">Descripción</th><th class="px-3 py-2">Tipo</th></tr></thead>
-          <tbody>
-            {% for c in cuentas %}
-              <tr class="border-t"><td class="px-3 py-2">{{ c.codigo }}</td><td class="px-3 py-2">{{ c.descripcion }}</td><td class="px-3 py-2">{{ c.get_tipo_display }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="min-w-full mt-2 border-collapse border" role="table">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-3 py-2 text-left">CÓDIGO</th>
+                <th class="px-3 py-2 text-left">DESCRIPCIÓN</th>
+                <th class="px-3 py-2 text-left">TIPO</th>
+                <th class="px-3 py-2 text-left">NATURALEZA</th>
+                <th class="px-3 py-2 text-left">ESTADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in cuentas %}
+                {% comment %}Calcular indentación simple según nivel (dots en el código){% endcomment %}
+                {% with lvl=c.level %}
+                <tr class="border-t align-top">
+                  <td class="px-3 py-2 align-top"><code class="font-mono">{{ c.codigo }}</code></td>
+                  {% if c.level == 0 %}
+                    <td class="px-3 py-2">{{ c.descripcion }}</td>
+                  {% elif c.level == 1 %}
+                    <td class="px-3 py-2" style="padding-left:0.75rem">{{ c.descripcion }}</td>
+                  {% elif c.level == 2 %}
+                    <td class="px-3 py-2" style="padding-left:1.5rem">{{ c.descripcion }}</td>
+                  {% elif c.level == 3 %}
+                    <td class="px-3 py-2" style="padding-left:2.25rem">{{ c.descripcion }}</td>
+                  {% else %}
+                    <td class="px-3 py-2" style="padding-left:3rem">{{ c.descripcion }}</td>
+                  {% endif %}
+                  <td class="px-3 py-2">{{ c.structural_type }}</td>
+                  <td class="px-3 py-2">
+                    <span class="inline-block px-2 py-0.5 rounded text-xs {% if c.naturaleza == 'Deudora' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}" title="Naturaleza de la cuenta">
+                      {{ c.get_naturaleza_display }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <span class="text-sm text-gray-700" title="Estado en los estados financieros">{{ c.estado_label }}</span>
+                  </td>
+                </tr>
+                {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
         <div class="text-gray-600">No hay cuentas definidas.</div>
       {% endif %}

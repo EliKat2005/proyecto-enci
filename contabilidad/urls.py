@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/toggle-visibility/<int:empresa_id>/', views.toggle_visibility_api, name='toggle_visibility_api'),
     path('import/', views.import_company, name='import_company'),
     path('<int:empresa_id>/plan/', views.company_plan, name='company_plan'),
+    path('<int:empresa_id>/plan/add-account/', views.add_account, name='add_account'),
     path('<int:empresa_id>/diario/', views.company_diario, name='company_diario'),
     path('<int:empresa_id>/comment/<str:section>/', views.add_comment, name='add_comment'),
 ]

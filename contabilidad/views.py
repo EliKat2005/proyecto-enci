@@ -213,7 +213,58 @@ def company_plan(request, empresa_id):
 
     cuentas = EmpresaPlanCuenta.objects.filter(empresa=empresa).order_by('codigo')
     comments = empresa.comments.filter(section='PL').order_by('-created_at')
-    return render(request, 'contabilidad/company_plan.html', {'empresa': empresa, 'cuentas': cuentas, 'comments': comments, 'is_supervisor': is_supervisor})
+    can_edit = (request.user == empresa.owner) or request.user.is_superuser
+    return render(request, 'contabilidad/company_plan.html', {'empresa': empresa, 'cuentas': cuentas, 'comments': comments, 'is_supervisor': is_supervisor, 'can_edit': can_edit})
+
+
+@login_required
+@require_POST
+def add_account(request, empresa_id):
+    """Crear una cuenta dentro del Plan de Cuentas de la empresa.
+
+    Solo el owner de la empresa o superuser puede crear cuentas.
+    Campos esperados: codigo, descripcion, tipo, naturaleza, estado_situacion (on), es_auxiliar (on), padre_id (opcional).
+    """
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not ((request.user == empresa.owner) or request.user.is_superuser):
+        return HttpResponseForbidden('No autorizado')
+
+    codigo = request.POST.get('codigo', '').strip()
+    descripcion = request.POST.get('descripcion', '').strip()
+    tipo = request.POST.get('tipo')
+    naturaleza = request.POST.get('naturaleza')
+    estado_situacion = request.POST.get('estado_situacion') == '1'
+    es_auxiliar = request.POST.get('es_auxiliar') == '1'
+    padre_id = request.POST.get('padre') or None
+
+    if not codigo or not descripcion:
+        messages.error(request, 'Código y descripción son obligatorios.')
+        return redirect('contabilidad:company_plan', empresa_id=empresa.id)
+
+    padre = None
+    if padre_id:
+        try:
+            padre = EmpresaPlanCuenta.objects.get(pk=int(padre_id), empresa=empresa)
+        except Exception:
+            padre = None
+
+    # Crear la cuenta
+    try:
+        EmpresaPlanCuenta.objects.create(
+            empresa=empresa,
+            codigo=codigo,
+            descripcion=descripcion,
+            tipo=tipo or EmpresaPlanCuenta._meta.get_field('tipo').choices[0][0],
+            naturaleza=naturaleza or EmpresaPlanCuenta._meta.get_field('naturaleza').choices[0][0],
+            estado_situacion=bool(estado_situacion),
+            es_auxiliar=bool(es_auxiliar),
+            padre=padre
+        )
+        messages.success(request, f'Cuenta {codigo} creada correctamente.')
+    except Exception as e:
+        messages.error(request, f'Error al crear la cuenta: {e}')
+
+    return redirect('contabilidad:company_plan', empresa_id=empresa.id)
 
 
 @login_required
