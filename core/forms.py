@@ -1,9 +1,10 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import UserProfile, Invitation, Referral
+from .models import UserProfile, Invitation, Referral, Notification
 from core.models import AuditLog
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.conf import settings
 
 User = get_user_model()
@@ -20,13 +21,18 @@ class RegistroForm(forms.ModelForm):
     # Campos para la contraseña
     password = forms.CharField(label='Contraseña', widget=forms.PasswordInput, required=True)
     password_confirm = forms.CharField(label='Confirmar Contraseña', widget=forms.PasswordInput, required=True)
-    # Indica si el registrante se identifica como estudiante y usará un código
-    soy_estudiante = forms.BooleanField(label='Soy estudiante', required=False, initial=True)
+    # Rol del usuario que se registra: estudiante o docente
+    role = forms.ChoiceField(
+        label='¿Eres estudiante o docente?',
+        choices=(('estudiante', 'Soy estudiante'), ('docente', 'Soy docente')),
+        widget=forms.RadioSelect,
+        initial='estudiante'
+    )
     codigo_invite = forms.CharField(label='Código de invitación (si aplica)', required=False)
 
     class Meta:
         model = User # Basado en el modelo User de Django
-        fields = ('username', 'first_name', 'last_name', 'email', 'password', 'soy_estudiante', 'codigo_invite')
+        fields = ('username', 'first_name', 'last_name', 'email', 'password', 'role', 'codigo_invite')
 
     def clean_password_confirm(self):
         """
@@ -59,11 +65,11 @@ class RegistroForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
-        soy_estudiante = bool(cleaned.get('soy_estudiante'))
+        role = (cleaned.get('role') or 'estudiante')
         codigo = (cleaned.get('codigo_invite') or '').strip()
 
-        if soy_estudiante:
-            # Si marca que es estudiante, el código es obligatorio
+        if role == 'estudiante':
+            # Si selecciona estudiante, el código es obligatorio
             if not codigo:
                 raise forms.ValidationError('Si te registras como estudiante debes ingresar un código de invitación proporcionado por tu docente.')
 
@@ -78,7 +84,6 @@ class RegistroForm(forms.ModelForm):
 
             # Validar que el creador de la invitación sea docente
             try:
-                # Some installations use userprofile with managed=False; we check rol safely
                 profile = invitation.creator.userprofile
                 if profile.rol != UserProfile.Roles.DOCENTE:
                     raise forms.ValidationError('El código no pertenece a un docente válido.')
@@ -95,74 +100,167 @@ class RegistroForm(forms.ModelForm):
         # 1. Crear el objeto User (pero no guardarlo aún)
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
-        
+
         if commit:
             # 2. Guardar el User
             user.save()
-            
-            # 3. Crear el UserProfile (¡Aquí está la lógica de negocio!)
-            # Por defecto, creamos perfil como ESTUDIANTE y desactivado.
-            UserProfile.objects.create(
-                user=user,
-                rol=UserProfile.Roles.ESTUDIANTE,
-                esta_activo=False
-            )
 
-            # Si el usuario se registró como estudiante con un código, creamos Referral
-            soy_estudiante = bool(self.cleaned_data.get('soy_estudiante'))
-            codigo = (self.cleaned_data.get('codigo_invite') or '').strip()
-            if soy_estudiante and codigo:
-                try:
-                    invitation = Invitation.objects.get(code=codigo)
-                    if invitation.is_valid():
-                        # Incrementar contador de usos
-                        invitation.uses_count += 1
-                        if invitation.max_uses is not None and invitation.uses_count >= invitation.max_uses:
-                            invitation.active = False
-                        invitation.save()
+            # 3. Crear el UserProfile según el rol elegido
+            role = (self.cleaned_data.get('role') or 'estudiante')
+            if role == 'estudiante':
+                UserProfile.objects.create(
+                    user=user,
+                    rol=UserProfile.Roles.ESTUDIANTE,
+                    esta_activo=False
+                )
 
-                        # Crear Referral (vincula estudiante con docente)
-                        Referral.objects.create(
-                            student=user,
-                            docente=invitation.creator,
-                            invitation=invitation,
-                            activated=False
-                        )
+                # Si el usuario se registró como estudiante con un código, creamos Referral
+                codigo = (self.cleaned_data.get('codigo_invite') or '').strip()
+                if codigo:
+                    try:
+                        invitation = Invitation.objects.get(code=codigo)
+                        if invitation.is_valid():
+                            # Incrementar contador de usos
+                            invitation.uses_count += 1
+                            if invitation.max_uses is not None and invitation.uses_count >= invitation.max_uses:
+                                invitation.active = False
+                            invitation.save()
 
-                        # Registrar en audit log
-                        try:
-                            AuditLog.objects.create(actor=invitation.creator, target_user=user, action='student_registered', description=f'Estudiante {user.username} registrado con código {invitation.code}')
-                        except Exception:
-                            pass
-                        # Enviar notificación por email al docente (si tiene email)
-                        try:
-                            docente_email = invitation.creator.email
-                            if docente_email:
-                                subject = f"Nuevo estudiante registrado: {user.username}"
-                                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'SERVER_EMAIL', 'no-reply@example.com')
-                                message = (
-                                    f"Hola {invitation.creator.get_full_name() or invitation.creator.username},\n\n"
-                                    f"El estudiante {user.get_full_name() or user.username} ({user.email}) se registró usando tu código {invitation.code} y está pendiente de activación.\n"
-                                    f"Ingresa al dashboard para revisarlo: /docente/dashboard/\n\n"
-                                    "Saludos."
+                            # Crear Referral (vincula estudiante con docente)
+                            Referral.objects.create(
+                                student=user,
+                                docente=invitation.creator,
+                                invitation=invitation,
+                                activated=False
+                            )
+
+                            # Registrar en audit log
+                            try:
+                                AuditLog.objects.create(actor=invitation.creator, target_user=user, action='student_registered', description=f'Estudiante {user.username} registrado con código {invitation.code}')
+                            except Exception:
+                                pass
+
+                            # Crear notificación en la app para el docente
+                            try:
+                                Notification.objects.create(
+                                    recipient=invitation.creator,
+                                    actor=None,
+                                    verb='student_registered',
+                                    target_user=user,
+                                    unread=True
                                 )
-                                try:
-                                    send_mail(subject, message, from_email, [docente_email], fail_silently=False)
+                            except Exception:
+                                pass
+
+                            # Notificar a administradores (is_staff=True) dentro de la app y por email
+                            try:
+                                admins = User.objects.filter(is_staff=True)
+                                admin_emails = []
+                                for admin in admins:
                                     try:
-                                        AuditLog.objects.create(actor=None, target_user=invitation.creator, action='email_sent', description=f'Notificación enviada a {docente_email} sobre estudiante {user.username}')
+                                        Notification.objects.create(
+                                            recipient=admin,
+                                            actor=None,
+                                            verb='student_registered',
+                                            target_user=user,
+                                            unread=True
+                                        )
                                     except Exception:
                                         pass
-                                except Exception as e:
+                                    if admin.email:
+                                        admin_emails.append(admin.email)
+
+                                # Enviar email a admins (si hay alguno)
+                                if admin_emails:
+                                    admin_subject = f"Nuevo estudiante registrado: {user.username}"
                                     try:
-                                        AuditLog.objects.create(actor=None, target_user=invitation.creator, action='email_failed', description=f'Error enviando email a {docente_email}: {e}')
+                                        admin_text = render_to_string('emails/new_student_admins.txt', {'student': user, 'invitation': invitation, 'dashboard_url': '/admin/'})
                                     except Exception:
-                                        pass
-                        except Exception:
-                            # No fatal: si falla el envío, ya dejamos registro en AuditLog cuando se creó el referral
-                            pass
-                except Invitation.DoesNotExist:
-                    # Si la invitación no existe, no hacemos referral (la validación debería prevenir esto)
+                                        admin_text = f"El estudiante {user.get_full_name() or user.username} ({user.email}) se registró usando el código {invitation.code}."
+                                    try:
+                                        admin_html = render_to_string('emails/new_student_admins.html', {'student': user, 'invitation': invitation, 'dashboard_url': '/admin/'})
+                                    except Exception:
+                                        admin_html = None
+                                    try:
+                                        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'SERVER_EMAIL', 'no-reply@example.com')
+                                        admin_msg = EmailMultiAlternatives(admin_subject, admin_text, from_email, list(set(admin_emails)))
+                                        if admin_html:
+                                            admin_msg.attach_alternative(admin_html, 'text/html')
+                                        admin_msg.send(fail_silently=False)
+                                        try:
+                                            AuditLog.objects.create(actor=None, target_user=None, action='email_sent_admins', description=f'Notificación enviada a admins sobre estudiante {user.username}')
+                                        except Exception:
+                                            pass
+                                    except Exception as e:
+                                        try:
+                                            AuditLog.objects.create(actor=None, target_user=None, action='email_failed_admins', description=f'Error enviando email a admins: {e}')
+                                        except Exception:
+                                            pass
+                            except Exception:
+                                pass
+
+                            # Enviar notificación por email al docente (si tiene email)
+                            try:
+                                docente_email = invitation.creator.email
+                                if docente_email:
+                                    subject = f"Nuevo estudiante registrado: {user.username}"
+                                    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'SERVER_EMAIL', 'no-reply@example.com')
+                                    # Contexto para las plantillas de email
+                                    ctx = {
+                                        'docente': invitation.creator,
+                                        'student': user,
+                                        'invitation': invitation,
+                                        'dashboard_url': '/docente/dashboard/'
+                                    }
+                                    # Renderizar plantillas: texto y HTML
+                                    try:
+                                        text_body = render_to_string('emails/new_student.txt', ctx)
+                                    except Exception:
+                                        # Fallback simple en caso de error renderizando
+                                        text_body = (
+                                            f"Hola {invitation.creator.get_full_name() or invitation.creator.username},\n\n"
+                                            f"El estudiante {user.get_full_name() or user.username} ({user.email}) se registró usando tu código {invitation.code} y está pendiente de activación.\n"
+                                            f"Ingresa al dashboard para revisarlo: {ctx['dashboard_url']}\n\n"
+                                            "Saludos."
+                                        )
+                                    try:
+                                        html_body = render_to_string('emails/new_student.html', ctx)
+                                    except Exception:
+                                        html_body = None
+
+                                    try:
+                                        msg = EmailMultiAlternatives(subject, text_body, from_email, [docente_email])
+                                        if html_body:
+                                            msg.attach_alternative(html_body, 'text/html')
+                                        msg.send(fail_silently=False)
+                                        try:
+                                            AuditLog.objects.create(actor=None, target_user=invitation.creator, action='email_sent', description=f'Notificación enviada a {docente_email} sobre estudiante {user.username}')
+                                        except Exception:
+                                            pass
+                                    except Exception as e:
+                                        try:
+                                            AuditLog.objects.create(actor=None, target_user=invitation.creator, action='email_failed', description=f'Error enviando email a {docente_email}: {e}')
+                                        except Exception:
+                                            pass
+                            except Exception:
+                                # No fatal: si falla el envío, ya dejamos registro en AuditLog cuando se creó el referral
+                                pass
+                    except Invitation.DoesNotExist:
+                        # Si la invitación no existe, no hacemos referral (la validación debería prevenir esto)
+                        pass
+            else:
+                # Registro como docente: crear perfil docente (desactivado hasta que admin lo active)
+                try:
+                    UserProfile.objects.create(
+                        user=user,
+                        rol=UserProfile.Roles.DOCENTE,
+                        esta_activo=False
+                    )
+                except Exception:
+                    # Si falla la creación del perfil, no bloquear el registro
                     pass
+                # El signal `notify_admins_on_docente_create` en `core.signals` se encargará de notificar a admins
+
         return user
 
 

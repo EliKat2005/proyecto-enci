@@ -1,0 +1,7 @@
+Atención administrador/a,
+
+Se ha registrado un nuevo docente: {{ docente.get_full_name|default:docente.username }} ({{ docente.email }}).
+Revisar en el panel de administración: {{ dashboard_url }}
+
+Saludos,
+Sistema ENCI

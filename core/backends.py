@@ -1,6 +1,8 @@
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import UserProfile
+
+User = get_user_model()
 
 class ActiveStudentBackend(ModelBackend):
     """
@@ -45,5 +47,5 @@ class ActiveStudentBackend(ModelBackend):
         # obtener el objeto User durante la sesión.
         try:
             return User.objects.get(pk=user_id)
-        except User.DoesNotExist:
+        except Exception:
             return None

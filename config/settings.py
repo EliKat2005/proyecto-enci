@@ -17,7 +17,11 @@ SECRET_KEY = 'django-insecure-tu-clave-secreta-aqui-reemplazame'
 # ¡IMPORTANTE! Cambia esto en producción.
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# En entornos con dominios personalizados o HTTPS añade los orígenes aquí,
+# por ejemplo: CSRF_TRUSTED_ORIGINS = ['https://tudominio.com']
+CSRF_TRUSTED_ORIGINS = []
 
 
 # --- APLICACIONES (APPS) ---
@@ -135,3 +139,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Nota recomendada: en producción habilita `SESSION_COOKIE_SECURE = True`
+
+# Email (development): mostrar emails en la consola para pruebas
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'no-reply@enci.local'

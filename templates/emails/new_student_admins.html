@@ -1,0 +1,9 @@
+<html>
+  <body>
+    <p>Atención administrador/a,</p>
+    <p>El estudiante <strong>{{ student.get_full_name|default:student.username }}</strong> ({{ student.email }}) se registró usando el código <code>{{ invitation.code }}</code>.</p>
+    <p>Revisar en el panel de administración: <a href="{{ dashboard_url }}">Panel de administración</a></p>
+    <hr>
+    <p>Saludos,<br>Sistema ENCI</p>
+  </body>
+</html>

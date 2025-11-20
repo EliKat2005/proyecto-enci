@@ -1,124 +1,49 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Proyecto ENCI</title>
-    <!-- Cargamos Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Cargamos la fuente Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Estilos base */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        /* Definición de Keyframes para las "Gotas" (Blobs) */
-        @keyframes blob-animation-1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30vw, -40vh) scale(1.2); }
-            66% { transform: translate(-20vw, 30vh) scale(0.9); }
-        }
-        
-        @keyframes blob-animation-2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-50vw, -10vh) scale(0.9); }
-            66% { transform: translate(10vw, -30vh) scale(1.1); }
-        }
+{% extends 'base.html' %}
 
-        /* Aplicamos la animación a las clases */
-        .blob-1 {
-            animation: blob-animation-1 15s ease-in-out infinite;
-        }
-        .blob-2 {
-            animation: blob-animation-2 18s ease-in-out infinite;
-        }
-    </style>
-</head>
-<body class="relative min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 overflow-hidden">
-    
-    <!-- Contenedor de las "Gotas" Animadas -->
-    <div class="absolute inset-0 w-full h-full">
-        <!-- Gota 1 -->
-        <div class="blob-1 absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-purple-300 rounded-full filter blur-xl opacity-50"></div>
-        <!-- Gota 2 -->
-        <div class="blob-2 absolute bottom-1/4 right-1/4 w-72 h-72 md:w-96 md:h-96 bg-pink-300 rounded-full filter blur-xl opacity-50"></div>
-    </div>
-    
-    <!-- Contenedor del Formulario (Centrado) -->
-    <div class="relative min-h-screen flex items-center justify-center p-4">
-        
-        <div class="w-full max-w-md">
-            
-            <!-- Título -->
-            <div class="text-center mb-6">
-                <h1 class="text-3xl font-bold text-white shadow-sm">Contabilidad ENCI</h1>
-                <p class="text-white/80">Bienvenido de vuelta</p>
-            </div>
+{% block title %}Iniciar sesión | ENCI{% endblock %}
 
-            <!-- Tarjeta de Glassmorphism -->
-            <div class="bg-white/30 backdrop-blur-lg rounded-2xl shadow-2xl p-8 transition-all duration-300">
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12">
+  <div class="w-full max-w-lg">
+    <div class="bg-white rounded-lg shadow-md p-8">
+      <h2 class="text-3xl font-semibold text-center mb-6">Iniciar sesión</h2>
 
-                <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Iniciar Sesión</h2>
-
-                <!-- --------------------------------------------------- -->
-                <!-- ¡NUEVO! BLOQUE PARA MOSTRAR MENSAJES DE DJANGO -->
-                <!-- --------------------------------------------------- -->
-                {% if messages %}
-                <div class="mb-4">
-                    {% for message in messages %}
-                        <!-- Asignamos un color diferente según el tipo de mensaje (warning o error) -->
-                        <div class="{% if message.tags == 'warning' %}bg-yellow-500/80 border-yellow-700{% else %}bg-red-500/80 border-red-700{% endif %} text-white px-4 py-3 rounded-lg" role="alert">
-                            <p class="text-sm font-medium">{{ message }}</p>
-                        </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <!-- FIN DEL BLOQUE DE MENSAJES -->
-
-                <!-- Bloque de Error de Django (Form.errors) - Lo dejamos por si acaso -->
-                {% if form.errors and not messages %}
-                <div class="bg-red-500/80 border border-red-700 text-white px-4 py-3 rounded-lg mb-4" role="alert">
-                    <p class="text-sm font-medium">Tu nombre de usuario y contraseña no coinciden. Por favor, inténtalo de nuevo.</p>
-                </div>
-                {% endif %}
-
-                <!-- Formulario de Login -->
-                <form method="post" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    
-                    <div class="mb-5">
-                        <label for="id_username" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-                        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required 
-                               id="id_username" value="{{ username_value|default:'' }}"
-                               class="block w-full px-4 py-3 bg-white/50 border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500">
-                    </div>
-                    
-                    <div class="mb-6">
-                        <label for="id_password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                        <input type="password" name="password" autocomplete="current-password" required 
-                               id="id_password" 
-                               class="block w-full px-4 py-3 bg-white/50 border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500">
-                    </div>
-                    
-                    <div class="mt-8">
-                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">
-                            Ingresar
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-            
-            <p class="text-center text-white/70 text-sm mt-6">
-                ¿Aún no tienes cuenta? <a href="{% url 'registro' %}" class="font-medium text-white hover:underline">Regístrate aquí</a>
-            </p>
+      {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+            {% if 'success' in message.tags %}
+              <div class="px-4 py-2 rounded bg-green-100 text-green-800 text-sm">{{ message }}</div>
+            {% else %}
+              <div class="px-4 py-2 rounded bg-red-100 text-red-800 text-sm">{{ message }}</div>
+            {% endif %}
+          {% endfor %}
         </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+
+        <!-- Registration role links moved below submit button -->
+
+        <div class="mb-5">
+          <label class="block text-base font-medium text-gray-700">Usuario</label>
+          <input type="text" name="username" id="id_username" value="{{ username_value|default:'' }}" class="mt-1 block w-full rounded border-gray-200 shadow-sm py-3 px-3 text-lg" required autofocus>
+        </div>
+        <div class="mb-5">
+          <label class="block text-base font-medium text-gray-700">Contraseña</label>
+          <input type="password" name="password" id="id_password" class="mt-1 block w-full rounded border-gray-200 shadow-sm py-3 px-3 text-lg" required>
+        </div>
+        <div class="mb-4">
+          <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded hover:bg-indigo-700 text-lg">Ingresar</button>
+        </div>
+
+        <div class="mt-4 text-center">
+          <span class="text-sm text-gray-600 mr-2">¿Quieres registrarte?</span>
+          <a href="{% url 'registro' %}?role=estudiante" class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded mr-2">Soy estudiante</a>
+          <a href="{% url 'registro' %}?role=docente" class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded">Soy docente</a>
+        </div>
+      </form>
     </div>
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}

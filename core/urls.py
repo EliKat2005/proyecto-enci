@@ -18,4 +18,8 @@ urlpatterns = [
     # Vista para que docentes/admin gestionen estudiantes (activar/desactivar)
     path('docente/alumnos/', views.docente_alumnos_view, name='docente_alumnos'),
     path('docente/dashboard/', views.docente_dashboard_view, name='docente_dashboard'),
+    # Notificaciones in-app
+    path('notifications/', views.notifications_view, name='notifications'),
+    path('notifications/mark-read/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
 ]

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Notificaciones | ENCI{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-xl font-semibold">Notificaciones</h1>
+    <form method="post" action="{% url 'mark_all_notifications_read' %}">
+      {% csrf_token %}
+      <button class="text-sm text-gray-600 hover:underline">Marcar todas como leídas</button>
+    </form>
+  </div>
+  <div class="divide-y">
+    {% for n in notifications %}
+      <div class="py-3 flex justify-between items-start {% if n.unread %}bg-indigo-50{% endif %}">
+        <div>
+          <p class="text-sm text-gray-800">{{ n.verb|capfirst }} {% if n.target_user %}<strong>{{ n.target_user.username }}</strong>{% endif %}</p>
+          <p class="text-xs text-gray-500">{{ n.created_at }}</p>
+        </div>
+        <div class="ml-4">
+          {% if n.unread %}
+          <form method="post" action="{% url 'mark_notification_read' %}">
+            {% csrf_token %}
+            <input type="hidden" name="notification_id" value="{{ n.id }}">
+            <button class="px-3 py-1 bg-indigo-600 text-white rounded text-sm">Marcar leída</button>
+          </form>
+          {% else %}
+            <span class="text-sm text-gray-400">Leída</span>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-gray-600">No tienes notificaciones.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

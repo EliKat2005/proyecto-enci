@@ -15,27 +15,41 @@
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    {% load notification_tags %}
     <nav class="bg-white shadow-md">
         <div class="max-w-6xl mx-auto px-4">
-            <div class="flex justify-between">
-                <div class="flex space-x-7">
-                    <div>
-                        <!-- Logo -->
-                        <a href="{% url 'home' %}" class="flex items-center py-4 px-2">
-                            <span class="font-semibold text-gray-500 text-lg">Contabilidad ENCI</span>
-                        </a>
-                    </div>
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-6">
+                    <a href="{% url 'home' %}" class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">EN</div>
+                        <div>
+                            <div class="text-lg font-semibold text-gray-700">Contabilidad ENCI</div>
+                            <div class="text-xs text-gray-500">Sistema académico</div>
+                        </div>
+                    </a>
                 </div>
-                <!-- Items del Navbar (Derecha) -->
-                <div class="flex items-center space-x-3">
+
+                <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <span class="py-2 px-2 text-gray-500">Hola, {{ user.username }}</span>
+                        <!-- Notifications dropdown (simple) -->
+                        <div class="relative">
+                            <a href="{% url 'notifications' %}" class="flex items-center px-3 py-2 rounded hover:bg-gray-100">
+                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                {% unread_count user as unread_count %}
+                                {% if unread_count > 0 %}
+                                    <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded">{{ unread_count }}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+
+                        <div class="text-sm text-gray-700">Hola, <strong>{{ user.get_full_name|default:user.username }}</strong></div>
                         <form method="post" action="{% url 'logout' %}" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="py-2 px-2 font-medium text-white bg-red-500 rounded hover:bg-red-400 transition duration-300">Logout</button>
+                            <button type="submit" class="ml-3 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400">Cerrar sesión</button>
                         </form>
                     {% else %}
-                        <a href="{% url 'login' %}" class="py-2 px-2 font-medium text-gray-500 rounded hover:bg-gray-200 transition duration-300">Login</a>
+                        <a href="{% url 'login' %}" class="px-3 py-2 font-medium text-gray-600 rounded hover:bg-gray-100">Iniciar sesión</a>
+                        <a href="{% url 'registro' %}" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Regístrate</a>
                     {% endif %}
                 </div>
             </div>

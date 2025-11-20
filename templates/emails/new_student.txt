@@ -1,0 +1,9 @@
+Hola {{ docente.get_full_name|default:docente.username }},
+
+El estudiante {{ student.get_full_name|default:student.username }} ({{ student.email }}) se registró usando tu código {{ invitation.code }} y está pendiente de activación.
+
+Revisa el dashboard del docente para activar al estudiante:
+{{ dashboard_url }}
+
+Saludos,
+Equipo ENCI

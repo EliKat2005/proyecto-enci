@@ -1,0 +1,13 @@
+<html>
+  <body>
+    <p>Hola {{ docente.get_full_name|default:docente.username }},</p>
+    <p>
+      El estudiante <strong>{{ student.get_full_name|default:student.username }}</strong> ({{ student.email }}) se registró usando tu código <code>{{ invitation.code }}</code> y está pendiente de activación.
+    </p>
+    <p>
+      Revisa el <a href="{{ dashboard_url }}">dashboard del docente</a> para activar al estudiante.
+    </p>
+    <hr>
+    <p>Saludos,<br>Equipo ENCI</p>
+  </body>
+</html>

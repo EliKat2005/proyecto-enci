@@ -1,0 +1,9 @@
+<html>
+  <body>
+    <p>Atención administrador/a,</p>
+    <p>Se ha registrado un nuevo docente: <strong>{{ docente.get_full_name|default:docente.username }}</strong> ({{ docente.email }}).</p>
+    <p>Revisar en el panel de administración: <a href="{{ dashboard_url }}">Panel de administración</a></p>
+    <hr>
+    <p>Saludos,<br>Sistema ENCI</p>
+  </body>
+</html>

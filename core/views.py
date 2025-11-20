@@ -11,6 +11,9 @@ from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q
+from .models import Notification
+from django.http import HttpResponseForbidden
+from django.contrib import messages
 
 # Obtenemos el modelo User
 User = get_user_model()
@@ -22,16 +25,22 @@ def home_view(request):
     Vista para la página de inicio.
     """
     # Pasamos información del usuario a la plantilla
-    # Determinar si el usuario es docente (para mostrar enlaces en la UI)
+    # Determinar si el usuario es docente y/o admin (para mostrar enlaces en la UI)
     is_docente = False
+    is_admin = False
     try:
-        is_docente = request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.DOCENTE)
+        # admin: superuser OR perfil rol=ADMIN
+        is_admin = request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.ADMIN)
+        # docente: perfil rol=DOCENTE (no marcar superuser como docente)
+        is_docente = (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.DOCENTE)
     except Exception:
         is_docente = False
+        is_admin = False
 
     contexto = {
         'user': request.user,
         'is_docente': is_docente,
+        'is_admin': is_admin,
     }
     return render(request, 'core/home.html', contexto)
 
@@ -112,18 +121,24 @@ def registro_view(request):
     """
     Vista para el registro de nuevos usuarios.
     """
+    # Determinar rol preseleccionado (viene como ?role=estudiante|docente desde login)
+    role = request.GET.get('role', 'estudiante')
+
     if request.method == 'POST':
+        # El template envía un campo oculto 'role' para que el form lo reciba
         form = RegistroForm(request.POST)
         if form.is_valid():
             form.save() # Nuestro 'save' personalizado se encarga de todo
             # Informamos al usuario y redirigimos al login
             messages.success(request, 'Registro completado. Tu cuenta está pendiente de activación por un docente o administrador.')
-            return redirect('login') 
+            return redirect('login')
     else:
-        form = RegistroForm()
-        
+        # Preconfiguramos el formulario con el role seleccionado (no se muestra en UI)
+        form = RegistroForm(initial={'role': role})
+
     contexto = {
-        'form': form
+        'form': form,
+        'selected_role': role,
     }
     return render(request, 'core/registro.html', contexto)
 
@@ -283,5 +298,39 @@ def docente_dashboard_view(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'core/docente_dashboard.html', {'referrals': page_obj, 'invitations': invitations})
+
+
+@login_required
+def notifications_view(request):
+    """Lista de notificaciones del usuario."""
+    notes = Notification.objects.filter(recipient=request.user).order_by('-created_at')[:100]
+    return render(request, 'core/notifications.html', {'notifications': notes})
+
+
+@login_required
+def mark_notification_read(request):
+    if request.method != 'POST':
+        return HttpResponseForbidden('Invalid')
+    nid = request.POST.get('notification_id')
+    if not nid:
+        messages.error(request, 'Notificación no especificada.')
+        return redirect('notifications')
+    try:
+        n = Notification.objects.get(pk=nid, recipient=request.user)
+        n.unread = False
+        n.save()
+        messages.success(request, 'Notificación marcada como leída.')
+    except Notification.DoesNotExist:
+        messages.error(request, 'Notificación no encontrada.')
+    return redirect('notifications')
+
+
+@login_required
+def mark_all_notifications_read(request):
+    if request.method != 'POST':
+        return HttpResponseForbidden('Invalid')
+    Notification.objects.filter(recipient=request.user, unread=True).update(unread=False)
+    messages.success(request, 'Todas las notificaciones han sido marcadas como leídas.')
+    return redirect('notifications')
 
 

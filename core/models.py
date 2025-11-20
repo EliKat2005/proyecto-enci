@@ -138,3 +138,44 @@ class Referral(models.Model):
 
     def __str__(self):
         return f"{self.student.username} -> {self.docente.username}"
+
+
+class Notification(models.Model):
+    """Notificaciones internas del sistema.
+
+    - `recipient`: usuario que recibe la notificación.
+    - `actor`: quién causó el evento (opcional).
+    - `verb`: acción corta (ej. 'registered', 'activated').
+    - `target_user`: usuario objetivo del evento, cuando aplique.
+    - `unread`: si la notificación aún no fue leída.
+    - `created_at`: timestamp.
+    """
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='actor_notifications'
+    )
+    verb = models.CharField(max_length=100)
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='target_notifications'
+    )
+    unread = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notifications'
+
+    def __str__(self):
+        return f"{self.recipient.username}: {self.verb} ({'unread' if self.unread else 'read'})"

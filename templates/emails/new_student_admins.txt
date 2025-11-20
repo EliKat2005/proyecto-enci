@@ -1,0 +1,7 @@
+Atención administrador/a,
+
+El estudiante {{ student.get_full_name|default:student.username }} ({{ student.email }}) se registró usando el código {{ invitation.code }}.
+Revisar en el panel de administración: {{ dashboard_url }}
+
+Saludos,
+Sistema ENCI
