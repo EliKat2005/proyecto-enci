@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .forms import RegistroForm
 # --- ¡Nuevas importaciones! ---
-from django.contrib.auth import authenticate, login, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from .models import UserProfile, Referral, AuditLog, Invitation
@@ -15,6 +15,7 @@ from django.db.models import Q
 from .models import Notification
 from django.http import HttpResponseForbidden
 from django.contrib import messages
+from django.contrib.messages import get_messages
 
 # Obtenemos el modelo User
 User = get_user_model()
@@ -117,6 +118,22 @@ def login_view(request):
         form = AuthenticationForm()
 
     return render(request, 'core/login.html', {'form': form})
+
+
+def logout_view(request):
+    """
+    Vista personalizada de logout que limpia los mensajes antes de cerrar sesión.
+    """
+    # Limpiar todos los mensajes de la sesión
+    storage = get_messages(request)
+    for _ in storage:
+        pass  # Iterar para consumir todos los mensajes
+    
+    # Cerrar sesión
+    logout(request)
+    
+    # Renderizar la página de logout sin mensajes
+    return render(request, 'core/logout.html')
 
 
 def registro_view(request):
@@ -333,6 +350,35 @@ def mark_all_notifications_read(request):
         return HttpResponseForbidden('Invalid')
     Notification.objects.filter(recipient=request.user, unread=True).update(unread=False)
     messages.success(request, 'Todas las notificaciones han sido marcadas como leídas.')
+    return redirect('notifications')
+
+
+@login_required
+def delete_notification(request):
+    """Elimina una notificación específica del usuario."""
+    if request.method != 'POST':
+        return HttpResponseForbidden('Invalid')
+    nid = request.POST.get('notification_id')
+    if not nid:
+        messages.error(request, 'Notificación no especificada.')
+        return redirect('notifications')
+    try:
+        n = Notification.objects.get(pk=nid, recipient=request.user)
+        n.delete()
+        messages.success(request, 'Notificación eliminada.')
+    except Notification.DoesNotExist:
+        messages.error(request, 'Notificación no encontrada.')
+    return redirect('notifications')
+
+
+@login_required
+def delete_all_notifications(request):
+    """Elimina todas las notificaciones del usuario."""
+    if request.method != 'POST':
+        return HttpResponseForbidden('Invalid')
+    count = Notification.objects.filter(recipient=request.user).count()
+    Notification.objects.filter(recipient=request.user).delete()
+    messages.success(request, f'{count} notificación{"es" if count != 1 else ""} eliminada{"s" if count != 1 else ""}.')
     return redirect('notifications')
 
 

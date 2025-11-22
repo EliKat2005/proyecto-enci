@@ -35,6 +35,7 @@
           <textarea name="descripcion" rows="4" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Descripción detallada de la empresa..."></textarea>
         </div>
         
+        {% if is_docente or user.is_superuser %}
         <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
           <label class="flex items-center cursor-pointer">
             <input type="checkbox" name="is_template" value="1" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
@@ -42,6 +43,7 @@
           </label>
           <p class="ml-7 text-xs text-slate-600 mt-1">Las plantillas pueden ser importadas por estudiantes mediante códigos de acceso</p>
         </div>
+        {% endif %}
         
         <div class="flex items-center space-x-3 pt-4 border-t border-slate-200">
           <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150">

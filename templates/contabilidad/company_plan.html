@@ -1,149 +1,271 @@
 {% extends 'base.html' %}
 
-{% block title %}Plan de Cuentas - {{ empresa.nombre }}{% endblock %}
+{% block title %}Plan de Cuentas - {{ empresa.nombre }} | ECAE{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-8">
-  <div class="bg-white shadow rounded-lg p-6 mb-6">
-    <h1 class="text-2xl font-bold">Plan de Cuentas - {{ empresa.nombre }}</h1>
-    <p class="text-sm text-gray-600">Propietario visible:
-      {% if empresa.original and empresa.original.owner %}
-        {{ empresa.original.owner.get_full_name|default:empresa.original.owner.username }}
-      {% else %}
-        {{ empresa.owner.get_full_name|default:empresa.owner.username }}
-      {% endif %}
-    </p>
-
-    <div class="mt-4">
-      {% if can_edit %}
-        <div class="mb-4 p-3 bg-gray-50 rounded">
-          <h4 class="font-semibold">Agregar nueva cuenta</h4>
-          <form method="post" action="{% url 'contabilidad:add_account' empresa.id %}" class="grid grid-cols-1 gap-2 sm:grid-cols-3 mt-2">
-            {% csrf_token %}
-            <div>
-              <label class="text-sm">Código <span class="text-red-500">*</span></label>
-              <input name="codigo" required class="w-full border rounded p-2" />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="text-sm">Descripción <span class="text-red-500">*</span></label>
-              <input name="descripcion" required class="w-full border rounded p-2" />
-            </div>
-            <div>
-              <label class="text-sm">Tipo</label>
-              <select name="tipo" class="w-full border rounded p-2">
-                <option value="Activo">Activo</option>
-                <option value="Pasivo">Pasivo</option>
-                <option value="Patrimonio">Patrimonio</option>
-                <option value="Ingreso">Ingreso</option>
-                <option value="Costo">Costo</option>
-                <option value="Gasto">Gasto</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-sm">Naturaleza</label>
-              <select name="naturaleza" class="w-full border rounded p-2">
-                <option value="Deudora">Deudora</option>
-                <option value="Acreedora">Acreedora</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-sm">Estado (Balance)</label>
-              <div class="mt-1"><label class="inline-flex items-center"><input type="checkbox" name="estado_situacion" value="1" class="mr-2">Aplica en Estado de Situación Financiera</label></div>
-            </div>
-            <div>
-              <label class="text-sm">Auxiliar</label>
-              <div class="mt-1"><label class="inline-flex items-center"><input type="checkbox" name="es_auxiliar" value="1" class="mr-2">Es cuenta auxiliar</label></div>
-            </div>
-            <div class="sm:col-span-3">
-              <label class="text-sm">Padre (opcional)</label>
-              <select name="padre" class="w-full border rounded p-2">
-                <option value="">-- Ninguno --</option>
-                {% for p in cuentas %}
-                  <option value="{{ p.id }}">{{ p.codigo }} — {{ p.descripcion }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="sm:col-span-3">
-              <div class="mt-2"><button class="px-3 py-2 bg-green-600 text-white rounded">Crear cuenta</button></div>
-            </div>
-          </form>
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-10">
+  <div class="max-w-7xl mx-auto px-4">
+    
+    <!-- Header -->
+    <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200 mb-6">
+      <div class="flex items-center space-x-3 mb-2">
+        <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
         </div>
-      {% endif %}
-      <h3 class="font-semibold">Cuentas</h3>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800">Plan de Cuentas</h1>
+          <p class="text-slate-600 text-sm font-medium">{{ empresa.nombre }}</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 text-sm text-slate-600 mt-4 pt-4 border-t border-slate-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>
+        <span>
+          {% if empresa.original and empresa.original.owner %}
+            {{ empresa.original.owner.get_full_name|default:empresa.original.owner.username }}
+          {% else %}
+            {{ empresa.owner.get_full_name|default:empresa.owner.username }}
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    {% if can_edit %}
+      <!-- Formulario para agregar cuenta -->
+      <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200 mb-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4 uppercase tracking-wide border-b-2 border-blue-600 pb-3">Agregar Nueva Cuenta</h2>
+        <form method="post" action="{% url 'contabilidad:add_account' empresa.id %}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% csrf_token %}
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Código <span class="text-red-600">*</span></label>
+            <input name="codigo" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" />
+          </div>
+          <div class="md:col-span-2 lg:col-span-2">
+            <label class="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Descripción <span class="text-red-600">*</span></label>
+            <input name="descripcion" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Tipo</label>
+            <select name="tipo" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+              <option value="Activo">Activo</option>
+              <option value="Pasivo">Pasivo</option>
+              <option value="Patrimonio">Patrimonio</option>
+              <option value="Ingreso">Ingreso</option>
+              <option value="Costo">Costo</option>
+              <option value="Gasto">Gasto</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Naturaleza</label>
+            <select name="naturaleza" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+              <option value="Deudora">Deudora</option>
+              <option value="Acreedora">Acreedora</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Cuenta Padre</label>
+            <select name="padre" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+              <option value="">-- Ninguno --</option>
+              {% for p in cuentas %}
+                <option value="{{ p.id }}">{{ p.codigo }} — {{ p.descripcion }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="flex items-center space-x-6">
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" name="estado_situacion" value="1" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-200">
+              <span class="ml-2 text-sm font-medium text-slate-700">Estado de Situación</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" name="es_auxiliar" value="1" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-200">
+              <span class="ml-2 text-sm font-medium text-slate-700">Auxiliar</span>
+            </label>
+          </div>
+          <div class="md:col-span-2 lg:col-span-3">
+            <button class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm transition-all duration-150 flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>Crear Cuenta</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    {% endif %}
+
+    <!-- Tabla de Cuentas -->
+    <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200 mb-6">
+      <h2 class="text-lg font-bold text-slate-800 mb-4 uppercase tracking-wide border-b-2 border-slate-600 pb-3">Catálogo de Cuentas</h2>
       {% if cuentas %}
         <div class="overflow-x-auto">
-          <table class="min-w-full mt-2 border-collapse border" role="table">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="px-3 py-2 text-left">CÓDIGO</th>
-                <th class="px-3 py-2 text-left">DESCRIPCIÓN</th>
-                <th class="px-3 py-2 text-left">TIPO</th>
-                <th class="px-3 py-2 text-left">NATURALEZA</th>
-                <th class="px-3 py-2 text-left">ESTADO</th>
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b-2 border-slate-200">
+                <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Código</th>
+                <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Descripción</th>
+                <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Naturaleza</th>
+                <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Estado</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-200">
               {% for c in cuentas %}
-                {% comment %}Calcular indentación simple según nivel (dots en el código){% endcomment %}
-                {% with lvl=c.level %}
-                <tr class="border-t align-top">
-                  <td class="px-3 py-2 align-top"><code class="font-mono">{{ c.codigo }}</code></td>
-                  {% if c.level == 0 %}
-                    <td class="px-3 py-2">{{ c.descripcion }}</td>
-                  {% elif c.level == 1 %}
-                    <td class="px-3 py-2" style="padding-left:0.75rem">{{ c.descripcion }}</td>
-                  {% elif c.level == 2 %}
-                    <td class="px-3 py-2" style="padding-left:1.5rem">{{ c.descripcion }}</td>
-                  {% elif c.level == 3 %}
-                    <td class="px-3 py-2" style="padding-left:2.25rem">{{ c.descripcion }}</td>
-                  {% else %}
-                    <td class="px-3 py-2" style="padding-left:3rem">{{ c.descripcion }}</td>
-                  {% endif %}
-                  <td class="px-3 py-2">{{ c.structural_type }}</td>
-                  <td class="px-3 py-2">
-                    <span class="inline-block px-2 py-0.5 rounded text-xs {% if c.naturaleza == 'Deudora' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}" title="Naturaleza de la cuenta">
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-4 py-3">
+                    <code class="font-mono text-sm text-slate-800 bg-slate-100 px-2 py-1 rounded">{{ c.codigo }}</code>
+                  </td>
+                  <td class="px-4 py-3" style="padding-left: {% if c.level == 1 %}1.5rem{% elif c.level == 2 %}2.5rem{% elif c.level == 3 %}3.5rem{% elif c.level > 3 %}4.5rem{% else %}1rem{% endif %}">
+                    <span class="text-sm text-slate-800">{{ c.descripcion }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-sm text-slate-700">{{ c.structural_type }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-block px-2 py-1 rounded-lg text-xs font-semibold {% if c.naturaleza == 'Deudora' %}bg-red-100 text-red-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
                       {{ c.get_naturaleza_display }}
                     </span>
                   </td>
-                  <td class="px-3 py-2">
-                    <span class="text-sm text-gray-700" title="Estado en los estados financieros">{{ c.estado_label }}</span>
+                  <td class="px-4 py-3">
+                    <span class="text-sm text-slate-600">{{ c.estado_label }}</span>
                   </td>
                 </tr>
-                {% endwith %}
               {% endfor %}
             </tbody>
           </table>
         </div>
       {% else %}
-        <div class="text-gray-600">No hay cuentas definidas.</div>
+        <div class="text-center py-12">
+          <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <p class="text-slate-600 font-medium">No hay cuentas definidas</p>
+          <p class="text-sm text-slate-500 mt-1">Comienza agregando tu primera cuenta contable</p>
+        </div>
       {% endif %}
     </div>
 
-    <div class="mt-6">
-      <h3 class="font-semibold">Comentarios del docente</h3>
-      {% if comments %}
-        <ul class="space-y-3 mt-2">
-          {% for com in comments %}
-            <li class="p-3 bg-gray-50 rounded">
-              <div class="text-sm text-gray-700">{{ com.content }}</div>
-              <div class="text-xs text-gray-500 mt-1">Por {{ com.author.get_full_name|default:com.author.username }} • {{ com.created_at|date:"d/m/Y H:i" }}</div>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="text-gray-600 mt-2">Aún no hay comentarios del docente.</div>
-      {% endif %}
+    <!-- Comentarios del Docente (solo visible para estudiantes) -->
+    {% if not is_docente %}
+      <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-4 uppercase tracking-wide border-b-2 border-emerald-600 pb-3">Comentarios del Docente</h2>
+        {% if comments %}
+          <ul class="space-y-3">
+            {% for com in comments %}
+              <li class="p-4 bg-slate-50 rounded-lg border-l-4 border-emerald-600">
+                <p class="text-sm text-slate-700 leading-relaxed">{{ com.content }}</p>
+                <div class="flex items-center space-x-2 text-xs text-slate-500 mt-2">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                  <span>{{ com.author.get_full_name|default:com.author.username }}</span>
+                  <span>•</span>
+                  <span>{{ com.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-slate-600 text-sm">Aún no hay comentarios del docente.</p>
+        {% endif %}
+      </div>
+    {% endif %}
 
-      {% if is_supervisor %}
-        <form method="post" action="{% url 'contabilidad:add_comment' empresa.id 'PL' %}" class="mt-4">
+    <!-- Formulario para agregar comentarios (solo para supervisores) -->
+    {% if is_supervisor %}
+      <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200 {% if not is_docente %}mt-6{% endif %}">
+        <h2 class="text-lg font-bold text-slate-800 mb-4 uppercase tracking-wide border-b-2 border-blue-600 pb-3">Agregar Retroalimentación</h2>
+        <form method="post" action="{% url 'contabilidad:add_comment' empresa.id 'PL' %}" onsubmit="return validateComment(this)">
           {% csrf_token %}
-          <textarea name="content" rows="3" class="w-full border rounded p-2" placeholder="Dejar comentario (sugerencias, observaciones)"></textarea>
-          <div class="mt-2"><button class="px-3 py-2 bg-blue-600 text-white rounded">Agregar comentario</button></div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wide">Comentario</label>
+          <textarea name="content" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Sugerencias, observaciones o retroalimentación..."></textarea>
+          <button type="submit" class="mt-3 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm transition-all duration-150 flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Publicar Comentario</span>
+          </button>
         </form>
-      {% endif %}
+      </div>
 
-    </div>
+      <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2" style="max-width: 400px;"></div>
+
+      <script>
+        function showNotification(message, type = 'error') {
+          const container = document.getElementById('notification-container');
+          const notification = document.createElement('div');
+          
+          const colors = {
+            error: 'bg-red-50 border-red-200 text-red-800',
+            warning: 'bg-amber-50 border-amber-200 text-amber-800',
+            success: 'bg-emerald-50 border-emerald-200 text-emerald-800'
+          };
+          
+          const icons = {
+            error: '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+            warning: '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+            success: '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>'
+          };
+          
+          notification.className = `${colors[type]} border-2 rounded-lg shadow-lg p-4 flex items-start gap-3 transform transition-all duration-300 translate-x-0 opacity-100`;
+          notification.style.animation = 'slideIn 0.3s ease-out';
+          
+          notification.innerHTML = `
+            <div class="flex-shrink-0">
+              ${icons[type]}
+            </div>
+            <div class="flex-1 text-sm font-medium">
+              ${message}
+            </div>
+            <button onclick="this.parentElement.remove()" class="flex-shrink-0 text-current opacity-50 hover:opacity-100 transition-opacity">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+          `;
+          
+          container.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+          }, 5000);
+        }
+        
+        function validateComment(form) {
+          const content = form.querySelector('textarea[name="content"]').value.trim();
+          if (!content) {
+            showNotification('El comentario no puede estar vacío. Por favor, escribe un comentario antes de enviar.', 'error');
+            return false;
+          }
+          if (content.length < 5) {
+            showNotification('El comentario es demasiado corto. Por favor, escribe al menos 5 caracteres.', 'warning');
+            return false;
+          }
+          return true;
+        }
+      </script>
+
+      <style>
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      </style>
+    {% endif %}
 
   </div>
 </div>
 {% endblock %}
+

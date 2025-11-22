@@ -145,8 +145,11 @@ class Notification(models.Model):
 
     - `recipient`: usuario que recibe la notificación.
     - `actor`: quién causó el evento (opcional).
-    - `verb`: acción corta (ej. 'registered', 'activated').
+    - `verb`: acción corta (ej. 'registered', 'activated', 'commented').
     - `target_user`: usuario objetivo del evento, cuando aplique.
+    - `empresa_id`: ID de la empresa relacionada (para comentarios).
+    - `comment_section`: sección del comentario (PL, DI, RP).
+    - `url`: URL directa a la acción/recurso.
     - `unread`: si la notificación aún no fue leída.
     - `created_at`: timestamp.
     """
@@ -170,12 +173,16 @@ class Notification(models.Model):
         blank=True,
         related_name='target_notifications'
     )
+    empresa_id = models.IntegerField(null=True, blank=True)
+    comment_section = models.CharField(max_length=2, null=True, blank=True)
+    url = models.CharField(max_length=500, null=True, blank=True)
     unread = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Notification'
         verbose_name_plural = 'Notifications'
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.recipient.username}: {self.verb} ({'unread' if self.unread else 'read'})"

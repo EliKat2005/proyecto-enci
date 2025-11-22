@@ -14,6 +14,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 
 
 @login_required
@@ -164,9 +165,38 @@ def delete_company(request, empresa_id):
 
     if request.method == 'POST':
         nombre = empresa.nombre
-        empresa.delete()
-        messages.success(request, f'Empresa "{nombre}" eliminada.')
-        return redirect('home')
+        try:
+            with transaction.atomic():
+                # 1) Borrar asientos y sus transacciones (CASCADE por FK "asiento")
+                EmpresaAsiento.objects.filter(empresa=empresa).delete()
+
+                # 2) Borrar cuentas del plan (asegurando borrar hojas primero para respetar FK padre PROTECT)
+                cuentas = list(EmpresaPlanCuenta.objects.filter(empresa=empresa))
+                # Ordenar por profundidad (más puntos primero) para eliminar de hojas -> raíz
+                cuentas.sort(key=lambda c: (c.codigo or '').count('.'), reverse=True)
+                for c in cuentas:
+                    try:
+                        c.delete()
+                    except ProtectedError:
+                        # Si por alguna razón quedan referencias, abortamos con mensaje claro
+                        raise
+
+                # 3) Eliminar relaciones adicionales
+                EmpresaSupervisor.objects.filter(empresa=empresa).delete()
+                EmpresaComment.objects.filter(empresa=empresa).delete()
+
+                # 4) Finalmente eliminar la empresa
+                empresa.delete()
+
+            messages.success(request, f'Empresa "{nombre}" eliminada.')
+            return redirect('home')
+        except ProtectedError as e:
+            messages.error(
+                request,
+                'No se pudo eliminar la empresa porque existen registros relacionados protegidos '
+                '(por ejemplo, cuentas con dependencias). Revise transacciones/cuentas e intente nuevamente.'
+            )
+            return redirect('contabilidad:company_detail', empresa_id=empresa.id)
 
     return render(request, 'contabilidad/delete_company_confirm.html', {'empresa': empresa})
 
@@ -222,7 +252,15 @@ def company_plan(request, empresa_id):
     cuentas = EmpresaPlanCuenta.objects.filter(empresa=empresa).order_by('codigo')
     comments = empresa.comments.filter(section='PL').order_by('-created_at')
     can_edit = (request.user == empresa.owner) or request.user.is_superuser
-    return render(request, 'contabilidad/company_plan.html', {'empresa': empresa, 'cuentas': cuentas, 'comments': comments, 'is_supervisor': is_supervisor, 'can_edit': can_edit})
+    
+    # Determinar si el usuario es docente
+    is_docente = False
+    try:
+        is_docente = (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.DOCENTE)
+    except:
+        is_docente = False
+    
+    return render(request, 'contabilidad/company_plan.html', {'empresa': empresa, 'cuentas': cuentas, 'comments': comments, 'is_supervisor': is_supervisor, 'can_edit': can_edit, 'is_docente': is_docente})
 
 
 @login_required
@@ -299,7 +337,15 @@ def company_diario(request, empresa_id):
 
     asientos = EmpresaAsiento.objects.filter(empresa=empresa).order_by('-fecha')
     comments = empresa.comments.filter(section='DI').order_by('-created_at')
-    return render(request, 'contabilidad/company_diario.html', {'empresa': empresa, 'asientos': asientos, 'comments': comments, 'is_supervisor': is_supervisor})
+    
+    # Determinar si el usuario es docente
+    is_docente = False
+    try:
+        is_docente = (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.DOCENTE)
+    except:
+        is_docente = False
+    
+    return render(request, 'contabilidad/company_diario.html', {'empresa': empresa, 'asientos': asientos, 'comments': comments, 'is_supervisor': is_supervisor, 'is_docente': is_docente})
 
 
 @login_required
@@ -320,7 +366,40 @@ def add_comment(request, empresa_id, section):
         messages.error(request, 'Sección inválida.')
         return redirect(request.META.get('HTTP_REFERER', 'contabilidad:company_detail'))
 
-    EmpresaComment.objects.create(empresa=empresa, section=section, author=request.user, content=content)
+    # Crear el comentario
+    comment = EmpresaComment.objects.create(empresa=empresa, section=section, author=request.user, content=content)
+    
+    # Crear notificación para el dueño de la empresa (estudiante)
+    from core.models import Notification
+    from django.urls import reverse
+    
+    section_names = {
+        'PL': 'Plan de Cuentas',
+        'DI': 'Libro Diario',
+        'RP': 'Reportes'
+    }
+    
+    # Solo notificar si el autor no es el dueño (evitar auto-notificaciones)
+    if request.user != empresa.owner:
+        # Determinar la URL según la sección
+        if section == 'PL':
+            url = reverse('contabilidad:company_plan', args=[empresa.id])
+        elif section == 'DI':
+            url = reverse('contabilidad:company_diario', args=[empresa.id])
+        else:
+            url = reverse('contabilidad:company_detail', args=[empresa.id])
+        
+        Notification.objects.create(
+            recipient=empresa.owner,
+            actor=request.user,
+            verb='commented',
+            empresa_id=empresa.id,
+            comment_section=section,
+            url=url,
+            unread=True
+        )
+    
     messages.success(request, 'Comentario agregado.')
     # Redirect back to the referring page
     return redirect(request.META.get('HTTP_REFERER', 'contabilidad:company_detail'))
+
