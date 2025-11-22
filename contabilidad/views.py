@@ -1,6 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponseForbidden, JsonResponse
+from django.views.decorators.http import require_POST
+from django.db import transaction
+from django.db.models.deletion import ProtectedError
+from django.urls import reverse
+
+from core.models import UserProfile, Notification
 from .models import (
     Empresa, 
     EmpresaPlanCuenta, 
@@ -9,12 +16,6 @@ from .models import (
     EmpresaTransaccion,
     EmpresaComment
 )
-from core.models import UserProfile
-from django.http import HttpResponseForbidden, JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.http import require_http_methods
-from django.db import transaction
-from django.db.models.deletion import ProtectedError
 
 
 @login_required
@@ -117,9 +118,9 @@ def supervised_companies(request):
 
     if request.user.is_superuser:
         # Admin: ver todas las supervisiones agrupadas por docente (solo empresas visibles)
-        supervisiones = EmpresaSupervisor.objects.select_related('empresa', 'docente').filter(empresa__visible_to_supervisor=True).order_by('-created_at')
+        supervisiones = EmpresaSupervisor.objects.select_related('empresa__owner', 'docente').filter(empresa__visible_to_supervisor=True).order_by('-created_at')
     else:
-        supervisiones = EmpresaSupervisor.objects.filter(docente=request.user, empresa__visible_to_supervisor=True).select_related('empresa').order_by('-created_at')
+        supervisiones = EmpresaSupervisor.objects.filter(docente=request.user, empresa__visible_to_supervisor=True).select_related('empresa__owner').order_by('-created_at')
 
     contexto = {
         'supervisiones': supervisiones,
@@ -249,8 +250,8 @@ def company_plan(request, empresa_id):
     if not (request.user == empresa.owner or request.user.is_superuser or (is_supervisor and empresa.visible_to_supervisor)):
         return HttpResponseForbidden('No autorizado')
 
-    cuentas = EmpresaPlanCuenta.objects.filter(empresa=empresa).order_by('codigo')
-    comments = empresa.comments.filter(section='PL').order_by('-created_at')
+    cuentas = EmpresaPlanCuenta.objects.filter(empresa=empresa).select_related('padre').order_by('codigo')
+    comments = empresa.comments.filter(section='PL').select_related('author').order_by('-created_at')
     can_edit = (request.user == empresa.owner) or request.user.is_superuser
     
     # Determinar si el usuario es docente
@@ -335,8 +336,8 @@ def company_diario(request, empresa_id):
     if not (request.user == empresa.owner or request.user.is_superuser or (is_supervisor and empresa.visible_to_supervisor)):
         return HttpResponseForbidden('No autorizado')
 
-    asientos = EmpresaAsiento.objects.filter(empresa=empresa).order_by('-fecha')
-    comments = empresa.comments.filter(section='DI').order_by('-created_at')
+    asientos = EmpresaAsiento.objects.filter(empresa=empresa).select_related('creado_por').prefetch_related('lineas__cuenta').order_by('-fecha')
+    comments = empresa.comments.filter(section='DI').select_related('author').order_by('-created_at')
     
     # Determinar si el usuario es docente
     is_docente = False
@@ -370,9 +371,6 @@ def add_comment(request, empresa_id, section):
     comment = EmpresaComment.objects.create(empresa=empresa, section=section, author=request.user, content=content)
     
     # Crear notificación para el dueño de la empresa (estudiante)
-    from core.models import Notification
-    from django.urls import reverse
-    
     section_names = {
         'PL': 'Plan de Cuentas',
         'DI': 'Libro Diario',

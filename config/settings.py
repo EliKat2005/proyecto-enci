@@ -135,11 +135,27 @@ AUTHENTICATION_BACKENDS = [
 
 # --- TIPO DE CAMPO AUTO-INCREMENTAL ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# Seguridad: expirar la sesión al cerrar el navegador (útil para entornos de usuario compartido)
+
+# --- SEGURIDAD DE SESIONES ---
+# Expirar la sesión al cerrar el navegador (útil para entornos de usuario compartido)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Edad de la cookie de sesión (2 semanas en producción)
+SESSION_COOKIE_AGE = 1209600
+# Nombre de la cookie de sesión (cambiar en producción para ofuscar)
+SESSION_COOKIE_NAME = 'enci_sessionid'
+# En producción habilitar estas opciones:
+# SESSION_COOKIE_SECURE = True  # Solo HTTPS
+# CSRF_COOKIE_SECURE = True     # Solo HTTPS
+# SECURE_SSL_REDIRECT = True    # Forzar HTTPS
 
-# Nota recomendada: en producción habilita `SESSION_COOKIE_SECURE = True`
-
-# Email (development): mostrar emails en la consola para pruebas
+# --- CONFIGURACIÓN DE EMAIL ---
+# Development: mostrar emails en la consola para pruebas
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@enci.local'
+# En producción configurar SMTP real:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'tu-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'tu-contraseña'

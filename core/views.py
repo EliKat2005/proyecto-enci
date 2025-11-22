@@ -1,21 +1,18 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .forms import RegistroForm
-# --- ¡Nuevas importaciones! ---
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from .models import UserProfile, Referral, AuditLog, Invitation
-from contabilidad.models import Empresa
-# -----------------------------
-from django.contrib.auth.decorators import user_passes_test
-from django.shortcuts import get_object_or_404
+from django.contrib.messages import get_messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import Notification
 from django.http import HttpResponseForbidden
-from django.contrib import messages
-from django.contrib.messages import get_messages
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from .models import UserProfile, Referral, AuditLog, Invitation, Notification
+from .forms import RegistroForm
+from contabilidad.models import Empresa
 
 # Obtenemos el modelo User
 User = get_user_model()
@@ -43,7 +40,7 @@ def home_view(request):
         'user': request.user,
         'is_docente': is_docente,
         'is_admin': is_admin,
-        'empresas': Empresa.objects.filter(owner=request.user)
+        'empresas': Empresa.objects.filter(owner=request.user).select_related('original')
     }
     return render(request, 'core/home.html', contexto)
 
@@ -106,7 +103,6 @@ def login_view(request):
             logged_user = user
 
         # Respetar parámetro `next` si viene y es seguro
-        from django.utils.http import url_has_allowed_host_and_scheme
         next_url = request.POST.get('next') or request.GET.get('next')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
             return redirect(next_url)
@@ -196,7 +192,6 @@ def docente_alumnos_view(request):
         profile.save()
         # Registrar en audit log
         try:
-            from .models import AuditLog
             AuditLog.objects.create(
                 actor=request.user,
                 target_user=profile.user,
@@ -263,7 +258,7 @@ def docente_dashboard_view(request):
 
         # Create Invitation
         if operation == 'create_invitation':
-            from .forms import InvitationForm
+            from .forms import InvitationForm  # Import local para evitar circular dependency
             form = InvitationForm(request.POST)
             if form.is_valid():
                 inv = form.save(creator=request.user)

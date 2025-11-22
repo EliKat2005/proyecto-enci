@@ -5,11 +5,18 @@ build/
 dist/
 wheels/
 *.egg-info
+*.pyc
+*.pyo
+*.pyd
+.Python
 
 # Entornos virtuales de Python
 .venv/
 venv/
+env/
+ENV/
 .env
+.env.local
 
 # Archivos del `uv init` original que no usaremos
 main.py
@@ -21,6 +28,7 @@ main.py
 db.sqlite3
 media/
 staticfiles/
+static_root/
 /node_modules/
 /staticfiles_build/
 
@@ -28,3 +36,26 @@ staticfiles/
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos de migración temporal (solo si es necesario)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Configuración local
+local_settings.py
+config/settings_production.py
+
+# Cobertura de tests
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Archivos de backup
+*.bak
+*.backup
+*.html.bak
