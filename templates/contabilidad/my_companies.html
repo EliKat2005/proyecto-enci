@@ -1,24 +1,65 @@
 {% extends 'base.html' %}
-{% block title %}Mis Empresas{% endblock %}
+{% block title %}Mis Empresas | ECAE{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto py-8">
-  <h1 class="text-2xl font-semibold mb-4">Mis Empresas</h1>
 
-  <div class="mb-6">
-    <a href="{% url 'contabilidad:create_company' %}" class="px-4 py-2 bg-indigo-600 text-white rounded">Crear nueva empresa</a>
-  </div>
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    
+    <!-- Header -->
+    <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200 mb-6">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-slate-800">Mis Empresas</h1>
+            <p class="text-slate-500 text-sm font-medium">Gestión completa de empresas</p>
+          </div>
+        </div>
+        <a href="{% url 'contabilidad:create_company' %}" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150 flex items-center space-x-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span>Nueva Empresa</span>
+        </a>
+      </div>
+    </div>
 
-  <div class="bg-white shadow rounded p-4">
-    {% include 'contabilidad/_company_list.html' with empresas=empresas is_docente=False %}
-  </div>
+    <!-- Lista de empresas -->
+    <div class="bg-white shadow-md rounded-lg p-8 border border-slate-200 mb-6">
+      {% include 'contabilidad/_company_list.html' with empresas=empresas is_docente=False %}
+    </div>
 
-  <div class="mt-6 bg-white shadow rounded p-4">
-    <h2 class="font-semibold mb-2">Importar empresa por código</h2>
-    <form method="post" action="{% url 'contabilidad:import_company' %}">
-      {% csrf_token %}
-      <input name="join_code" placeholder="Código de plantilla" class="px-3 py-2 border rounded mr-2">
-      <button class="px-3 py-2 bg-green-600 text-white rounded">Importar</button>
-    </form>
+    <!-- Importar empresa -->
+    <div class="bg-gradient-to-br from-emerald-50 to-green-50 shadow-md rounded-lg p-8 border-l-4 border-emerald-600">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1">
+          <h2 class="text-lg font-bold text-slate-800 mb-2 uppercase tracking-wide">Importar Empresa</h2>
+          <p class="text-slate-700 mb-4 text-sm">Ingresa el código proporcionado por tu docente para importar una empresa plantilla</p>
+          <form method="post" action="{% url 'contabilidad:import_company' %}" class="flex items-center gap-3">
+            {% csrf_token %}
+            <input name="join_code" placeholder="Código de plantilla" class="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all bg-white">
+            <button class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold shadow-sm transition-all duration-150 flex items-center space-x-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+              <span>Importar</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
 {% endblock %}

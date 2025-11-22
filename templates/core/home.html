@@ -1,89 +1,172 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard | ENCI{% endblock %}
+{% block title %}Dashboard | ECAE{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-8 px-4">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Main column (left, span 2) -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Bienvenido, {{ user.first_name|default:user.username }}</h1>
-                        <p class="mt-1 text-sm text-gray-600">Accede a tus empresas y los paneles contables desde aquí.</p>
-                    </div>
-                    <div class="text-right">
-                        {% if is_docente %}
-                            <a href="{% url 'docente_dashboard' %}" class="inline-block px-3 py-2 bg-indigo-600 text-white rounded">Docente</a>
-                        {% endif %}
-                        {% if is_admin %}
-                            <a href="/admin/" class="inline-block px-3 py-2 bg-gray-700 text-white rounded ml-2">Admin</a>
-                        {% endif %}
+<style>
+    .card-hover {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -8px rgba(15, 23, 42, 0.12);
+    }
+    .professional-gradient {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+    }
+    .accent-line {
+        position: relative;
+    }
+    .accent-line::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: linear-gradient(to bottom, #3b82f6, #2563eb);
+        border-radius: 2px;
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .animate-slide { 
+        animation: slideIn 0.4s ease-out forwards;
+        opacity: 1;
+    }
+</style>
+
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+    <div class="max-w-7xl mx-auto py-10 px-4">
+        <!-- Hero Welcome Section -->
+        <div class="professional-gradient rounded-xl p-8 mb-8 shadow-xl text-white animate-slide border-b-4 border-blue-400">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold tracking-tight">Bienvenido, {{ user.first_name|default:user.username }}</h1>
+                            <p class="mt-1 text-blue-100 text-base font-medium">Panel de Control • Gestión Contable Empresarial</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Empresas y acciones principales -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800">Tus empresas</h2>
-                    <div class="flex items-center space-x-3">
-                        <a href="{% url 'contabilidad:create_company' %}" class="px-3 py-2 bg-indigo-600 text-white rounded">Crear nueva empresa</a>
-                        <a href="{% url 'contabilidad:my_companies' %}" class="px-3 py-2 bg-gray-100 text-gray-800 rounded">Ver todas</a>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    {% if is_docente %}
+                        <a href="{% url 'docente_dashboard' %}" class="px-5 py-2.5 bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white rounded-lg font-semibold transition-all duration-150 flex items-center space-x-2 border border-white/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                            <span>Panel Docente</span>
+                        </a>
+                    {% endif %}
+                    {% if is_admin %}
+                        <a href="/admin/" class="px-5 py-2.5 bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white rounded-lg font-semibold transition-all duration-150 flex items-center space-x-2 border border-white/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span>Admin</span>
+                        </a>
+                    {% endif %}
                 </div>
-
-                {% include 'contabilidad/_company_list.html' with empresas=empresas is_docente=is_docente %}
-
-                <div class="mt-6">
-                    <h3 class="text-sm font-medium text-gray-700 mb-2">Importar empresa por código</h3>
-                    <form method="post" action="{% url 'contabilidad:import_company' %}" class="flex items-center gap-3">
-                        {% csrf_token %}
-                        <input name="join_code" placeholder="Código de plantilla" class="px-3 py-2 border rounded w-64">
-                        <button class="px-3 py-2 bg-green-600 text-white rounded">Importar</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Placeholder / Announcements or Help -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-lg font-semibold text-gray-800">Recursos y ayuda</h3>
-                <p class="mt-2 text-sm text-gray-600">Encuentra guías y material didáctico para trabajar con las empresas ficticias y entender los flujos contables.</p>
             </div>
         </div>
 
-        <!-- Sidebar (right) -->
-        <aside class="space-y-6">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h4 class="font-semibold text-gray-800 mb-2">Acciones rápidas</h4>
-                <div class="flex flex-col space-y-2">
-                    <a href="{% url 'contabilidad:create_company' %}" class="px-3 py-2 bg-indigo-600 text-white rounded text-center">Crear empresa</a>
-                    <a href="#" class="px-3 py-2 bg-gray-100 text-gray-800 rounded text-center">Abrir último plan de cuentas</a>
-                    <a href="#" class="px-3 py-2 bg-gray-100 text-gray-800 rounded text-center">Registrar asiento</a>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main column (left, span 2) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Empresas -->
+                <div class="bg-white p-8 rounded-lg shadow-md border border-slate-200 card-hover">
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-slate-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-800">Mis Empresas</h2>
+                        </div>
+                        <a href="{% url 'contabilidad:my_companies' %}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-colors border border-slate-300">Ver Todas</a>
+                    </div>
+
+                    {% include 'contabilidad/_company_list.html' with empresas=empresas is_docente=is_docente %}
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h4 class="font-semibold text-gray-800 mb-2">Atajos</h4>
-                <ul class="text-sm text-gray-600 space-y-2">
-                    {% if is_docente or is_admin %}
-                        <li><a href="{% url 'contabilidad:supervised_companies' %}" class="text-blue-600">Empresas supervisadas</a></li>
-                    {% endif %}
-                    <li><a href="{% url 'notifications' %}" class="text-blue-600">Notificaciones</a></li>
-                </ul>
-            </div>
+            <!-- Sidebar (right) -->
+            <aside class="space-y-5">
+                <!-- Acciones Principales -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200 card-hover">
+                    <h4 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wider flex items-center border-b-2 border-blue-600 pb-3">
+                        <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Acciones Principales
+                    </h4>
+                    <div class="flex flex-col space-y-2.5">
+                        <a href="{% url 'contabilidad:create_company' %}" class="group px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-center font-semibold shadow-sm hover:shadow-md transition-all duration-150 flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Crear Empresa</span>
+                        </a>
+                        <div class="pt-2 border-t border-slate-200">
+                            <p class="text-xs text-slate-600 mb-2 px-1 font-medium">Importar plantilla:</p>
+                            <form method="post" action="{% url 'contabilidad:import_company' %}" class="space-y-2">
+                                {% csrf_token %}
+                                <input name="join_code" placeholder="Código" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all">
+                                <button class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all duration-150 flex items-center justify-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                    <span>Importar</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h4 class="font-semibold text-gray-800 mb-2">Consejos</h4>
-                {% if is_docente %}
-                    <p class="text-sm text-gray-600">Como docente, crea plantillas y genera códigos para que tus estudiantes importen copias aisladas. Revisa las empresas supervisadas y proporciona feedback puntual.</p>
-                {% else %}
-                    <p class="text-sm text-gray-600">Como estudiante, crea empresas para practicar libremente. Cuando quieras compartir una empresa con tu docente, activa la opción "Visible a docente" junto a la empresa.</p>
-                {% endif %}
-            </div>
-        </aside>
+                <!-- Enlaces Rápidos -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200 card-hover">
+                    <h4 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wider flex items-center border-b-2 border-slate-600 pb-3">
+                        <svg class="w-4 h-4 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Navegación
+                    </h4>
+                    <ul class="space-y-2">
+                        {% if is_docente or is_admin %}
+                            <li>
+                                <a href="{% url 'contabilidad:supervised_companies' %}" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium group py-2 px-3 rounded-lg hover:bg-blue-50 transition-all">
+                                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    <span>Empresas Supervisadas</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <a href="{% url 'notifications' %}" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium group py-2 px-3 rounded-lg hover:bg-blue-50 transition-all">
+                                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <span>Notificaciones</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'contabilidad:my_companies' %}" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium group py-2 px-3 rounded-lg hover:bg-blue-50 transition-all">
+                                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <span>Todas las Empresas</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Información -->
+                <div class="bg-gradient-to-br from-blue-50 to-slate-100 p-6 rounded-lg shadow-md border-l-4 border-blue-600 card-hover">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-2 text-sm uppercase tracking-wide">Información</h4>
+                            {% if is_docente %}
+                                <p class="text-sm text-slate-700 leading-relaxed">Como docente, puede crear plantillas empresariales y generar códigos de acceso para que sus estudiantes importen copias independientes. Supervise el progreso y proporcione retroalimentación detallada.</p>
+                            {% else %}
+                                <p class="text-sm text-slate-700 leading-relaxed">Como estudiante, puede crear empresas para practicar de forma autónoma. Para compartir su trabajo con el docente, active la opción "Visible a docente" en la configuración de la empresa.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </div>
 </div>
-
 {% endblock %}

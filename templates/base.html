@@ -1,67 +1,106 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Proyecto Contable ENCI{% endblock %}</title>
-    <!-- Cargamos Tailwind CSS -->
+    <title>{% block title %}Plataforma ECAE - Universidad{% endblock %}</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
-        /* Estilos base */
+        /* === ESTILOS GLOBALES === */
         body {
             font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Transición suave */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide {
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
 
     {% load notification_tags %}
-    <nav class="bg-white shadow-md">
-        <div class="max-w-6xl mx-auto px-4">
+
+    <nav class="sticky top-0 z-50 bg-white border-b-2 border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-6">
-                    <a href="{% url 'home' %}" class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">EN</div>
-                        <div>
-                            <div class="text-lg font-semibold text-gray-700">Contabilidad ENCI</div>
-                            <div class="text-xs text-gray-500">Sistema académico</div>
+                
+                <div class="flex items-center">
+                    <a href="{% url 'home' %}" class="flex items-center group">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm group-hover:bg-blue-700 transition-all duration-150">
+                            EC
+                        </div>
+                        <div class="ml-3">
+                            <div class="text-lg font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">ECAE</div>
+                            <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Plataforma Universitaria</div>
                         </div>
                     </a>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <!-- Notifications dropdown (simple) -->
-                        <div class="relative">
-                            <a href="{% url 'notifications' %}" class="flex items-center px-3 py-2 rounded hover:bg-gray-100">
-                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                                {% unread_count user as unread_count %}
-                                {% if unread_count > 0 %}
-                                    <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded">{{ unread_count }}</span>
-                                {% endif %}
+                        <a href="{% url 'notifications' %}" class="relative p-2 text-slate-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            {% unread_count user as unread_count %}
+                            {% if unread_count > 0 %}
+                                <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full ring-2 ring-white">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+
+                        <div class="flex items-center space-x-3 pl-4 border-l-2 border-slate-200">
+                            <div class="text-right hidden md:block">
+                                <div class="text-sm font-semibold text-slate-800">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="text-xs text-slate-500 uppercase tracking-wide">En línea</div>
+                            </div>
+                            
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150" title="Cerrar Sesión">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center space-x-4">
+                            <div class="hidden sm:flex items-center space-x-3 text-sm text-slate-600">
+                                <span class="font-medium">Crear cuenta:</span>
+                                <a href="{% url 'registro' %}?role=estudiante" class="text-blue-600 hover:text-blue-800 font-semibold">Estudiante</a>
+                                <span class="text-slate-300">|</span>
+                                <a href="{% url 'registro' %}?role=docente" class="text-blue-600 hover:text-blue-800 font-semibold">Docente</a>
+                            </div>
+                            <a href="{% url 'login' %}" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all duration-150">
+                                Iniciar sesión
                             </a>
                         </div>
-
-                        <div class="text-sm text-gray-700">Hola, <strong>{{ user.get_full_name|default:user.username }}</strong></div>
-                        <form method="post" action="{% url 'logout' %}" class="inline">
-                            {% csrf_token %}
-                            <button type="submit" class="ml-3 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400">Cerrar sesión</button>
-                        </form>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="px-3 py-2 font-medium text-gray-600 rounded hover:bg-gray-100">Iniciar sesión</a>
-                        <a href="{% url 'registro' %}" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Regístrate</a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Contenido principal -->
-    <main class="max-w-6xl mx-auto p-6">
+    <main class="flex-grow w-full">
         {% block content %}
-        <!-- El contenido de otras plantillas irá aquí -->
         {% endblock %}
     </main>
+    
+    <footer class="bg-slate-50 border-t-2 border-slate-200 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+            <p class="font-medium">&copy; {% now "Y" %} ECAE - Plataforma Académica Universitaria</p>
+        </div>
+    </footer>
 
 </body>
 </html>

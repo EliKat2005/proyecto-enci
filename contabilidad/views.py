@@ -1,11 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Empresa, EmpresaPlanCuenta, EmpresaSupervisor
+from .models import (
+    Empresa, 
+    EmpresaPlanCuenta, 
+    EmpresaSupervisor, 
+    EmpresaAsiento, 
+    EmpresaTransaccion,
+    EmpresaComment
+)
 from core.models import UserProfile
 from django.http import HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
+from django.db import transaction
 
 
 @login_required
