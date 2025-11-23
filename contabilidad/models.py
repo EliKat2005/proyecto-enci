@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.urls import reverse
+from decimal import Decimal
 import secrets
 
 
@@ -22,6 +24,7 @@ class NaturalezaCuenta(models.TextChoices):
 class EstadoAsiento(models.TextChoices):
     BORRADOR = 'Borrador', 'Borrador'
     CONFIRMADO = 'Confirmado', 'Confirmado'
+    ANULADO = 'Anulado', 'Anulado'  # Para soft-delete
 
 
 # --- Modelos de Tablas ---
@@ -250,23 +253,74 @@ class Empresa(models.Model):
 
 class EmpresaPlanCuenta(models.Model):
     """Plan de cuentas asociado a una `Empresa` (copia independiente del PlanDeCuentas global)."""
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='cuentas')
-    codigo = models.CharField(max_length=50)
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='cuentas', db_index=True)
+    codigo = models.CharField(max_length=50, db_index=True)
     descripcion = models.CharField(max_length=255)
-    tipo = models.CharField(max_length=10, choices=TipoCuenta.choices)
+    tipo = models.CharField(max_length=10, choices=TipoCuenta.choices, db_index=True)
     naturaleza = models.CharField(max_length=9, choices=NaturalezaCuenta.choices)
-    estado_situacion = models.BooleanField()
-    es_auxiliar = models.BooleanField(default=False)
-    padre = models.ForeignKey('self', null=True, blank=True, on_delete=models.PROTECT)
+    estado_situacion = models.BooleanField(
+        help_text='True si es cuenta de Balance, False si es de Resultado'
+    )
+    es_auxiliar = models.BooleanField(
+        default=False,
+        help_text='True si es una cuenta hoja (auxiliar) que puede recibir transacciones'
+    )
+    padre = models.ForeignKey('self', null=True, blank=True, on_delete=models.PROTECT, related_name='hijas')
 
     class Meta:
         db_table = 'contabilidad_empresa_plandecuentas'
         verbose_name = 'Cuenta (Empresa)'
         verbose_name_plural = 'Cuentas (Empresas)'
         unique_together = ('empresa', 'codigo')
+        indexes = [
+            models.Index(fields=['empresa', 'codigo']),
+            models.Index(fields=['empresa', 'tipo']),
+            models.Index(fields=['empresa', 'es_auxiliar']),
+        ]
 
     def __str__(self):
         return f"{self.codigo} - {self.descripcion} [{self.empresa.nombre}]"
+
+    def clean(self):
+        """Validaciones de modelo."""
+        super().clean()
+        
+        # Validar que el código siga una estructura lógica
+        if self.codigo:
+            partes = self.codigo.split('.')
+            # Validar formato según nivel
+            for parte in partes:
+                if not parte.strip():
+                    raise ValidationError({
+                        'codigo': 'El código no puede contener puntos consecutivos o vacíos.'
+                    })
+        
+        # Validar que si tiene padre, el código debe comenzar con el código del padre
+        if self.padre:
+            if not self.codigo.startswith(self.padre.codigo):
+                raise ValidationError({
+                    'codigo': f'El código debe comenzar con el código del padre ({self.padre.codigo}).'
+                })
+            
+            # Heredar tipo y naturaleza del padre si no están definidos
+            if not self.tipo:
+                self.tipo = self.padre.tipo
+            if not self.naturaleza:
+                self.naturaleza = self.padre.naturaleza
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @property
+    def tiene_hijas(self):
+        """Retorna True si esta cuenta tiene subcuentas."""
+        return self.hijas.exists()
+
+    @property
+    def puede_recibir_transacciones(self):
+        """Solo las cuentas auxiliares (hojas del árbol) pueden recibir transacciones."""
+        return self.es_auxiliar and not self.tiene_hijas
 
     @property
     def level(self):
@@ -311,41 +365,218 @@ class EmpresaPlanCuenta(models.Model):
 
 
 class EmpresaAsiento(models.Model):
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='asientos')
-    fecha = models.DateField()
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='asientos', db_index=True)
+    numero_asiento = models.PositiveIntegerField(
+        editable=False,
+        help_text='Número secuencial del asiento por empresa (auditoría)'
+    )
+    fecha = models.DateField(db_index=True)
     descripcion_general = models.TextField()
-    estado = models.CharField(max_length=10, choices=EstadoAsiento.choices, default=EstadoAsiento.BORRADOR)
+    estado = models.CharField(
+        max_length=10, 
+        choices=EstadoAsiento.choices, 
+        default=EstadoAsiento.BORRADOR,
+        db_index=True
+    )
+    # Compatibilidad con esquema legado: algunos motores tienen columna 'anulado' NOT NULL
+    # que indica si el asiento fue anulado (se mantiene junto con campos de trazabilidad detallada).
+    anulado = models.BooleanField(default=False, db_index=True)
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
+    
+    # Campos para soft-delete y anulación
+    anulado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True,
+        related_name='asientos_anulados'
+    )
+    fecha_anulacion = models.DateTimeField(null=True, blank=True)
+    motivo_anulacion = models.TextField(blank=True)
+    
+    # Asiento de anulación (referencia al contra-asiento)
+    anulado_mediante = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='anula_a'
+    )
 
     class Meta:
         db_table = 'contabilidad_empresa_asiento'
         verbose_name = 'Asiento (Empresa)'
         verbose_name_plural = 'Asientos (Empresa)'
+        unique_together = ('empresa', 'numero_asiento')
+        indexes = [
+            models.Index(fields=['empresa', 'fecha']),
+            models.Index(fields=['empresa', 'estado']),
+            models.Index(fields=['empresa', 'numero_asiento']),
+        ]
+        ordering = ['empresa', '-fecha', '-numero_asiento']
 
     def __str__(self):
-        return f"Asiento #{self.id} ({self.empresa.nombre}) - {self.descripcion_general[:40]}"
+        return f"Asiento #{self.numero_asiento} ({self.empresa.nombre}) - {self.descripcion_general[:40]}"
+
+    def save(self, *args, **kwargs):
+        # Asignar número secuencial si es nuevo
+        if not self.numero_asiento:
+            ultimo = EmpresaAsiento.objects.filter(empresa=self.empresa).aggregate(
+                models.Max('numero_asiento')
+            )['numero_asiento__max']
+            self.numero_asiento = (ultimo or 0) + 1
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        """Validaciones de modelo."""
+        super().clean()
+        
+        # No se puede modificar un asiento confirmado directamente
+        if self.pk and self.estado == EstadoAsiento.CONFIRMADO:
+            original = EmpresaAsiento.objects.get(pk=self.pk)
+            if original.estado == EstadoAsiento.CONFIRMADO:
+                raise ValidationError(
+                    'No se puede modificar un asiento confirmado. Debe anularlo primero.'
+                )
+        
+        # Un asiento anulado no puede volver a confirmarse
+        if self.estado == EstadoAsiento.CONFIRMADO and self.anulado_por:
+            raise ValidationError('Un asiento anulado no puede confirmarse.')
+
+    @property
+    def esta_balanceado(self):
+        """Verifica la partida doble: Debe = Haber."""
+        totales = self.lineas.aggregate(
+            total_debe=models.Sum('debe'),
+            total_haber=models.Sum('haber')
+        )
+        debe = totales['total_debe'] or Decimal('0.00')
+        haber = totales['total_haber'] or Decimal('0.00')
+        return debe == haber
+
+    @property
+    def total_debe(self):
+        """Suma total del debe."""
+        return self.lineas.aggregate(total=models.Sum('debe'))['total'] or Decimal('0.00')
+
+    @property
+    def total_haber(self):
+        """Suma total del haber."""
+        return self.lineas.aggregate(total=models.Sum('haber'))['total'] or Decimal('0.00')
+
+    @property
+    def monto_total(self):
+        """Monto total del asiento (debe o haber, son iguales si está balanceado)."""
+        return self.total_debe
+
+    def anular(self, usuario, motivo):
+        """Anula el asiento creando un contra-asiento."""
+        from django.db import transaction
+        
+        if self.estado != EstadoAsiento.CONFIRMADO:
+            raise ValidationError('Solo se pueden anular asientos confirmados.')
+        
+        if self.anulado_por:
+            raise ValidationError('Este asiento ya está anulado.')
+        
+        with transaction.atomic():
+            # Crear contra-asiento
+            contra_asiento = EmpresaAsiento.objects.create(
+                empresa=self.empresa,
+                fecha=timezone.now().date(),
+                descripcion_general=f'ANULACIÓN: {self.descripcion_general}',
+                estado=EstadoAsiento.CONFIRMADO,
+                creado_por=usuario
+            )
+            
+            # Crear líneas inversas
+            for linea in self.lineas.all():
+                EmpresaTransaccion.objects.create(
+                    asiento=contra_asiento,
+                    cuenta=linea.cuenta,
+                    detalle_linea=f'Anulación: {linea.detalle_linea or ""}',
+                    debe=linea.haber,  # Invertir
+                    haber=linea.debe   # Invertir
+                )
+            
+            # Marcar como anulado
+            self.estado = EstadoAsiento.ANULADO
+            self.anulado_por = usuario
+            self.fecha_anulacion = timezone.now()
+            self.motivo_anulacion = motivo
+            self.anulado_mediante = contra_asiento
+            self.anulado = True
+            self.save()
+            
+            return contra_asiento
 
 
 class EmpresaTransaccion(models.Model):
     asiento = models.ForeignKey(EmpresaAsiento, on_delete=models.CASCADE, related_name='lineas')
-    cuenta = models.ForeignKey(EmpresaPlanCuenta, on_delete=models.PROTECT, null=True, blank=True)
+    cuenta = models.ForeignKey(
+        EmpresaPlanCuenta, 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True,
+        db_index=True
+    )
     detalle_linea = models.CharField(max_length=500, blank=True, null=True)
-    parcial = models.DecimalField(max_digits=19, decimal_places=2, default=0.00)
-    debe = models.DecimalField(max_digits=19, decimal_places=2, default=0.00)
-    haber = models.DecimalField(max_digits=19, decimal_places=2, default=0.00)
+    parcial = models.DecimalField(max_digits=19, decimal_places=2, default=Decimal('0.00'))
+    debe = models.DecimalField(max_digits=19, decimal_places=2, default=Decimal('0.00'))
+    haber = models.DecimalField(max_digits=19, decimal_places=2, default=Decimal('0.00'))
 
     class Meta:
         db_table = 'contabilidad_empresa_transaccion'
         verbose_name = 'Transacción (Empresa)'
         verbose_name_plural = 'Transacciones (Empresa)'
+        indexes = [
+            models.Index(fields=['asiento', 'cuenta']),
+            models.Index(fields=['cuenta']),
+        ]
 
     def __str__(self):
-        return f"Línea Asiento #{self.asiento.id} [{self.empresa()}]: {self.cuenta.codigo if self.cuenta else 'N/A'} D:{self.debe} H:{self.haber}"
+        return f"Línea Asiento #{self.asiento.numero_asiento} [{self.empresa()}]: {self.cuenta.codigo if self.cuenta else 'N/A'} D:{self.debe} H:{self.haber}"
 
     def empresa(self):
         return self.asiento.empresa.nombre
+
+    def clean(self):
+        """Validaciones de modelo."""
+        super().clean()
+        
+        # Validar que la cuenta existe y pertenece a la misma empresa
+        if self.cuenta and self.asiento:
+            if self.cuenta.empresa != self.asiento.empresa:
+                raise ValidationError({
+                    'cuenta': 'La cuenta debe pertenecer a la misma empresa del asiento.'
+                })
+            
+            # Validar que solo se usen cuentas auxiliares
+            if not self.cuenta.puede_recibir_transacciones:
+                raise ValidationError({
+                    'cuenta': f'La cuenta "{self.cuenta.codigo} - {self.cuenta.descripcion}" '
+                             f'no es auxiliar. Solo se pueden usar cuentas de último nivel.'
+                })
+        
+        # Validar que debe y haber no sean ambos > 0
+        if self.debe > 0 and self.haber > 0:
+            raise ValidationError(
+                'Una línea no puede tener valores tanto en debe como en haber. Use líneas separadas.'
+            )
+        
+        # Validar que al menos uno sea > 0
+        if self.debe == 0 and self.haber == 0:
+            raise ValidationError('Debe o Haber debe ser mayor a cero.')
+        
+        # Validar montos negativos
+        if self.debe < 0 or self.haber < 0:
+            raise ValidationError('Los montos no pueden ser negativos.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class EmpresaSupervisor(models.Model):

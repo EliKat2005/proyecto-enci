@@ -34,57 +34,71 @@
 
     {% load notification_tags %}
 
-    <nav class="sticky top-0 z-50 bg-white border-b-2 border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+    <nav class="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-[1600px] mx-auto px-4 lg:px-6">
+            <div class="flex justify-between items-center h-14">
                 
-                <div class="flex items-center">
-                    <a href="{% url 'home' %}" class="flex items-center group">
-                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm group-hover:bg-blue-700 transition-all duration-150">
-                            EC
-                        </div>
-                        <div class="ml-3">
-                            <div class="text-lg font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors">ECAE</div>
-                            <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Plataforma Universitaria</div>
-                        </div>
-                    </a>
-                </div>
+                <!-- Logo compacto -->
+                <a href="{% url 'home' %}" class="flex items-center gap-2.5 group">
+                    <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:bg-blue-700 transition-colors">
+                        EC
+                    </div>
+                    <div class="hidden sm:block">
+                        <div class="text-base font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-none">ECAE</div>
+                        <div class="text-[10px] font-medium text-slate-500 uppercase tracking-wider mt-0.5">Plataforma</div>
+                    </div>
+                </a>
 
-                <div class="flex items-center space-x-4">
+                <!-- Acciones y usuario -->
+                <div class="flex items-center gap-3">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'notifications' %}" class="relative p-2 text-slate-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+                        <!-- Botón Ultra compacto -->
+                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 transition-colors shadow-sm" title="Modo Ultra Compacto">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                            <span class="hidden xl:inline">Ultra</span>
+                        </button>
+                        
+                        <!-- Notificaciones -->
+                        <a href="{% url 'notifications' %}" class="relative p-2 text-slate-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50" title="Notificaciones">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                             {% unread_count user as unread_count %}
                             {% if unread_count > 0 %}
-                                <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full ring-2 ring-white">{{ unread_count }}</span>
+                                <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-600 rounded-full ring-2 ring-white">{{ unread_count }}</span>
                             {% endif %}
                         </a>
 
-                        <div class="flex items-center space-x-3 pl-4 border-l-2 border-slate-200">
-                            <div class="text-right hidden md:block">
-                                <div class="text-sm font-semibold text-slate-800">{{ user.get_full_name|default:user.username }}</div>
-                                <div class="text-xs text-slate-500 uppercase tracking-wide">En línea</div>
+                        <!-- Usuario y logout -->
+                        <div class="flex items-center gap-2 pl-3 border-l border-slate-200">
+                            <div class="text-right hidden lg:block">
+                                <div class="text-xs font-semibold text-slate-800 leading-tight">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="text-[10px] text-slate-500 flex items-center justify-end gap-1 mt-0.5">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                    En línea
+                                </div>
                             </div>
                             
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
-                                <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150" title="Cerrar Sesión">
+                                <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Cerrar Sesión">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 </button>
                             </form>
                         </div>
                     {% else %}
-                        <div class="flex items-center space-x-4">
-                            <div class="hidden sm:flex items-center space-x-3 text-sm text-slate-600">
-                                <span class="font-medium">Crear cuenta:</span>
-                                <a href="{% url 'registro' %}?role=estudiante" class="text-blue-600 hover:text-blue-800 font-semibold">Estudiante</a>
-                                <span class="text-slate-300">|</span>
-                                <a href="{% url 'registro' %}?role=docente" class="text-blue-600 hover:text-blue-800 font-semibold">Docente</a>
-                            </div>
-                            <a href="{% url 'login' %}" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all duration-150">
-                                Iniciar sesión
-                            </a>
+                        <!-- Usuario no autenticado -->
+                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 transition-colors shadow-sm" title="Modo Ultra Compacto">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                            <span class="hidden xl:inline">Ultra</span>
+                        </button>
+                        <div class="hidden sm:flex items-center gap-2 text-xs text-slate-600">
+                            <span class="font-medium">Crear:</span>
+                            <a href="{% url 'registro' %}?role=estudiante" class="text-blue-600 hover:text-blue-800 font-semibold">Estudiante</a>
+                            <span class="text-slate-300">|</span>
+                            <a href="{% url 'registro' %}?role=docente" class="text-blue-600 hover:text-blue-800 font-semibold">Docente</a>
                         </div>
+                        <a href="{% url 'login' %}" class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">
+                            Iniciar sesión
+                        </a>
                     {% endif %}
                 </div>
             </div>
@@ -126,6 +140,24 @@
         {% block content %}
         {% endblock %}
     </main>
+
+        <!-- Modal Global -->
+        <div id="app-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+            <div class="relative max-w-lg mx-auto mt-32 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-slide">
+                <div class="p-5 border-b border-slate-200 flex items-start gap-3" id="app-modal-header">
+                    <div id="app-modal-icon" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600"></div>
+                    <h3 id="app-modal-title" class="text-lg font-bold text-slate-800">Título</h3>
+                </div>
+                <div class="p-5" id="app-modal-body">
+                    <p class="text-sm text-slate-700" id="app-modal-message">Mensaje</p>
+                </div>
+                <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3" id="app-modal-actions">
+                    <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700" onclick="closeModal()">Cerrar</button>
+                    <button type="button" id="app-modal-primary" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white hidden"></button>
+                </div>
+            </div>
+        </div>
     
     <footer class="bg-slate-50 border-t-2 border-slate-200 py-6 mt-auto">
         <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
@@ -133,21 +165,89 @@
         </div>
     </footer>
 
-    <script>
-    // Auto-ocultar mensajes Django después de unos segundos
-    document.addEventListener('DOMContentLoaded', () => {
-        // Solo seleccionar los mensajes dentro del contenedor de mensajes
-        const msgsContainer = document.querySelectorAll('.max-w-3xl.mx-auto .animate-slide');
-        msgsContainer.forEach((el) => {
-            setTimeout(() => {
-                el.style.transition = 'opacity .4s ease, transform .4s ease';
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(-6px)';
-                setTimeout(() => el.remove(), 450);
-            }, 5000);
-        });
-    });
-    </script>
+        <script>
+            function openModal(title, message, type, primaryText, primaryAction) {
+                var modal = document.getElementById('app-modal');
+                var icon = document.getElementById('app-modal-icon');
+                var titleEl = document.getElementById('app-modal-title');
+                var msgEl = document.getElementById('app-modal-message');
+                var primaryBtn = document.getElementById('app-modal-primary');
+                titleEl.textContent = title || 'Mensaje';
+                msgEl.textContent = message || '';
+                var styleClass = 'bg-blue-100 text-blue-600';
+                var iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 18.5A6.5 6.5 0 1012 5.5a6.5 6.5 0 000 13z"/></svg>';
+                if (type === 'success') { styleClass = 'bg-emerald-100 text-emerald-600'; iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'; }
+                else if (type === 'warning') { styleClass = 'bg-amber-100 text-amber-600'; iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 19h14.14a2 2 0 001.73-3l-7.07-12.24a2 2 0 00-3.46 0L3.2 16a2 2 0 001.73 3z"/></svg>'; }
+                else if (type === 'error') { styleClass = 'bg-red-100 text-red-600'; iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'; }
+                icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg ' + styleClass;
+                icon.innerHTML = iconSvg;
+                if (primaryText) {
+                    primaryBtn.textContent = primaryText;
+                    primaryBtn.classList.remove('hidden');
+                    primaryBtn.onclick = function(){ if (primaryAction) { primaryAction(); } closeModal(); };
+                } else {
+                    primaryBtn.classList.add('hidden');
+                }
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+            function closeModal(){
+                var modal = document.getElementById('app-modal');
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+            window.openModal = openModal;
+            window.closeModal = closeModal;
+        </script>
+        <script>
+            // Auto-ocultar mensajes Django después de unos segundos
+            document.addEventListener('DOMContentLoaded', function() {
+                var msgsContainer = document.querySelectorAll('.max-w-3xl.mx-auto .animate-slide');
+                msgsContainer.forEach(function(el) {
+                    setTimeout(function() {
+                        el.style.transition = 'opacity .4s ease, transform .4s ease';
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateY(-6px)';
+                        setTimeout(function(){ el.remove(); }, 450);
+                    }, 5000);
+                });
+                // Ultra mode toggle
+                var ultraBtn = document.getElementById('btn-ultra-toggle');
+                if(ultraBtn){
+                    var root = document.documentElement;
+                    var ultraPref = localStorage.getItem('layoutUltra') === '1';
+                    if(ultraPref){ root.classList.add('layout-ultra'); }
+                    ultraBtn.addEventListener('click', function(){
+                        var active = root.classList.toggle('layout-ultra');
+                        localStorage.setItem('layoutUltra', active ? '1':'0');
+                        ultraBtn.classList.toggle('bg-slate-900', active);
+                    });
+                }
+            });
+        </script>
+        <style>
+            /* Ultra layout overrides for maximum horizontal usage */
+            .layout-ultra .max-w-7xl, .layout-ultra .max-w-6xl, .layout-ultra .max-w-5xl, .layout-ultra .max-w-4xl,
+            .layout-ultra .max-w-3xl, .layout-ultra .max-w-2xl, .layout-ultra .max-w-\[1600px\] { max-width:100% !important; }
+            .layout-ultra .px-4 { padding-left:1rem!important; padding-right:1rem!important; }
+            @media (min-width:1280px){ .layout-ultra .xl\:px-8 { padding-left:1rem!important; padding-right:1rem!important; } }
+            .layout-ultra .p-8 { padding:1.25rem!important; }
+            .layout-ultra .p-6 { padding:1rem!important; }
+            .layout-ultra .p-5 { padding:0.75rem!important; }
+            .layout-ultra .p-4 { padding:0.5rem!important; }
+            .layout-ultra h1.text-3xl { font-size:1.75rem!important; }
+            .layout-ultra h1.text-2xl { font-size:1.5rem!important; }
+            .layout-ultra h2.text-2xl, .layout-ultra h2.text-lg { font-size:1.05rem!important; letter-spacing:.5px; }
+            .layout-ultra nav .px-4.py-2 { padding:.4rem .75rem!important; }
+            .layout-ultra .rounded-lg { border-radius:0.5rem!important; }
+            .layout-ultra .shadow-md, .layout-ultra .shadow-lg { box-shadow:none!important; }
+            .layout-ultra .border-b-2 { border-bottom-width:1px!important; }
+            .layout-ultra .border-t-2 { border-top-width:1px!important; }
+            .layout-ultra .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top:1rem!important; }
+            .layout-ultra .gap-6 { gap:1rem!important; }
+            .layout-ultra .gap-4 { gap:0.75rem!important; }
+            .layout-ultra table th, .layout-ultra table td { padding-top:0.35rem!important; padding-bottom:0.35rem!important; }
+        </style>
 
 </body>
 </html>

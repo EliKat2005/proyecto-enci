@@ -6,6 +6,9 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.urls import reverse
+from django.core.exceptions import ValidationError
+from datetime import date
+import json
 
 from core.models import UserProfile, Notification
 from .models import (
@@ -16,6 +19,7 @@ from .models import (
     EmpresaTransaccion,
     EmpresaComment
 )
+from .services import AsientoService
 
 
 @login_required
@@ -335,6 +339,8 @@ def company_diario(request, empresa_id):
 
     asientos = EmpresaAsiento.objects.filter(empresa=empresa).select_related('creado_por').prefetch_related('lineas__cuenta').order_by('-fecha')
     comments = empresa.comments.filter(section='DI').select_related('author').order_by('-created_at')
+    can_edit = (request.user == empresa.owner) or request.user.is_superuser
+    cuentas_aux = EmpresaPlanCuenta.objects.filter(empresa=empresa, es_auxiliar=True).order_by('codigo')
     
     # Determinar si el usuario es docente
     is_docente = False
@@ -343,7 +349,77 @@ def company_diario(request, empresa_id):
     except:
         is_docente = False
     
-    return render(request, 'contabilidad/company_diario.html', {'empresa': empresa, 'asientos': asientos, 'comments': comments, 'is_supervisor': is_supervisor, 'is_docente': is_docente})
+    return render(request, 'contabilidad/company_diario.html', {
+        'empresa': empresa,
+        'asientos': asientos,
+        'comments': comments,
+        'is_supervisor': is_supervisor,
+        'is_docente': is_docente,
+        'can_edit': can_edit,
+        'cuentas_aux': cuentas_aux,
+    })
+
+
+@login_required
+@require_POST
+def create_journal_entry(request, empresa_id):
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    # Solo el owner o superuser puede crear asientos
+    if not (request.user == empresa.owner or request.user.is_superuser):
+        return HttpResponseForbidden('No autorizado')
+
+    fecha_str = request.POST.get('fecha')
+    descripcion = request.POST.get('descripcion', '').strip()
+    lineas_json = request.POST.get('lineas_json', '[]')
+
+    try:
+        f = date.fromisoformat(fecha_str) if fecha_str else date.today()
+    except Exception:
+        messages.error(request, 'Fecha inválida.')
+        return redirect('contabilidad:company_diario', empresa_id=empresa.id)
+
+    try:
+        raw = json.loads(lineas_json)
+        lineas = []
+        for idx, item in enumerate(raw):
+            try:
+                cuenta_id = int(item.get('cuenta_id'))
+            except Exception:
+                raise ValidationError(f'Línea {idx+1}: cuenta inválida')
+            detalle = (item.get('detalle') or '').strip()
+            debe = str(item.get('debe') or '0')
+            haber = str(item.get('haber') or '0')
+            lineas.append({
+                'cuenta_id': cuenta_id,
+                'detalle': detalle,
+                'debe': debe,
+                'haber': haber,
+            })
+    except ValidationError as ve:
+        messages.error(request, str(ve))
+        return redirect('contabilidad:company_diario', empresa_id=empresa.id)
+    except Exception:
+        messages.error(request, 'No se pudieron leer las líneas del asiento.')
+        return redirect('contabilidad:company_diario', empresa_id=empresa.id)
+
+    try:
+        AsientoService.crear_asiento(
+            empresa=empresa,
+            fecha=f,
+            descripcion=descripcion or 'Asiento contable',
+            lineas=lineas,
+            creado_por=request.user,
+            auto_confirmar=True
+        )
+        messages.success(request, 'Asiento creado correctamente.')
+    except ValidationError as e:
+        # e.messages puede ser lista o string
+        msg = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
+        messages.error(request, msg)
+    except Exception as e:
+        messages.error(request, f'Error al crear el asiento: {e}')
+
+    return redirect('contabilidad:company_diario', empresa_id=empresa.id)
 
 
 @login_required

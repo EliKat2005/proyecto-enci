@@ -17,5 +17,6 @@ urlpatterns = [
     path('<int:empresa_id>/plan/', views.company_plan, name='company_plan'),
     path('<int:empresa_id>/plan/add-account/', views.add_account, name='add_account'),
     path('<int:empresa_id>/diario/', views.company_diario, name='company_diario'),
+    path('<int:empresa_id>/diario/add/', views.create_journal_entry, name='create_journal_entry'),
     path('<int:empresa_id>/comment/<str:section>/', views.add_comment, name='add_comment'),
 ]
