@@ -78,12 +78,52 @@ class AuditLog(models.Model):
         return f"[{self.created_at}] {who} -> {self.action} ({target})"
 
 
-class Invitation(models.Model):
-    """Código/invitación generado por un docente para que estudiantes se registren.
+class Grupo(models.Model):
+    """Grupo/Curso creado por un docente para organizar estudiantes.
+    
+    Cada grupo tiene su propio código de invitación y estudiantes asociados.
+    """
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    docente = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='grupos'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
 
-    No toca `UserProfile` directamente; sirve para vincular registros con el docente creador.
+    class Meta:
+        verbose_name = 'Grupo'
+        verbose_name_plural = 'Grupos'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.docente.username})"
+
+    def get_students_count(self):
+        """Retorna el número de estudiantes en el grupo."""
+        return self.referrals.count()
+
+    def get_active_students_count(self):
+        """Retorna el número de estudiantes activos en el grupo."""
+        return self.referrals.filter(activated=True).count()
+
+
+class Invitation(models.Model):
+    """Código/invitación generado por un docente para que estudiantes se unan a un grupo.
+
+    Cada invitación está vinculada a un grupo específico.
     """
     code = models.CharField(max_length=64, unique=True)
+    grupo = models.ForeignKey(
+        Grupo,
+        on_delete=models.CASCADE,
+        related_name='invitations',
+        null=True,
+        blank=True
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -100,7 +140,7 @@ class Invitation(models.Model):
         verbose_name_plural = 'Invitations'
 
     def __str__(self):
-        return f"{self.code} (by {self.creator.username})"
+        return f"{self.code} - {self.grupo.nombre} (by {self.creator.username})"
 
     def is_valid(self):
         from django.utils import timezone
@@ -112,16 +152,34 @@ class Invitation(models.Model):
             return False
         return True
 
+    def delete(self, *args, **kwargs):
+        """Sobrescribe delete para evitar eliminar invitaciones con estudiantes registrados."""
+        from django.core.exceptions import ValidationError
+        # Verificar si hay referrals usando esta invitación
+        if self.referral_set.exists():
+            raise ValidationError(
+                f'No se puede eliminar la invitación {self.code} porque hay estudiantes registrados con ella. '
+                f'Primero debe eliminar a los estudiantes del grupo.'
+            )
+        super().delete(*args, **kwargs)
+
 
 class Referral(models.Model):
-    """Vincula a un estudiante con el docente que le proporcionó la invitación.
+    """Vincula a un estudiante con un grupo específico.
 
-    Permite listar en el dashboard del docente los estudiantes referidos y su estado.
+    Cada estudiante pertenece a un grupo y puede ser activado/desactivado por el docente.
     """
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='referrals'
+    )
+    grupo = models.ForeignKey(
+        Grupo,
+        on_delete=models.CASCADE,
+        related_name='referrals',
+        null=True,
+        blank=True
     )
     docente = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -135,9 +193,10 @@ class Referral(models.Model):
     class Meta:
         verbose_name = 'Referral'
         verbose_name_plural = 'Referrals'
+        unique_together = ('student', 'grupo')  # Un estudiante solo puede estar una vez en un grupo
 
     def __str__(self):
-        return f"{self.student.username} -> {self.docente.username}"
+        return f"{self.student.username} -> {self.grupo.nombre} ({self.docente.username})"
 
 
 class Notification(models.Model):

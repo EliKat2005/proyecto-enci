@@ -6,8 +6,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.contrib.messages import get_messages
 from django.core.paginator import Paginator
+from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import UserProfile, Referral, AuditLog, Invitation, Notification
@@ -222,20 +223,169 @@ def docente_alumnos_view(request):
 
 @docente_required
 def docente_dashboard_view(request):
-    """Dashboard para que el docente vea sus estudiantes referidos y gestione códigos/invitaciones."""
+    """Dashboard para que el docente vea sus grupos, estudiantes referidos y gestione códigos/invitaciones."""
     # POST: puede contener varias operaciones diferenciadas por 'operation'
     if request.method == 'POST':
         operation = request.POST.get('operation')
 
-        # Referral activation/deactivation
+        # Crear Grupo
+        if operation == 'create_grupo':
+            from .forms import GrupoForm
+            form = GrupoForm(request.POST)
+            if form.is_valid():
+                grupo = form.save(docente=request.user)
+                try:
+                    AuditLog.objects.create(
+                        actor=request.user,
+                        action='create_grupo',
+                        description=f'Grupo "{grupo.nombre}" creado por {request.user.username}'
+                    )
+                except Exception:
+                    pass
+                messages.success(request, f'✅ Grupo "{grupo.nombre}" creado exitosamente.')
+            else:
+                messages.error(request, f'Error al crear el grupo: {form.errors}')
+            return redirect('docente_dashboard')
+
+        # Editar Grupo
+        if operation == 'edit_grupo':
+            grupo_id = request.POST.get('grupo_id')
+            if not grupo_id:
+                messages.error(request, 'Solicitud inválida.')
+                return redirect('docente_dashboard')
+            from .forms import GrupoForm
+            from .models import Grupo
+            grupo = get_object_or_404(Grupo, pk=grupo_id, docente=request.user)
+            form = GrupoForm(request.POST, instance=grupo)
+            if form.is_valid():
+                form.save()
+                try:
+                    AuditLog.objects.create(
+                        actor=request.user,
+                        action='edit_grupo',
+                        description=f'Grupo "{grupo.nombre}" editado por {request.user.username}'
+                    )
+                except Exception:
+                    pass
+                messages.success(request, f'✅ Grupo "{grupo.nombre}" actualizado exitosamente.')
+            else:
+                messages.error(request, f'Error al editar el grupo: {form.errors}')
+            return redirect('docente_dashboard')
+
+        # Eliminar/Desactivar Grupo
+        if operation == 'delete_grupo':
+            grupo_id = request.POST.get('grupo_id')
+            if not grupo_id:
+                messages.error(request, 'Solicitud inválida.')
+                return redirect('docente_dashboard')
+            from .models import Grupo
+            grupo = get_object_or_404(Grupo, pk=grupo_id, docente=request.user)
+            grupo_nombre = grupo.nombre
+            # Desactivar en lugar de eliminar para mantener historial
+            grupo.active = False
+            grupo.save()
+            try:
+                AuditLog.objects.create(
+                    actor=request.user,
+                    action='delete_grupo',
+                    description=f'Grupo "{grupo_nombre}" desactivado por {request.user.username}'
+                )
+            except Exception:
+                pass
+            # Respuesta AJAX
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': True, 'grupo_id': grupo.id, 'active': False})
+            messages.success(request, f'✓ Grupo "{grupo_nombre}" desactivado exitosamente.')
+            return redirect('docente_dashboard')
+
+        # Activar Grupo
+        if operation == 'activate_grupo':
+            grupo_id = request.POST.get('grupo_id')
+            if not grupo_id:
+                messages.error(request, 'Solicitud inválida.')
+                return redirect('docente_dashboard')
+            from .models import Grupo
+            grupo = get_object_or_404(Grupo, pk=grupo_id, docente=request.user)
+            grupo_nombre = grupo.nombre
+            grupo.active = True
+            grupo.save()
+            try:
+                AuditLog.objects.create(
+                    actor=request.user,
+                    action='activate_grupo',
+                    description=f'Grupo "{grupo_nombre}" activado por {request.user.username}'
+                )
+            except Exception:
+                pass
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': True, 'grupo_id': grupo.id, 'active': True})
+            messages.success(request, f'✓ Grupo "{grupo_nombre}" activado exitosamente.')
+            return redirect('docente_dashboard')
+
+        # Eliminar Grupo Permanentemente
+        if operation == 'permanent_delete_grupo':
+            grupo_id = request.POST.get('grupo_id')
+            if not grupo_id:
+                messages.error(request, 'Solicitud inválida.')
+                return redirect('docente_dashboard')
+            from .models import Grupo
+            grupo = get_object_or_404(Grupo, pk=grupo_id, docente=request.user)
+            grupo_nombre = grupo.nombre
+            try:
+                AuditLog.objects.create(
+                    actor=request.user,
+                    action='permanent_delete_grupo',
+                    description=f'Grupo "{grupo_nombre}" eliminado permanentemente por {request.user.username}'
+                )
+            except Exception:
+                pass
+            # Eliminar el grupo (esto también eliminará invitaciones por CASCADE)
+            grupo.delete()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': True, 'grupo_id': int(grupo_id), 'removed': True})
+            messages.success(request, f'✓ Grupo "{grupo_nombre}" eliminado permanentemente.')
+            return redirect('docente_dashboard')
+
+        # Referral activation/deactivation/delete
         if operation == 'referral_action':
             referral_id = request.POST.get('referral_id')
             action = request.POST.get('action')
-            if not referral_id or action not in ('activar', 'desactivar'):
+            if not referral_id or action not in ('activar', 'desactivar', 'eliminar'):
                 messages.error(request, 'Solicitud inválida.')
                 return redirect('docente_dashboard')
 
             referral = get_object_or_404(Referral, pk=referral_id, docente=request.user)
+
+            # Eliminar del grupo
+            if action == 'eliminar':
+                student_username = referral.student.username
+                grupo_nombre = referral.grupo.nombre if referral.grupo else 'N/A'
+                grupo_id = referral.grupo.id if referral.grupo else None
+                try:
+                    AuditLog.objects.create(
+                        actor=request.user,
+                        target_user=referral.student,
+                        action='eliminar_referral',
+                        description=f"Estudiante {student_username} eliminado del grupo '{grupo_nombre}' por {request.user.username} desde el dashboard."
+                    )
+                except Exception:
+                    pass
+                referral.delete()
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    # Recalcular contadores del grupo
+                    from .models import Grupo
+                    students_count = 0
+                    active_count = 0
+                    if grupo_id:
+                        g = Grupo.objects.filter(id=grupo_id, docente=request.user).first()
+                        if g:
+                            students_count = g.get_students_count()
+                            active_count = g.get_active_students_count()
+                    return JsonResponse({'ok': True, 'referral_id': int(referral_id), 'removed': True, 'grupo_id': grupo_id, 'students_count': students_count, 'active_count': active_count})
+                messages.success(request, f"❌ Estudiante {student_username} eliminado del grupo '{grupo_nombre}'.")
+                return redirect('docente_dashboard')
+
+            # Activar / Desactivar dentro del grupo
             referral.activated = True if action == 'activar' else False
             referral.save()
             try:
@@ -253,22 +403,35 @@ def docente_dashboard_view(request):
                 )
             except Exception:
                 pass
-            messages.success(request, f"Perfil de {referral.student.username} {'activado' if referral.activated else 'desactivado'}.")
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Recalcular contadores del grupo
+                grupo_id = referral.grupo.id if referral.grupo else None
+                students_count = referral.grupo.get_students_count() if referral.grupo else 0
+                active_count = referral.grupo.get_active_students_count() if referral.grupo else 0
+                return JsonResponse({
+                    'ok': True,
+                    'referral_id': referral.id,
+                    'activated': referral.activated,
+                    'grupo_id': grupo_id,
+                    'students_count': students_count,
+                    'active_count': active_count,
+                })
+            messages.success(request, f"{'✅' if referral.activated else '⚠️'} Estudiante {referral.student.username} {'activado' if referral.activated else 'desactivado'} exitosamente.")
             return redirect('docente_dashboard')
 
         # Create Invitation
         if operation == 'create_invitation':
             from .forms import InvitationForm  # Import local para evitar circular dependency
-            form = InvitationForm(request.POST)
+            form = InvitationForm(request.POST, docente=request.user)
             if form.is_valid():
                 inv = form.save(creator=request.user)
                 try:
-                    AuditLog.objects.create(actor=request.user, action='create_invitation', description=f'Invitation {inv.code} creada por {request.user.username}')
+                    AuditLog.objects.create(actor=request.user, action='create_invitation', description=f'Invitation {inv.code} creada para grupo {inv.grupo.nombre}')
                 except Exception:
                     pass
-                messages.success(request, f'Código creado: {inv.code} (usos: {inv.max_uses})')
+                messages.success(request, f'✅ Código de invitación creado: {inv.code} para el grupo "{inv.grupo.nombre}" (máx. {inv.max_uses} usos)')
             else:
-                messages.error(request, f'Error al crear el código: {form.errors.as_json()}')
+                messages.error(request, f'Error al crear el código: {form.errors}')
             return redirect('docente_dashboard')
 
         # Invitation actions: activar/desactivar/eliminar
@@ -280,13 +443,23 @@ def docente_dashboard_view(request):
                 return redirect('docente_dashboard')
             inv = get_object_or_404(Invitation, pk=inv_id, creator=request.user)
             if inv_action == 'eliminar':
-                inv_code = inv.code
-                inv.delete()
+                # Verificar si hay estudiantes registrados con este código
+                students_count = Referral.objects.filter(invitation=inv).count()
+                if students_count > 0:
+                    messages.error(request, f'⚠️ No se puede eliminar el código {inv.code} porque hay {students_count} estudiante(s) registrado(s) con él. Primero debe eliminar a los estudiantes del grupo.')
+                    return redirect('docente_dashboard')
+                
                 try:
-                    AuditLog.objects.create(actor=request.user, action='delete_invitation', description=f'Invitation {inv_code} eliminada por {request.user.username}')
-                except Exception:
-                    pass
-                messages.success(request, f'Código {inv_code} eliminado.')
+                    inv_code = inv.code
+                    inv.delete()
+                    try:
+                        AuditLog.objects.create(actor=request.user, action='delete_invitation', description=f'Invitation {inv_code} eliminada por {request.user.username}')
+                    except Exception:
+                        pass
+                    messages.success(request, f'❌ Código {inv_code} eliminado permanentemente.')
+                except ValidationError as e:
+                    messages.error(request, str(e))
+                    return redirect('docente_dashboard')
             else:
                 inv.active = True if inv_action == 'activar' else False
                 inv.save()
@@ -294,13 +467,19 @@ def docente_dashboard_view(request):
                     AuditLog.objects.create(actor=request.user, action='toggle_invitation', description=f'Invitation {inv.code} set active={inv.active} by {request.user.username}')
                 except Exception:
                     pass
-                messages.success(request, f'Código {inv.code} actualizado.')
+                messages.success(request, f"{'✅' if inv.active else '⚠️'} Código {inv.code} {'activado' if inv.active else 'desactivado'} exitosamente.")
             return redirect('docente_dashboard')
 
-    # GET: lista de referrals e invitaciones del docente
+    # GET: lista de grupos, referrals e invitaciones del docente
+    from .models import Grupo
+    from .forms import GrupoForm, InvitationForm
+    
+    # Mostrar todos los grupos (activos e inactivos) ordenados: activos primero
+    grupos = Grupo.objects.filter(docente=request.user).prefetch_related('referrals__student').order_by('-active', '-created_at')
+    
     q = request.GET.get('q', '').strip()
-    referrals = Referral.objects.filter(docente=request.user).select_related('student', 'invitation').order_by('-created_at')
-    invitations = Invitation.objects.filter(creator=request.user).order_by('-created_at')
+    referrals = Referral.objects.filter(docente=request.user).select_related('student', 'invitation', 'grupo').order_by('-created_at')
+    invitations = Invitation.objects.filter(creator=request.user).select_related('grupo').order_by('-created_at')
     if q:
         referrals = referrals.filter(
             Q(student__username__icontains=q) | Q(student__email__icontains=q) | Q(student__first_name__icontains=q) | Q(student__last_name__icontains=q)
@@ -310,8 +489,26 @@ def docente_dashboard_view(request):
     paginator = Paginator(referrals, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Obtener empresas supervisadas (compartidas por estudiantes)
+    estudiantes_ids = referrals.values_list('student_id', flat=True).distinct()
+    empresas_supervisadas = Empresa.objects.filter(
+        owner_id__in=estudiantes_ids,
+        visible_to_supervisor=True
+    ).select_related('owner').order_by('-updated_at')[:50]
+    
+    # Formularios para el template
+    grupo_form = GrupoForm()
+    invitation_form = InvitationForm(docente=request.user)
 
-    return render(request, 'core/docente_dashboard.html', {'referrals': page_obj, 'invitations': invitations})
+    return render(request, 'core/docente_dashboard.html', {
+        'grupos': grupos,
+        'referrals': page_obj,
+        'invitations': invitations,
+        'empresas_supervisadas': empresas_supervisadas,
+        'grupo_form': grupo_form,
+        'invitation_form': invitation_form,
+    })
 
 
 @login_required
@@ -375,5 +572,48 @@ def delete_all_notifications(request):
     Notification.objects.filter(recipient=request.user).delete()
     messages.success(request, f'{count} notificación{"es" if count != 1 else ""} eliminada{"s" if count != 1 else ""}.')
     return redirect('notifications')
+
+
+@login_required
+@user_passes_test(lambda u: hasattr(u, 'userprofile') and u.userprofile.rol == 'docente', login_url='/')
+def student_profile_view(request, student_id, grupo_id):
+    """Vista para que el docente vea el perfil de un estudiante y sus empresas compartidas.
+    
+    Args:
+        student_id: ID del estudiante
+        grupo_id: ID del grupo al que pertenece el estudiante
+    """
+    from .models import Grupo
+    
+    # Verificar que el grupo pertenece al docente
+    grupo = get_object_or_404(Grupo, pk=grupo_id, docente=request.user)
+    
+    # Verificar que el estudiante pertenece a ese grupo
+    referral = get_object_or_404(Referral, grupo=grupo, student_id=student_id, docente=request.user)
+    student = referral.student
+    
+    # Obtener las empresas del estudiante que están visibles para supervisores
+    empresas_compartidas = Empresa.objects.filter(
+        owner=student,
+        visible_to_supervisor=True
+    ).order_by('-updated_at')
+    
+    # Obtener todas las empresas del estudiante (para mostrar estadísticas)
+    total_empresas = Empresa.objects.filter(owner=student).count()
+    empresas_compartidas_count = empresas_compartidas.count()
+    empresas_privadas = total_empresas - empresas_compartidas_count
+    
+    context = {
+        'student': student,
+        'grupo': grupo,
+        'referral': referral,
+        'empresas_compartidas': empresas_compartidas,
+        'total_empresas': total_empresas,
+        'empresas_compartidas_count': empresas_compartidas_count,
+        'empresas_privadas': empresas_privadas,
+    }
+    
+    return render(request, 'core/student_profile.html', context)
+
 
 

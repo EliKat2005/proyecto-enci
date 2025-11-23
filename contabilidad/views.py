@@ -104,35 +104,6 @@ def import_company(request):
 
 
 @login_required
-def supervised_companies(request):
-    """Lista las empresas que el docente supervisa (o admin puede ver todas)."""
-    # Permitir acceso sólo a docentes o superusers
-    is_docente = False
-    try:
-        is_docente = (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.DOCENTE)
-    except Exception:
-        is_docente = False
-
-    if not (is_docente or request.user.is_superuser):
-        return HttpResponseForbidden('No autorizado')
-
-    if request.user.is_superuser:
-        # Admin: ver todas las supervisiones agrupadas por docente (solo empresas visibles)
-        supervisiones = EmpresaSupervisor.objects.select_related('empresa__owner', 'docente').filter(empresa__visible_to_supervisor=True).order_by('-created_at')
-    else:
-        supervisiones = EmpresaSupervisor.objects.filter(docente=request.user, empresa__visible_to_supervisor=True).select_related('empresa__owner').order_by('-created_at')
-
-    contexto = {
-        'supervisiones': supervisiones,
-        'is_docente': is_docente,
-        'is_admin': request.user.is_superuser,
-    }
-
-    return render(request, 'contabilidad/supervised_companies.html', contexto)
-
-
-
-@login_required
 def company_detail(request, empresa_id):
     """Mostrar paneles de la empresa: Plan de cuentas, Libro Diario, Libro Mayor, etc.
 
@@ -155,6 +126,32 @@ def company_detail(request, empresa_id):
         is_docente = False
 
     return render(request, 'contabilidad/company_detail.html', {'empresa': empresa, 'can_edit': can_edit, 'is_docente': is_docente})
+
+
+@login_required
+def edit_company(request, empresa_id):
+    """Permite al propietario editar el nombre y descripción de la empresa."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    # Solo el owner o superuser puede editar
+    if not (request.user == empresa.owner or request.user.is_superuser):
+        return HttpResponseForbidden('No autorizado para editar esta empresa')
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        
+        if not nombre:
+            messages.error(request, 'El nombre es obligatorio.')
+            return redirect('contabilidad:edit_company', empresa_id=empresa.id)
+        
+        empresa.nombre = nombre
+        empresa.descripcion = descripcion
+        empresa.save(update_fields=['nombre', 'descripcion'])
+        
+        messages.success(request, f'Empresa "{empresa.nombre}" actualizada correctamente.')
+        return redirect('contabilidad:company_detail', empresa_id=empresa.id)
+    
+    return render(request, 'contabilidad/edit_company.html', {'empresa': empresa})
 
 
 @login_required

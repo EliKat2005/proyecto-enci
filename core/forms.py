@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import UserProfile, Invitation, Referral, Notification
+from .models import UserProfile, Invitation, Referral, Notification, Grupo
 from core.models import AuditLog
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -126,11 +126,12 @@ class RegistroForm(forms.ModelForm):
                                 invitation.active = False
                             invitation.save()
 
-                            # Crear Referral (vincula estudiante con docente)
+                            # Crear Referral (vincula estudiante con docente y grupo)
                             Referral.objects.create(
                                 student=user,
                                 docente=invitation.creator,
                                 invitation=invitation,
+                                grupo=invitation.grupo,
                                 activated=False
                             )
 
@@ -265,13 +266,22 @@ class RegistroForm(forms.ModelForm):
 
 
 class InvitationForm(forms.ModelForm):
-    """Formulario para que un docente genere un código/invitación."""
+    """Formulario para que un docente genere un código/invitación para un grupo específico."""
     # expires_at as optional date/time field (HTML5 datetime-local)
     expires_at = forms.DateTimeField(required=False, widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}))
 
     class Meta:
         model = Invitation
-        fields = ('max_uses', 'expires_at')
+        fields = ('grupo', 'max_uses', 'expires_at')
+
+    def __init__(self, *args, **kwargs):
+        docente = kwargs.pop('docente', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filtrar los grupos para mostrar solo los del docente actual
+        if docente:
+            self.fields['grupo'].queryset = Grupo.objects.filter(docente=docente, active=True)
+            self.fields['grupo'].required = True
 
     def save(self, creator=None, commit=True):
         import secrets
@@ -284,3 +294,30 @@ class InvitationForm(forms.ModelForm):
         if commit:
             invitation.save()
         return invitation
+
+
+class GrupoForm(forms.ModelForm):
+    """Formulario para crear/editar grupos."""
+    
+    class Meta:
+        model = Grupo
+        fields = ('nombre', 'descripcion', 'active')
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Matemáticas 2025-1'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del grupo (opcional)'}),
+            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'nombre': 'Nombre del Grupo',
+            'descripcion': 'Descripción',
+            'active': 'Grupo Activo',
+        }
+    
+    def save(self, docente=None, commit=True):
+        """Guarda el grupo asignándole el docente."""
+        grupo = super().save(commit=False)
+        if docente is not None:
+            grupo.docente = docente
+        if commit:
+            grupo.save()
+        return grupo

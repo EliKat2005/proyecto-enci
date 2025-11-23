@@ -50,7 +50,7 @@
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-3xl font-bold tracking-tight">Bienvenido, {{ user.first_name|default:user.username }}</h1>
+                            <h1 class="text-3xl font-bold tracking-tight">Bienvenid@, {{ user.first_name|default:user.username }}</h1>
                             <p class="mt-1 text-blue-100 text-base font-medium">Panel de Control • Gestión Contable Empresarial</p>
                         </div>
                     </div>
@@ -160,7 +160,7 @@
                     <ul class="space-y-2">
                         {% if is_docente or is_admin %}
                             <li>
-                                <a href="{% url 'contabilidad:supervised_companies' %}" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium group py-2 px-3 rounded-lg hover:bg-blue-50 transition-all">
+                                <a href="{% url 'docente_dashboard' %}#empresas" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium group py-2 px-3 rounded-lg hover:bg-blue-50 transition-all">
                                     <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                     <span>Empresas Supervisadas</span>
                                 </a>

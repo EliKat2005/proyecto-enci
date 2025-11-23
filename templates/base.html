@@ -91,6 +91,37 @@
         </div>
     </nav>
 
+    <!-- Mensajes Globales (Django messages) con estilo del proyecto -->
+    {% if messages %}
+    <div class="max-w-3xl mx-auto px-4 mt-4 space-y-3">
+        {% for message in messages %}
+            {% with tags=message.tags %}
+            <div class="animate-slide flex items-start gap-3 px-5 py-4 rounded-xl shadow-md border
+                {% if 'success' in tags %} bg-green-50 text-green-800 border-green-200
+                {% elif 'error' in tags or 'danger' in tags %} bg-red-50 text-red-800 border-red-200
+                {% elif 'warning' in tags %} bg-yellow-50 text-yellow-800 border-yellow-200
+                {% else %} bg-blue-50 text-blue-800 border-blue-200{% endif %}">
+                <div class="shrink-0 mt-0.5">
+                    {% if 'success' in tags %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {% elif 'error' in tags or 'danger' in tags %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    {% elif 'warning' in tags %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 19h14.14a2 2 0 001.73-3l-7.07-12.24a2 2 0 00-3.46 0L3.2 16a2 2 0 001.73 3z"/></svg>
+                    {% else %}
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 18.5A6.5 6.5 0 1012 5.5a6.5 6.5 0 000 13z"/></svg>
+                    {% endif %}
+                </div>
+                <div class="flex-1 text-sm font-medium">{{ message }}</div>
+                <button type="button" class="shrink-0 text-current/60 hover:text-current" onclick="this.parentElement.remove()" aria-label="Cerrar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <main class="flex-grow w-full">
         {% block content %}
         {% endblock %}
@@ -101,6 +132,22 @@
             <p class="font-medium">&copy; {% now "Y" %} ECAE - Plataforma Académica Universitaria</p>
         </div>
     </footer>
+
+    <script>
+    // Auto-ocultar mensajes Django después de unos segundos
+    document.addEventListener('DOMContentLoaded', () => {
+        // Solo seleccionar los mensajes dentro del contenedor de mensajes
+        const msgsContainer = document.querySelectorAll('.max-w-3xl.mx-auto .animate-slide');
+        msgsContainer.forEach((el) => {
+            setTimeout(() => {
+                el.style.transition = 'opacity .4s ease, transform .4s ease';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-6px)';
+                setTimeout(() => el.remove(), 450);
+            }, 5000);
+        });
+    });
+    </script>
 
 </body>
 </html>
