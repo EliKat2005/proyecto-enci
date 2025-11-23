@@ -19,7 +19,7 @@ from .models import (
     EmpresaTransaccion,
     EmpresaComment
 )
-from .services import AsientoService
+from .services import AsientoService, LibroMayorService
 
 
 @login_required
@@ -357,6 +357,82 @@ def company_diario(request, empresa_id):
         'is_docente': is_docente,
         'can_edit': can_edit,
         'cuentas_aux': cuentas_aux,
+    })
+
+
+@login_required
+def company_mayor(request, empresa_id):
+    """Vista del Libro Mayor con filtros de cuenta y rango de fechas."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (request.user == empresa.owner or request.user.is_superuser or (is_supervisor and empresa.visible_to_supervisor)):
+        return HttpResponseForbidden('No autorizado')
+
+    # Filtros de la solicitud
+    cuenta_id = request.GET.get('cuenta_id')
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    
+    # Parsear fechas
+    fecha_inicio = None
+    fecha_fin = None
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = date.fromisoformat(fecha_inicio_str)
+        except:
+            pass
+    if fecha_fin_str:
+        try:
+            fecha_fin = date.fromisoformat(fecha_fin_str)
+        except:
+            pass
+    
+    # Obtener todas las cuentas auxiliares para el selector
+    cuentas_aux = EmpresaPlanCuenta.objects.filter(
+        empresa=empresa, 
+        es_auxiliar=True
+    ).order_by('codigo')
+    
+    # Calcular saldos si hay cuenta seleccionada
+    saldos_data = None
+    cuenta_seleccionada = None
+    if cuenta_id:
+        try:
+            cuenta_seleccionada = EmpresaPlanCuenta.objects.get(
+                id=cuenta_id, 
+                empresa=empresa
+            )
+            saldos_data = LibroMayorService.calcular_saldos_cuenta(
+                cuenta=cuenta_seleccionada,
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
+                incluir_borradores=False
+            )
+        except EmpresaPlanCuenta.DoesNotExist:
+            messages.error(request, 'Cuenta no encontrada.')
+    
+    # Comentarios de la sección Mayor
+    comments = empresa.comments.filter(section='MA').select_related('author').order_by('-created_at')
+    can_edit = (request.user == empresa.owner) or request.user.is_superuser
+    
+    # Determinar si el usuario es docente
+    is_docente = False
+    try:
+        is_docente = (hasattr(request.user, 'userprofile') and request.user.userprofile.rol == UserProfile.Roles.DOCENTE)
+    except:
+        is_docente = False
+    
+    return render(request, 'contabilidad/company_mayor.html', {
+        'empresa': empresa,
+        'cuentas_aux': cuentas_aux,
+        'cuenta_seleccionada': cuenta_seleccionada,
+        'saldos_data': saldos_data,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'comments': comments,
+        'is_supervisor': is_supervisor,
+        'is_docente': is_docente,
+        'can_edit': can_edit,
     })
 
 

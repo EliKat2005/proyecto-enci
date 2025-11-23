@@ -51,6 +51,10 @@ def login_view(request):
     """
     Maneja el inicio de sesión con comprobación de estado de activación.
     """
+    # Si el usuario ya está autenticado, redirigir al home
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
 

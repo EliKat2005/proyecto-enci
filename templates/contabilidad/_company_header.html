@@ -42,6 +42,7 @@
   </div>
 </div>
 
+{% if current_panel != 'detalle' %}
 <nav class="mt-4 mb-6">
   <div class="flex flex-wrap gap-2">
     <a href="{% url 'contabilidad:company_detail' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-150
@@ -50,5 +51,8 @@
       {% if current_panel == 'plan' %}bg-blue-600 text-white border-blue-600 shadow-sm{% else %}bg-white text-slate-700 hover:bg-blue-50 border-slate-300{% endif %}">Plan de Cuentas</a>
     <a href="{% url 'contabilidad:company_diario' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-150
       {% if current_panel == 'diario' %}bg-emerald-600 text-white border-emerald-600 shadow-sm{% else %}bg-white text-slate-700 hover:bg-emerald-50 border-slate-300{% endif %}">Libro Diario</a>
+    <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-150
+      {% if current_panel == 'mayor' %}bg-purple-600 text-white border-purple-600 shadow-sm{% else %}bg-white text-slate-700 hover:bg-purple-50 border-slate-300{% endif %}">Libro Mayor</a>
   </div>
 </nav>
+{% endif %}

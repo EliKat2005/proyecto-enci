@@ -603,6 +603,7 @@ class EmpresaComment(models.Model):
     SECTION_CHOICES = [
         ('PL', 'Plan de Cuentas'),
         ('DI', 'Libro Diario'),
+        ('MA', 'Libro Mayor'),
         ('RP', 'Reportes'),
     ]
 
