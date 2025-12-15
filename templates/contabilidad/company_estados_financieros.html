@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estados Financieros - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  
+  {# Header #}
+  {% include 'contabilidad/_company_header_minimal.html' with current_panel='estados' %}
+  
+  {# Selector de Reporte y acciones #}
+  <div class="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="space-y-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">EF</div>
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Estados Financieros</h2>
+            <p class="text-sm text-slate-600">Empresa: {{ empresa.nombre }}</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <a href="?reporte=balance{% if fecha_str %}&fecha={{ fecha_str }}{% endif %}" 
+             class="px-4 py-2 rounded-lg font-semibold transition-colors {% if reporte == 'balance' %}bg-rose-600 text-white{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">
+            Balance General
+          </a>
+          <a href="?reporte=resultados{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}{% endif %}" 
+             class="px-4 py-2 rounded-lg font-semibold transition-colors {% if reporte == 'resultados' %}bg-rose-600 text-white{% else %}bg-slate-200 text-slate-700 hover:bg-slate-300{% endif %}">
+            Estado de Resultados
+          </a>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 justify-end">
+        {% if reporte == 'balance' %}
+          <a href="{% url 'contabilidad:export_estados_csv' empresa.id %}?reporte=balance&fecha={{ fecha_corte|date:'Y-m-d' }}" 
+             class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">CSV</a>
+          <a href="{% url 'contabilidad:export_estados_xlsx' empresa.id %}?reporte=balance&fecha={{ fecha_corte|date:'Y-m-d' }}" 
+             class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors">XLSX</a>
+        {% else %}
+          <a href="{% url 'contabilidad:export_estados_csv' empresa.id %}?reporte=resultados&fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}" 
+             class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">CSV</a>
+          <a href="{% url 'contabilidad:export_estados_xlsx' empresa.id %}?reporte=resultados&fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}" 
+             class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors">XLSX</a>
+        {% endif %}
+        <button onclick="window.print()" class="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors">Imprimir</button>
+      </div>
+    </div>
+    
+    {# Balance General #}
+    {% if reporte == 'balance' and balance_general %}
+    <div>
+      {# Filtro de fecha #}
+      <form method="get" class="flex flex-wrap gap-3 items-end mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <input type="hidden" name="reporte" value="balance">
+        <div class="flex-1 min-w-[220px] max-w-xs">
+          <label for="fecha" class="block text-sm font-medium text-slate-700 mb-1">Fecha de Corte</label>
+          <input type="date" id="fecha" name="fecha" value="{{ fecha_corte|date:'Y-m-d' }}" 
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+        </div>
+        <button type="submit" class="px-6 py-2 bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 transition-colors">
+          Generar
+        </button>
+      </form>
+      
+      {# Encabezado del Reporte #}
+      <div class="text-center mb-8">
+        <h3 class="text-xl font-bold text-slate-900">{{ empresa.nombre|upper }}</h3>
+        <p class="text-lg font-semibold text-slate-700">BALANCE GENERAL</p>
+        <p class="text-sm text-slate-600">Al {{ balance_general.fecha_corte }}</p>
+      </div>
+      
+      {# Contenido del Balance #}
+      <div class="grid md:grid-cols-2 gap-6">
+        
+        {# Activos #}
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <div class="bg-blue-600 text-white px-4 py-3 font-bold">ACTIVOS</div>
+          <div class="divide-y divide-slate-200">
+            {% for item in balance_general.detalle_activos %}
+            <div class="px-4 py-2 flex justify-between hover:bg-slate-50">
+              <span class="text-sm text-slate-700">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
+              <span class="font-mono text-sm font-semibold">${{ item.saldo|floatformat:2 }}</span>
+            </div>
+            {% empty %}
+            <div class="px-4 py-4 text-center text-slate-500 text-sm">Sin movimientos</div>
+            {% endfor %}
+          </div>
+          <div class="bg-slate-100 px-4 py-3 flex justify-between font-bold border-t-2 border-slate-300">
+            <span>TOTAL ACTIVOS</span>
+            <span class="font-mono">${{ balance_general.activos|floatformat:2 }}</span>
+          </div>
+        </div>
+        
+        {# Pasivos + Patrimonio #}
+        <div class="space-y-6">
+          
+          {# Pasivos #}
+          <div class="border border-slate-200 rounded-lg overflow-hidden">
+            <div class="bg-red-600 text-white px-4 py-3 font-bold">PASIVOS</div>
+            <div class="divide-y divide-slate-200">
+              {% for item in balance_general.detalle_pasivos %}
+              <div class="px-4 py-2 flex justify-between hover:bg-slate-50">
+                <span class="text-sm text-slate-700">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
+                <span class="font-mono text-sm font-semibold">${{ item.saldo|floatformat:2 }}</span>
+              </div>
+              {% empty %}
+              <div class="px-4 py-4 text-center text-slate-500 text-sm">Sin movimientos</div>
+              {% endfor %}
+            </div>
+            <div class="bg-slate-100 px-4 py-3 flex justify-between font-bold border-t-2 border-slate-300">
+              <span>TOTAL PASIVOS</span>
+              <span class="font-mono">${{ balance_general.pasivos|floatformat:2 }}</span>
+            </div>
+          </div>
+          
+          {# Patrimonio #}
+          <div class="border border-slate-200 rounded-lg overflow-hidden">
+            <div class="bg-green-600 text-white px-4 py-3 font-bold">PATRIMONIO</div>
+            <div class="divide-y divide-slate-200">
+              {% for item in balance_general.detalle_patrimonio %}
+              <div class="px-4 py-2 flex justify-between hover:bg-slate-50">
+                <span class="text-sm text-slate-700">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
+                <span class="font-mono text-sm font-semibold">${{ item.saldo|floatformat:2 }}</span>
+              </div>
+              {% empty %}
+              <div class="px-4 py-4 text-center text-slate-500 text-sm">Sin movimientos</div>
+              {% endfor %}
+            </div>
+            <div class="bg-slate-100 px-4 py-3 flex justify-between font-bold border-t-2 border-slate-300">
+              <span>TOTAL PATRIMONIO</span>
+              <span class="font-mono">${{ balance_general.patrimonio|floatformat:2 }}</span>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+      {# Ecuación Patrimonial #}
+      <div class="mt-8 p-6 bg-slate-800 text-white rounded-lg">
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p class="text-sm opacity-80">Activos</p>
+            <p class="text-2xl font-bold">${{ balance_general.activos|floatformat:2 }}</p>
+          </div>
+          <div class="flex items-center justify-center">
+            <span class="text-3xl font-bold">=</span>
+          </div>
+          <div>
+            <p class="text-sm opacity-80">Pasivos + Patrimonio</p>
+            <p class="text-2xl font-bold">${{ balance_general.pasivos|add:balance_general.patrimonio|floatformat:2 }}</p>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          {% if balance_general.balanceado %}
+            <p class="text-green-300 font-semibold">✓ Balance Cuadrado</p>
+          {% else %}
+            <p class="text-red-300 font-semibold">⚠ Diferencia: ${{ balance_general.diferencia|floatformat:2 }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    {# Estado de Resultados #}
+    {% if reporte == 'resultados' and estado_resultados %}
+    <div>
+      {# Filtro de fechas #}
+      <form method="get" class="flex flex-wrap gap-3 items-end mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <input type="hidden" name="reporte" value="resultados">
+        <div class="flex-1 min-w-[220px]">
+          <label for="fecha_inicio" class="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+          <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}" 
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+        </div>
+        <div class="flex-1 min-w-[220px]">
+          <label for="fecha_fin" class="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+          <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}" 
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+        </div>
+        <button type="submit" class="px-6 py-2 bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 transition-colors">
+          Generar
+        </button>
+      </form>
+      
+      {# Encabezado del Reporte #}
+      <div class="text-center mb-8">
+        <h3 class="text-xl font-bold text-slate-900">{{ empresa.nombre|upper }}</h3>
+        <p class="text-lg font-semibold text-slate-700">ESTADO DE RESULTADOS</p>
+        <p class="text-sm text-slate-600">{{ estado_resultados.periodo }}</p>
+      </div>
+      
+      {# Contenido del Estado #}
+      <div class="max-w-3xl mx-auto">
+        
+        {# Ingresos #}
+        <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
+          <div class="bg-green-600 text-white px-4 py-3 font-bold">INGRESOS</div>
+          <div class="divide-y divide-slate-200">
+            {% for item in estado_resultados.detalle_ingresos %}
+            <div class="px-4 py-2 flex justify-between hover:bg-slate-50">
+              <span class="text-sm text-slate-700">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
+              <span class="font-mono text-sm font-semibold">${{ item.monto|floatformat:2 }}</span>
+            </div>
+            {% empty %}
+            <div class="px-4 py-4 text-center text-slate-500 text-sm">Sin ingresos registrados</div>
+            {% endfor %}
+          </div>
+          <div class="bg-slate-100 px-4 py-3 flex justify-between font-bold border-t-2 border-slate-300">
+            <span>TOTAL INGRESOS</span>
+            <span class="font-mono">${{ estado_resultados.ingresos|floatformat:2 }}</span>
+          </div>
+        </div>
+        
+        {# Costos #}
+        <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
+          <div class="bg-orange-600 text-white px-4 py-3 font-bold">COSTOS DE VENTAS</div>
+          <div class="divide-y divide-slate-200">
+            {% for item in estado_resultados.detalle_costos %}
+            <div class="px-4 py-2 flex justify-between hover:bg-slate-50">
+              <span class="text-sm text-slate-700">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
+              <span class="font-mono text-sm font-semibold">${{ item.monto|floatformat:2 }}</span>
+            </div>
+            {% empty %}
+            <div class="px-4 py-4 text-center text-slate-500 text-sm">Sin costos registrados</div>
+            {% endfor %}
+          </div>
+          <div class="bg-slate-100 px-4 py-3 flex justify-between font-bold border-t-2 border-slate-300">
+            <span>TOTAL COSTOS</span>
+            <span class="font-mono">-${{ estado_resultados.costos|floatformat:2 }}</span>
+          </div>
+        </div>
+        
+        {# Utilidad Bruta #}
+        <div class="px-4 py-3 flex justify-between font-bold text-lg bg-blue-100 rounded-lg mb-4">
+          <span>UTILIDAD BRUTA</span>
+          <span class="font-mono {% if estado_resultados.utilidad_bruta >= 0 %}text-green-700{% else %}text-red-700{% endif %}">
+            ${{ estado_resultados.utilidad_bruta|floatformat:2 }}
+          </span>
+        </div>
+        
+        {# Gastos #}
+        <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
+          <div class="bg-red-600 text-white px-4 py-3 font-bold">GASTOS OPERACIONALES</div>
+          <div class="divide-y divide-slate-200">
+            {% for item in estado_resultados.detalle_gastos %}
+            <div class="px-4 py-2 flex justify-between hover:bg-slate-50">
+              <span class="text-sm text-slate-700">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
+              <span class="font-mono text-sm font-semibold">${{ item.monto|floatformat:2 }}</span>
+            </div>
+            {% empty %}
+            <div class="px-4 py-4 text-center text-slate-500 text-sm">Sin gastos registrados</div>
+            {% endfor %}
+          </div>
+          <div class="bg-slate-100 px-4 py-3 flex justify-between font-bold border-t-2 border-slate-300">
+            <span>TOTAL GASTOS</span>
+            <span class="font-mono">-${{ estado_resultados.gastos|floatformat:2 }}</span>
+          </div>
+        </div>
+        
+        {# Utilidad Neta #}
+        <div class="p-6 flex justify-between font-bold text-2xl bg-slate-800 text-white rounded-lg">
+          <span>UTILIDAD NETA</span>
+          <span class="font-mono {% if estado_resultados.utilidad_neta >= 0 %}text-green-300{% else %}text-red-300{% endif %}">
+            ${{ estado_resultados.utilidad_neta|floatformat:2 }}
+          </span>
+        </div>
+        
+        {# Resumen #}
+        <div class="mt-6 p-4 bg-slate-50 rounded-lg text-sm">
+          <p class="text-slate-600 mb-2">
+            <strong>Margen Bruto:</strong> 
+            {% if estado_resultados.ingresos > 0 %}
+              {{ estado_resultados.utilidad_bruta|floatformat:2 }} / {{ estado_resultados.ingresos|floatformat:2 }} = 
+              {% widthratio estado_resultados.utilidad_bruta estado_resultados.ingresos 100 %}%
+            {% else %}
+              N/A
+            {% endif %}
+          </p>
+          <p class="text-slate-600">
+            <strong>Margen Neto:</strong> 
+            {% if estado_resultados.ingresos > 0 %}
+              {{ estado_resultados.utilidad_neta|floatformat:2 }} / {{ estado_resultados.ingresos|floatformat:2 }} = 
+              {% widthratio estado_resultados.utilidad_neta estado_resultados.ingresos 100 %}%
+            {% else %}
+              N/A
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    {# Botones de Acción #}
+    <div class="mt-6 flex gap-3">
+      <button onclick="window.print()" class="px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors">
+        🖨️ Imprimir
+      </button>
+      <button onclick="exportToPDF()" class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">
+        📄 Exportar PDF
+      </button>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+function exportToPDF() {
+  alert('Funcionalidad de exportación PDF pendiente de implementar');
+  // TODO: Implementar exportación con WeasyPrint
+}
+</script>
+
+<style>
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+</style>
+{% endblock %}

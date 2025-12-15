@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from datetime import date
 import json
+import csv
+import io
 
 from core.models import UserProfile, Notification
 from .models import (
@@ -19,7 +21,7 @@ from .models import (
     EmpresaTransaccion,
     EmpresaComment
 )
-from .services import AsientoService, LibroMayorService
+from .services import AsientoService, LibroMayorService, EstadosFinancierosService
 
 
 @login_required
@@ -550,3 +552,501 @@ def add_comment(request, empresa_id, section):
     # Redirect back to the referring page
     return redirect(request.META.get('HTTP_REFERER', 'contabilidad:company_detail'))
 
+
+@login_required
+def company_balance_comprobacion(request, empresa_id):
+    """Vista del Balance de Comprobación."""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    
+    # Verificar permisos
+    if empresa.owner != request.user:
+        supervisor_access = EmpresaSupervisor.objects.filter(
+            empresa=empresa,
+            docente=request.user
+        ).exists()
+        if not (supervisor_access and empresa.visible_to_supervisor):
+            return HttpResponseForbidden("No tienes permisos para ver esta empresa.")
+    
+    # Obtener parámetros de fecha
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    
+    # Valores por defecto: primer y último día del año actual
+    from datetime import datetime
+    hoy = date.today()
+    fecha_inicio = date(hoy.year, 1, 1)
+    fecha_fin = hoy
+    
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            messages.warning(request, 'Fecha de inicio inválida, usando valor por defecto.')
+    
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            messages.warning(request, 'Fecha de fin inválida, usando valor por defecto.')
+    
+    # Obtener todas las cuentas auxiliares con movimientos
+    cuentas_con_movimientos = []
+    cuentas = empresa.cuentas.filter(es_auxiliar=True).order_by('codigo')
+    
+    total_saldo_inicial = {'deudor': 0, 'acreedor': 0}
+    total_movimientos = {'debe': 0, 'haber': 0}
+    total_saldo_final = {'deudor': 0, 'acreedor': 0}
+    
+    for cuenta in cuentas:
+        saldos = LibroMayorService.calcular_saldos_cuenta(
+            cuenta=cuenta,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin
+        )
+        
+        # Solo incluir cuentas con algún movimiento o saldo
+        if (saldos['saldo_inicial'] != 0 or saldos['debe'] != 0 or 
+            saldos['haber'] != 0 or saldos['saldo_final'] != 0):
+            
+            # Determinar columna de saldo inicial (deudor/acreedor)
+            saldo_inicial_deudor = saldos['saldo_inicial'] if saldos['saldo_inicial'] > 0 else 0
+            saldo_inicial_acreedor = abs(saldos['saldo_inicial']) if saldos['saldo_inicial'] < 0 else 0
+            
+            # Determinar columna de saldo final (deudor/acreedor)
+            saldo_final_deudor = saldos['saldo_final'] if saldos['saldo_final'] > 0 else 0
+            saldo_final_acreedor = abs(saldos['saldo_final']) if saldos['saldo_final'] < 0 else 0
+            
+            cuentas_con_movimientos.append({
+                'cuenta': cuenta,
+                'saldo_inicial_deudor': saldo_inicial_deudor,
+                'saldo_inicial_acreedor': saldo_inicial_acreedor,
+                'debe': saldos['debe'],
+                'haber': saldos['haber'],
+                'saldo_final_deudor': saldo_final_deudor,
+                'saldo_final_acreedor': saldo_final_acreedor,
+            })
+            
+            # Acumular totales
+            total_saldo_inicial['deudor'] += saldo_inicial_deudor
+            total_saldo_inicial['acreedor'] += saldo_inicial_acreedor
+            total_movimientos['debe'] += saldos['debe']
+            total_movimientos['haber'] += saldos['haber']
+            total_saldo_final['deudor'] += saldo_final_deudor
+            total_saldo_final['acreedor'] += saldo_final_acreedor
+    
+    # Verificar cuadratura
+    cuadra_inicial = abs(total_saldo_inicial['deudor'] - total_saldo_inicial['acreedor']) < 0.01
+    cuadra_movimientos = abs(total_movimientos['debe'] - total_movimientos['haber']) < 0.01
+    cuadra_final = abs(total_saldo_final['deudor'] - total_saldo_final['acreedor']) < 0.01
+    cuadra_todo = cuadra_inicial and cuadra_movimientos and cuadra_final
+    
+    context = {
+        'empresa': empresa,
+        'cuentas': cuentas_con_movimientos,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'total_saldo_inicial': total_saldo_inicial,
+        'total_movimientos': total_movimientos,
+        'total_saldo_final': total_saldo_final,
+        'cuadra_inicial': cuadra_inicial,
+        'cuadra_movimientos': cuadra_movimientos,
+        'cuadra_final': cuadra_final,
+        'cuadra_todo': cuadra_todo,
+        'active_section': 'balance',
+    }
+    
+    return render(request, 'contabilidad/company_balance_comprobacion.html', context)
+
+
+@login_required
+def company_estados_financieros(request, empresa_id):
+    """Vista de Estados Financieros (Balance General y Estado de Resultados)."""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    
+    # Verificar permisos
+    if empresa.owner != request.user:
+        supervisor_access = EmpresaSupervisor.objects.filter(
+            empresa=empresa,
+            docente=request.user
+        ).exists()
+        if not (supervisor_access and empresa.visible_to_supervisor):
+            return HttpResponseForbidden("No tienes permisos para ver esta empresa.")
+    
+    # Obtener parámetros
+    from datetime import datetime
+    reporte = request.GET.get('reporte', 'balance')  # 'balance' o 'resultados'
+    fecha_str = request.GET.get('fecha')
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    
+    # Valores por defecto
+    hoy = date.today()
+    fecha_corte = hoy
+    fecha_inicio = date(hoy.year, 1, 1)
+    fecha_fin = hoy
+    
+    if fecha_str:
+        try:
+            fecha_corte = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        except ValueError:
+            messages.warning(request, 'Fecha inválida, usando hoy.')
+    
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    # Generar reportes
+    balance_general = None
+    estado_resultados = None
+    
+    if reporte == 'balance':
+        balance_general = EstadosFinancierosService.balance_general(empresa, fecha_corte)
+    else:  # resultados
+        estado_resultados = EstadosFinancierosService.estado_de_resultados(
+            empresa, fecha_inicio, fecha_fin
+        )
+    
+    context = {
+        'empresa': empresa,
+        'reporte': reporte,
+        'balance_general': balance_general,
+        'estado_resultados': estado_resultados,
+        'fecha_corte': fecha_corte,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'active_section': 'estados',
+    }
+    
+    return render(request, 'contabilidad/company_estados_financieros.html', context)
+
+@login_required
+def export_balance_csv(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    if empresa.owner != request.user and not (EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists() and empresa.visible_to_supervisor):
+        return HttpResponseForbidden("No tienes permisos")
+    from datetime import datetime
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    hoy = date.today()
+    fecha_inicio = date(hoy.year, 1, 1)
+    fecha_fin = hoy
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    cuentas = empresa.cuentas.filter(es_auxiliar=True).order_by('codigo')
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(['Codigo','Cuenta','Saldo Inicial Deudor','Saldo Inicial Acreedor','Debe','Haber','Saldo Final Deudor','Saldo Final Acreedor'])
+    for cuenta in cuentas:
+        s = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
+        si_d = s['saldo_inicial'] if s['saldo_inicial']>0 else 0
+        si_a = abs(s['saldo_inicial']) if s['saldo_inicial']<0 else 0
+        sf_d = s['saldo_final'] if s['saldo_final']>0 else 0
+        sf_a = abs(s['saldo_final']) if s['saldo_final']<0 else 0
+        if si_d or si_a or s['debe'] or s['haber'] or sf_d or sf_a:
+            writer.writerow([cuenta.codigo, cuenta.descripcion, f"{si_d:.2f}", f"{si_a:.2f}", f"{s['debe']:.2f}", f"{s['haber']:.2f}", f"{sf_d:.2f}", f"{sf_a:.2f}"])
+    resp = HttpResponse(buffer.getvalue(), content_type='text/csv')
+    resp['Content-Disposition'] = f'attachment; filename="balance_{empresa.id}.csv"'
+    return resp
+
+@login_required
+def export_estados_csv(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    if empresa.owner != request.user and not (EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists() and empresa.visible_to_supervisor):
+        return HttpResponseForbidden("No tienes permisos")
+    from datetime import datetime
+    reporte = request.GET.get('reporte','balance')
+    fecha_str = request.GET.get('fecha')
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    hoy = date.today()
+    fecha_corte = hoy
+    fecha_inicio = date(hoy.year,1,1)
+    fecha_fin = hoy
+    if fecha_str:
+        try:
+            fecha_corte = datetime.strptime(fecha_str,'%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str,'%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str,'%Y-%m-%d').date()
+        except ValueError:
+            pass
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    if reporte == 'balance':
+        bg = EstadosFinancierosService.balance_general(empresa, fecha_corte)
+        writer.writerow(['SECCION','CODIGO','CUENTA','SALDO'])
+        for det in bg['detalle_activos']:
+            writer.writerow(['ACTIVO', det['cuenta'].codigo, det['cuenta'].descripcion, f"{det['saldo']:.2f}"])
+        for det in bg['detalle_pasivos']:
+            writer.writerow(['PASIVO', det['cuenta'].codigo, det['cuenta'].descripcion, f"{det['saldo']:.2f}"])
+        for det in bg['detalle_patrimonio']:
+            writer.writerow(['PATRIMONIO', det['cuenta'].codigo, det['cuenta'].descripcion, f"{det['saldo']:.2f}"])
+        writer.writerow([])
+        writer.writerow(['TOTALES','','',''])
+        writer.writerow(['ACTIVO','','', f"{bg['activos']:.2f}"])
+        writer.writerow(['PASIVO','','', f"{bg['pasivos']:.2f}"])
+        writer.writerow(['PATRIMONIO','','', f"{bg['patrimonio']:.2f}"])
+        writer.writerow(['BALANCEADO','','', 'SI' if bg['balanceado'] else 'NO'])
+    else:
+        er = EstadosFinancierosService.estado_de_resultados(empresa, fecha_inicio, fecha_fin)
+        writer.writerow(['SECCION','CODIGO','CUENTA','MONTO'])
+        for det in er['detalle_ingresos']:
+            writer.writerow(['INGRESOS', det['cuenta'].codigo, det['cuenta'].descripcion, f"{det['monto']:.2f}"])
+        for det in er['detalle_costos']:
+            writer.writerow(['COSTOS', det['cuenta'].codigo, det['cuenta'].descripcion, f"{det['monto']:.2f}"])
+        for det in er['detalle_gastos']:
+            writer.writerow(['GASTOS', det['cuenta'].codigo, det['cuenta'].descripcion, f"{det['monto']:.2f}"])
+        writer.writerow([])
+        writer.writerow(['TOTALES','','',''])
+        writer.writerow(['INGRESOS','','', f"{er['ingresos']:.2f}"])
+        writer.writerow(['COSTOS','','', f"{er['costos']:.2f}"])
+        writer.writerow(['GASTOS','','', f"{er['gastos']:.2f}"])
+        writer.writerow(['UTILIDAD BRUTA','','', f"{er['utilidad_bruta']:.2f}"])
+        writer.writerow(['UTILIDAD NETA','','', f"{er['utilidad_neta']:.2f}"])
+    resp = HttpResponse(buffer.getvalue(), content_type='text/csv')
+    fname = 'estados_balance' if reporte=='balance' else 'estados_resultados'
+    resp['Content-Disposition'] = f'attachment; filename="{fname}_{empresa.id}.csv"'
+    return resp
+
+@login_required
+def export_balance_xlsx(request, empresa_id):
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, Alignment
+    except Exception:
+        return export_balance_csv(request, empresa_id)
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    if empresa.owner != request.user and not (EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists() and empresa.visible_to_supervisor):
+        return HttpResponseForbidden("No tienes permisos")
+    from datetime import datetime
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    hoy = date.today()
+    fecha_inicio = date(hoy.year, 1, 1)
+    fecha_fin = hoy
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Balance'
+    ws.append(['Balance de Comprobación', f'Empresa: {empresa.nombre}', f'Periodo: {fecha_inicio} a {fecha_fin}'])
+    ws.append([])
+    ws.append(['Codigo','Cuenta','Saldo Inicial Deudor','Saldo Inicial Acreedor','Debe','Haber','Saldo Final Deudor','Saldo Final Acreedor'])
+    cuentas = empresa.cuentas.filter(es_auxiliar=True).order_by('codigo')
+    for cuenta in cuentas:
+        s = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
+        si_d = s['saldo_inicial'] if s['saldo_inicial']>0 else 0
+        si_a = abs(s['saldo_inicial']) if s['saldo_inicial']<0 else 0
+        sf_d = s['saldo_final'] if s['saldo_final']>0 else 0
+        sf_a = abs(s['saldo_final']) if s['saldo_final']<0 else 0
+        if si_d or si_a or s['debe'] or s['haber'] or sf_d or sf_a:
+            ws.append([cuenta.codigo, cuenta.descripcion, float(si_d), float(si_a), float(s['debe']), float(s['haber']), float(sf_d), float(sf_a)])
+    output = io.BytesIO()
+    wb.save(output)
+    resp = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    resp['Content-Disposition'] = f'attachment; filename="balance_{empresa.id}.xlsx"'
+    return resp
+
+@login_required
+def export_estados_xlsx(request, empresa_id):
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, Alignment
+    except Exception:
+        return export_estados_csv(request, empresa_id)
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    if empresa.owner != request.user and not (EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists() and empresa.visible_to_supervisor):
+        return HttpResponseForbidden("No tienes permisos")
+    from datetime import datetime
+    reporte = request.GET.get('reporte','balance')
+    fecha_str = request.GET.get('fecha')
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    hoy = date.today()
+    fecha_corte = hoy
+    fecha_inicio = date(hoy.year,1,1)
+    fecha_fin = hoy
+    if fecha_str:
+        try:
+            fecha_corte = datetime.strptime(fecha_str,'%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str,'%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str,'%Y-%m-%d').date()
+        except ValueError:
+            pass
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    if reporte=='balance':
+        ws.title = 'Balance General'
+        bg = EstadosFinancierosService.balance_general(empresa, fecha_corte)
+        ws.append(['Balance General', f'Empresa: {empresa.nombre}', f'Corte: {fecha_corte}'])
+        ws.append([])
+        ws.append(['SECCION','CODIGO','CUENTA','SALDO'])
+        for det in bg['detalle_activos']:
+            ws.append(['ACTIVO', det['cuenta'].codigo, det['cuenta'].descripcion, float(det['saldo'])])
+        for det in bg['detalle_pasivos']:
+            ws.append(['PASIVO', det['cuenta'].codigo, det['cuenta'].descripcion, float(det['saldo'])])
+        for det in bg['detalle_patrimonio']:
+            ws.append(['PATRIMONIO', det['cuenta'].codigo, det['cuenta'].descripcion, float(det['saldo'])])
+        ws.append([])
+        ws.append(['TOTALES','','',''])
+        ws.append(['ACTIVO','','', float(bg['activos'])])
+        ws.append(['PASIVO','','', float(bg['pasivos'])])
+        ws.append(['PATRIMONIO','','', float(bg['patrimonio'])])
+        ws.append(['BALANCEADO','','', 'SI' if bg['balanceado'] else 'NO'])
+    else:
+        ws.title = 'Estado Resultados'
+        er = EstadosFinancierosService.estado_de_resultados(empresa, fecha_inicio, fecha_fin)
+        ws.append(['Estado de Resultados', f'Empresa: {empresa.nombre}', f'Periodo: {fecha_inicio} a {fecha_fin}'])
+        ws.append([])
+        ws.append(['SECCION','CODIGO','CUENTA','MONTO'])
+        for det in er['detalle_ingresos']:
+            ws.append(['INGRESOS', det['cuenta'].codigo, det['cuenta'].descripcion, float(det['monto'])])
+        for det in er['detalle_costos']:
+            ws.append(['COSTOS', det['cuenta'].codigo, det['cuenta'].descripcion, float(det['monto'])])
+        for det in er['detalle_gastos']:
+            ws.append(['GASTOS', det['cuenta'].codigo, det['cuenta'].descripcion, float(det['monto'])])
+        ws.append([])
+        ws.append(['TOTALES','','',''])
+        ws.append(['INGRESOS','','', float(er['ingresos'])])
+        ws.append(['COSTOS','','', float(er['costos'])])
+        ws.append(['GASTOS','','', float(er['gastos'])])
+        ws.append(['UTILIDAD BRUTA','','', float(er['utilidad_bruta'])])
+        ws.append(['UTILIDAD NETA','','', float(er['utilidad_neta'])])
+    output = io.BytesIO()
+    wb.save(output)
+    fname = 'estados_balance' if reporte=='balance' else 'estados_resultados'
+    resp = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    resp['Content-Disposition'] = f'attachment; filename="{fname}_{empresa.id}.xlsx"'
+    return resp
+
+@login_required
+def company_libro_mayor(request, empresa_id):
+    """Vista del Libro Mayor por Cuenta"""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    if empresa.owner != request.user and not (EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists() and empresa.visible_to_supervisor):
+        return HttpResponseForbidden("No tienes permisos")
+    
+    from datetime import datetime
+    
+    # Obtener cuentas auxiliares
+    cuentas_auxiliares = empresa.cuentas.filter(es_auxiliar=True).order_by('codigo')
+    
+    # Parámetros
+    cuenta_id = request.GET.get('cuenta_id')
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    
+    hoy = date.today()
+    fecha_inicio = date(hoy.year, 1, 1)
+    fecha_fin = hoy
+    
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    context = {
+        'empresa': empresa,
+        'cuentas_auxiliares': cuentas_auxiliares,
+        'cuenta_id': int(cuenta_id) if cuenta_id else None,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'movimientos': [],
+        'totales': {'debe': 0, 'haber': 0},
+        'saldo_final': 0,
+        'cuenta_actual': None,
+    }
+    
+    if cuenta_id:
+        try:
+            cuenta_actual = EmpresaPlanCuenta.objects.get(id=cuenta_id, empresa=empresa)
+            context['cuenta_actual'] = cuenta_actual
+            
+            # Obtener transacciones
+            transacciones = EmpresaTransaccion.objects.filter(
+                cuenta=cuenta_actual,
+                asiento__fecha__gte=fecha_inicio,
+                asiento__fecha__lte=fecha_fin,
+                asiento__anulado=False
+            ).select_related('asiento', 'cuenta').order_by('asiento__fecha', 'asiento__id')
+            
+            # Calcular saldo inicial
+            saldos = LibroMayorService.calcular_saldos_cuenta(cuenta_actual, fecha_inicio, fecha_fin)
+            saldo_acum = saldos['saldo_inicial']
+            
+            movimientos = []
+            total_debe = 0
+            total_haber = 0
+            
+            for transaccion in transacciones:
+                if transaccion.debe > 0:
+                    saldo_acum += transaccion.debe
+                else:
+                    saldo_acum -= transaccion.haber
+                
+                movimientos.append({
+                    'fecha': transaccion.asiento.fecha,
+                    'numero_asiento': transaccion.asiento.numero,
+                    'descripcion': transaccion.asiento.descripcion,
+                    'debe': transaccion.debe,
+                    'haber': transaccion.haber,
+                    'saldo': saldo_acum,
+                })
+                
+                total_debe += transaccion.debe
+                total_haber += transaccion.haber
+            
+            context['movimientos'] = movimientos
+            context['totales'] = {'debe': total_debe, 'haber': total_haber}
+            context['saldo_final'] = saldo_acum
+        
+        except EmpresaPlanCuenta.DoesNotExist:
+            pass
+    
+    return render(request, 'contabilidad/company_libro_mayor.html', context)

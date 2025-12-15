@@ -65,75 +65,13 @@ class PlanDeCuentas(models.Model):
     )
 
     class Meta:
-        managed = False # Django no gestionará esta tabla
+        managed = True  # Django ahora gestiona el schema
         db_table = 'contabilidad_plandecuentas'
         verbose_name = 'Plan de Cuenta'
         verbose_name_plural = 'Planes de Cuentas'
 
     def __str__(self):
         return f"{self.codigo} - {self.descripcion}"
-
-
-class Asiento(models.Model):
-    """
-    Modelo para la cabecera del Asiento Contable.
-    Representa la tabla 'contabilidad_asiento'.
-    """
-    fecha = models.DateField()
-    descripcion_general = models.TextField()
-    
-    estado = models.CharField(
-        max_length=10, 
-        choices=EstadoAsiento.choices, 
-        default=EstadoAsiento.BORRADOR
-    )
-    
-    creado_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.PROTECT # ON DELETE RESTRICT
-    )
-    
-    # Hacemos que Django maneje las fechas automáticamente
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_modificacion = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        managed = False # Django no gestionará esta tabla
-        db_table = 'contabilidad_asiento'
-        verbose_name = 'Asiento Contable'
-        verbose_name_plural = 'Asientos Contables'
-
-    def __str__(self):
-        return f"Asiento #{self.id} ({self.fecha}) - {self.descripcion_general[:50]}..."
-
-
-class Transaccion(models.Model):
-    """
-    Modelo para el detalle (líneas) del Asiento Contable.
-    Representa la tabla 'contabilidad_transaccion'.
-    """
-    asiento = models.ForeignKey(
-        Asiento, 
-        on_delete=models.CASCADE # ON DELETE CASCADE
-    )
-    cuenta = models.ForeignKey(
-        PlanDeCuentas, 
-        on_delete=models.PROTECT # ON DELETE RESTRICT
-    )
-    
-    detalle_linea = models.CharField(max_length=500, blank=True, null=True)
-    parcial = models.DecimalField(max_digits=19, decimal_places=2, default=0.00)
-    debe = models.DecimalField(max_digits=19, decimal_places=2, default=0.00)
-    haber = models.DecimalField(max_digits=19, decimal_places=2, default=0.00)
-
-    class Meta:
-        managed = False # Django no gestionará esta tabla
-        db_table = 'contabilidad_transaccion'
-        verbose_name = 'Transacción'
-        verbose_name_plural = 'Transacciones'
-
-    def __str__(self):
-        return f"Línea de Asiento #{self.asiento.id}: {self.cuenta.codigo} | D:{self.debe} H:{self.haber}"
 
 
 # -------------------------
@@ -265,6 +203,10 @@ class EmpresaPlanCuenta(models.Model):
         default=False,
         help_text='True si es una cuenta hoja (auxiliar) que puede recibir transacciones'
     )
+    activa = models.BooleanField(
+        default=True,
+        help_text='True si la cuenta está activa y puede recibir transacciones'
+    )
     padre = models.ForeignKey('self', null=True, blank=True, on_delete=models.PROTECT, related_name='hijas')
 
     class Meta:
@@ -308,6 +250,13 @@ class EmpresaPlanCuenta(models.Model):
             if not self.naturaleza:
                 self.naturaleza = self.padre.naturaleza
 
+            # Evitar ciclos padre-hijo (A -> B -> A)
+            ancestro = self.padre
+            while ancestro:
+                if ancestro == self or (self.pk and ancestro.pk == self.pk):
+                    raise ValidationError({'padre': 'Asignar este padre genera un ciclo en el plan de cuentas.'})
+                ancestro = ancestro.padre
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
@@ -319,8 +268,8 @@ class EmpresaPlanCuenta(models.Model):
 
     @property
     def puede_recibir_transacciones(self):
-        """Solo las cuentas auxiliares (hojas del árbol) pueden recibir transacciones."""
-        return self.es_auxiliar and not self.tiene_hijas
+        """Solo las cuentas auxiliares (hojas del árbol) activas pueden recibir transacciones."""
+        return self.es_auxiliar and not self.tiene_hijas and self.activa
 
     @property
     def level(self):
@@ -364,6 +313,101 @@ class EmpresaPlanCuenta(models.Model):
         return 'Balance' if bool(self.estado_situacion) else 'Resultado'
 
 
+class EmpresaTercero(models.Model):
+    """
+    Modelo para normalizar beneficiarios (Clientes, Proveedores, Empleados, Accionistas, Gobierno).
+    
+    Permite reportes fiscales por tercero (Libro Auxiliar por Tercero, DIOT, Anexos Transaccionales).
+    """
+    
+    TIPO_TERCERO_CHOICES = [
+        ('CLIENTE', 'Cliente'),
+        ('PROVEEDOR', 'Proveedor'),
+        ('EMPLEADO', 'Empleado'),
+        ('ACCIONISTA', 'Accionista'),
+        ('GOBIERNO', 'Gobierno'),
+        ('OTRO', 'Otro'),
+    ]
+    
+    empresa = models.ForeignKey(
+        Empresa, 
+        on_delete=models.CASCADE, 
+        related_name='terceros',
+        db_index=True
+    )
+    
+    # Identificador fiscal (RUC/Cédula/DNI)
+    numero_identificacion = models.CharField(
+        max_length=20,
+        help_text='RUC, Cédula, DNI u otro identificador fiscal'
+    )
+    
+    # Clasificación del tercero
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_TERCERO_CHOICES,
+        db_index=True
+    )
+    
+    # Datos del tercero
+    nombre = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    direccion = models.TextField(blank=True)
+    
+    # Control de integridad
+    activo = models.BooleanField(default=True, db_index=True)
+    
+    # Auditoría
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='terceros_creados'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'contabilidad_empresa_tercero'
+        verbose_name = 'Tercero (Empresa)'
+        verbose_name_plural = 'Terceros (Empresas)'
+        unique_together = ('empresa', 'numero_identificacion')
+        indexes = [
+            models.Index(fields=['empresa', 'tipo']),
+            models.Index(fields=['empresa', 'activo']),
+            models.Index(fields=['numero_identificacion']),
+        ]
+        ordering = ['tipo', 'nombre']
+
+    def __str__(self):
+        return f'{self.nombre} ({self.numero_identificacion}) - {self.get_tipo_display()}'
+
+    def clean(self):
+        """Validaciones del modelo."""
+        super().clean()
+        
+        # Validar número de identificación no vacío
+        if not self.numero_identificacion or not self.numero_identificacion.strip():
+            raise ValidationError({
+                'numero_identificacion': 'El número de identificación es obligatorio.'
+            })
+        
+        # Validar unicidad en la empresa
+        existente = EmpresaTercero.objects.filter(
+            empresa=self.empresa,
+            numero_identificacion=self.numero_identificacion
+        ).exclude(pk=self.pk).exists()
+        
+        if existente:
+            raise ValidationError({
+                'numero_identificacion': 'Este identificador ya está registrado en la empresa.'
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
 class EmpresaAsiento(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='asientos', db_index=True)
     numero_asiento = models.PositiveIntegerField(
@@ -381,11 +425,38 @@ class EmpresaAsiento(models.Model):
     # Compatibilidad con esquema legado: algunos motores tienen columna 'anulado' NOT NULL
     # que indica si el asiento fue anulado (se mantiene junto con campos de trazabilidad detallada).
     anulado = models.BooleanField(default=False, db_index=True)
-    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_modificacion = models.DateTimeField(auto_now=True)
     
-    # Campos para soft-delete y anulación
+    # ===== AUDITORÍA COMPLETA =====
+    # Creación
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.PROTECT,
+        related_name='asientos_creados'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    ip_address_creacion = models.GenericIPAddressField(
+        null=True, 
+        blank=True,
+        help_text='Dirección IP desde la que se creó el asiento'
+    )
+    
+    # Modificación
+    modificado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='asientos_modificados'
+    )
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+    ip_address_modificacion = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text='Dirección IP desde la que se modificó el asiento'
+    )
+    
+    # ===== SOFT-DELETE + ANULACIÓN =====
+    # Campos para soft-delete y anulación (reversión)
     anulado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.PROTECT, 
@@ -395,6 +466,11 @@ class EmpresaAsiento(models.Model):
     )
     fecha_anulacion = models.DateTimeField(null=True, blank=True)
     motivo_anulacion = models.TextField(blank=True)
+    ip_address_anulacion = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text='Dirección IP desde la que se anuló el asiento'
+    )
     
     # Asiento de anulación (referencia al contra-asiento)
     anulado_mediante = models.ForeignKey(
@@ -522,10 +598,30 @@ class EmpresaTransaccion(models.Model):
         blank=True,
         db_index=True
     )
+    
+    # Tercero asociado (normalizado)
+    tercero = models.ForeignKey(
+        EmpresaTercero,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transacciones',
+        help_text='Cliente, Proveedor, Empleado, etc.'
+    )
+    
     detalle_linea = models.CharField(max_length=500, blank=True, null=True)
-    parcial = models.DecimalField(max_digits=19, decimal_places=2, default=Decimal('0.00'))
     debe = models.DecimalField(max_digits=19, decimal_places=2, default=Decimal('0.00'))
     haber = models.DecimalField(max_digits=19, decimal_places=2, default=Decimal('0.00'))
+    
+    # Auditoría
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='transacciones_creadas'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
         db_table = 'contabilidad_empresa_transaccion'
@@ -573,10 +669,116 @@ class EmpresaTransaccion(models.Model):
         # Validar montos negativos
         if self.debe < 0 or self.haber < 0:
             raise ValidationError('Los montos no pueden ser negativos.')
+        
+        # Validar naturaleza de la cuenta vs debe/haber (advertencia)
+        if self.cuenta:
+            if self.cuenta.naturaleza == NaturalezaCuenta.DEUDORA and self.haber > self.debe:
+                # Cuenta deudora: es normal que predomine el debe
+                pass  # Permitir, pero podríamos agregar warning en el futuro
+            elif self.cuenta.naturaleza == NaturalezaCuenta.ACREEDORA and self.debe > self.haber:
+                # Cuenta acreedora: es normal que predomine el haber
+                pass  # Permitir, pero podríamos agregar warning en el futuro
+            # No bloqueamos la operación, solo validamos la lógica básica
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class PeriodoContable(models.Model):
+    """Modelo para el control de periodos contables (cierre mensual/anual)."""
+    
+    class EstadoPeriodo(models.TextChoices):
+        ABIERTO = 'ABIERTO', 'Abierto'
+        CERRADO = 'CERRADO', 'Cerrado'
+        BLOQUEADO = 'BLOQUEADO', 'Bloqueado (Auditoría)'
+    
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='periodos')
+    anio = models.PositiveIntegerField()
+    mes = models.PositiveIntegerField(
+        help_text='Mes del 1-12, o 0 para indicar cierre anual'
+    )
+    estado = models.CharField(
+        max_length=10,
+        choices=EstadoPeriodo.choices,
+        default=EstadoPeriodo.ABIERTO
+    )
+    cerrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='periodos_cerrados'
+    )
+    fecha_cierre = models.DateTimeField(null=True, blank=True)
+    notas = models.TextField(blank=True, help_text='Observaciones del cierre')
+
+    class Meta:
+        db_table = 'contabilidad_periodo'
+        verbose_name = 'Periodo Contable'
+        verbose_name_plural = 'Periodos Contables'
+        unique_together = ('empresa', 'anio', 'mes')
+        indexes = [
+            models.Index(fields=['empresa', 'anio', 'mes']),
+            models.Index(fields=['empresa', 'estado']),
+        ]
+        ordering = ['-anio', '-mes']
+
+    def __str__(self):
+        mes_str = f'{self.mes:02d}' if self.mes > 0 else 'Anual'
+        return f'{self.empresa.nombre} - {self.anio}/{mes_str} [{self.estado}]'
+
+    def clean(self):
+        """Validaciones del periodo."""
+        super().clean()
+        
+        # Validar mes
+        if self.mes < 0 or self.mes > 12:
+            raise ValidationError({'mes': 'El mes debe estar entre 0 (anual) y 12.'})
+        
+        # No se puede cerrar un periodo si hay asientos en borrador
+        if self.pk and self.estado == self.EstadoPeriodo.CERRADO:
+            borradores_qs = EmpresaAsiento.objects.filter(
+                empresa=self.empresa,
+                fecha__year=self.anio,
+                estado=EstadoAsiento.BORRADOR
+            )
+
+            # Si mes=0 es cierre anual: evalúa cualquier mes del año; si mes>0 filtra mes concreto
+            if self.mes > 0:
+                borradores_qs = borradores_qs.filter(fecha__month=self.mes)
+
+            asientos_borrador = borradores_qs.count()
+            
+            if asientos_borrador > 0:
+                raise ValidationError(
+                    f'No se puede cerrar el periodo. Hay {asientos_borrador} asiento(s) en borrador.'
+                )
+
+    def cerrar(self, usuario):
+        """Cierra el periodo contable."""
+        if self.estado == self.EstadoPeriodo.CERRADO:
+            raise ValidationError('El periodo ya está cerrado.')
+        
+        # Validar que no haya borradores
+        self.clean()
+        
+        self.estado = self.EstadoPeriodo.CERRADO
+        self.cerrado_por = usuario
+        self.fecha_cierre = timezone.now()
+        self.save()
+
+    def reabrir(self, usuario):
+        """Reabre el periodo para correcciones (requiere permisos especiales)."""
+        if self.estado != self.EstadoPeriodo.CERRADO:
+            raise ValidationError('El periodo no está cerrado.')
+        
+        if self.estado == self.EstadoPeriodo.BLOQUEADO:
+            raise ValidationError('El periodo está bloqueado y no puede reabrirse.')
+        
+        self.estado = self.EstadoPeriodo.ABIERTO
+        self.notas += f'\n[Reabierto por {usuario.username} el {timezone.now()}]'
+        self.save()
 
 
 class EmpresaSupervisor(models.Model):

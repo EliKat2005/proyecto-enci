@@ -14,6 +14,7 @@ from .models import (
     EmpresaAsiento,
     EmpresaTransaccion,
     Empresa,
+    EmpresaTercero,
     TipoCuenta,
     NaturalezaCuenta,
     EstadoAsiento
@@ -54,7 +55,8 @@ class AsientoService:
                         'cuenta_id': int,
                         'detalle': str,
                         'debe': Decimal,
-                        'haber': Decimal
+                        'haber': Decimal,
+                        'tercero_id': Optional[int]
                     },
                     ...
                 ]
@@ -80,7 +82,10 @@ class AsientoService:
         if total_debe == 0:
             raise ValidationError('El asiento no puede tener monto cero.')
         
-        # 2. Validar bancarización
+        # 2. Validar periodo contable abierto
+        cls._validar_periodo_abierto(empresa, fecha)
+        
+        # 3. Validar bancarización
         cls._validar_bancarizacion(empresa, lineas, total_debe)
         
         # 3. Crear asiento
@@ -99,13 +104,32 @@ class AsientoService:
                 id=linea_data['cuenta_id'],
                 empresa=empresa
             )
+
+            # Tercero opcional
+            tercero = None
+            tercero_id = linea_data.get('tercero_id')
+            if tercero_id:
+                try:
+                    tercero = EmpresaTercero.objects.get(id=tercero_id, empresa=empresa)
+                except EmpresaTercero.DoesNotExist:
+                    raise ValidationError(
+                        f'El tercero con id {tercero_id} no pertenece a la empresa.'
+                    )
+            
+            # Validar que la cuenta pueda recibir transacciones
+            if not cuenta.puede_recibir_transacciones:
+                raise ValidationError(
+                    f'La cuenta {cuenta.codigo} - {cuenta.descripcion} no puede recibir transacciones. '
+                    f'Debe ser auxiliar, sin cuentas hijas y estar activa.'
+                )
             
             EmpresaTransaccion.objects.create(
                 asiento=asiento,
                 cuenta=cuenta,
                 detalle_linea=linea_data.get('detalle', ''),
                 debe=Decimal(str(linea_data.get('debe', 0))),
-                haber=Decimal(str(linea_data.get('haber', 0)))
+                haber=Decimal(str(linea_data.get('haber', 0))),
+                tercero=tercero
             )
         
         # 5. Verificar balance final
@@ -113,6 +137,29 @@ class AsientoService:
             raise ValidationError('Error interno: el asiento no quedó balanceado.')
         
         return asiento
+    
+    @classmethod
+    def _validar_periodo_abierto(cls, empresa: Empresa, fecha: date):
+        """
+        Valida que el periodo contable esté abierto para la fecha del asiento.
+        
+        Raises:
+            ValidationError: Si el periodo está cerrado o bloqueado
+        """
+        from .models import PeriodoContable
+        
+        # Buscar periodo para el mes/año del asiento
+        periodo = PeriodoContable.objects.filter(
+            empresa=empresa,
+            anio=fecha.year,
+            mes=fecha.month
+        ).first()
+        
+        if periodo and periodo.estado != PeriodoContable.EstadoPeriodo.ABIERTO:
+            raise ValidationError(
+                f'El periodo {fecha.month}/{fecha.year} está {periodo.estado}. '
+                f'No se pueden crear asientos en periodos cerrados.'
+            )
     
     @classmethod
     def _validar_bancarizacion(cls, empresa: Empresa, lineas: List[Dict], monto_total: Decimal):
@@ -125,24 +172,28 @@ class AsientoService:
         if monto_total <= cls.LIMITE_BANCARIZACION:
             return  # No aplica bancarización
         
-        # Buscar si se usa cuenta de caja
+        # Buscar si se usa cuenta de caja (más flexible)
         cuenta_ids = [l['cuenta_id'] for l in lineas]
         cuentas = EmpresaPlanCuenta.objects.filter(
             id__in=cuenta_ids,
             empresa=empresa
         ).select_related('padre')
         
-        usa_caja = any(
-            cls.CODIGO_CAJA_PATTERN in cuenta.codigo 
-            for cuenta in cuentas
-        )
-        
-        if usa_caja:
-            raise ValidationError(
-                f'ALERTA DE BANCARIZACIÓN: El monto total (${monto_total}) supera los '
-                f'${cls.LIMITE_BANCARIZACION}. Debe usar una cuenta bancaria en lugar de caja. '
-                f'Esto es requerido por normativas tributarias.'
+        # Verificar múltiples formas de identificar caja
+        for cuenta in cuentas:
+            es_caja = (
+                cls.CODIGO_CAJA_PATTERN in cuenta.codigo or  # Por código
+                'caja' in cuenta.descripcion.lower() or      # Por descripción
+                (cuenta.padre and 'caja' in cuenta.padre.descripcion.lower())  # Por padre
             )
+            
+            if es_caja:
+                raise ValidationError(
+                    f'ALERTA DE BANCARIZACIÓN: El monto total (${monto_total}) supera los '
+                    f'${cls.LIMITE_BANCARIZACION}. La cuenta "{cuenta.codigo} - {cuenta.descripcion}" '
+                    f'parece ser de caja. Debe usar una cuenta bancaria en lugar de caja. '
+                    f'Esto es requerido por normativas tributarias.'
+                )
     
     @classmethod
     @transaction.atomic
@@ -491,13 +542,26 @@ class EstadosFinancierosService:
         # Buscar cuenta de "Resultados del Ejercicio" o similar (ajustar código)
         try:
             cuenta_resultados = empresa.cuentas.get(
-                codigo__icontains='3.3',  # Ajustar según plan de cuentas
-                tipo=TipoCuenta.PATRIMONIO
+                descripcion__icontains='Resultados del Ejercicio',
+                tipo=TipoCuenta.PATRIMONIO,
+                es_auxiliar=True
             )
         except EmpresaPlanCuenta.DoesNotExist:
-            raise ValidationError(
-                'No se encontró la cuenta patrimonial "Resultados del Ejercicio". '
-                'Debe existir en el plan de cuentas para realizar el cierre.'
+            # Crear automáticamente bajo patrimonio si no existe
+            try:
+                cuenta_patrimonio = empresa.cuentas.get(codigo='3')
+            except EmpresaPlanCuenta.DoesNotExist:
+                raise ValidationError('No existe cuenta Patrimonio (3) en el plan de cuentas')
+            cuenta_resultados = EmpresaPlanCuenta.objects.create(
+                empresa=empresa,
+                codigo='3.2',
+                descripcion='Resultados del Ejercicio',
+                tipo=TipoCuenta.PATRIMONIO,
+                naturaleza=NaturalezaCuenta.ACREEDORA,
+                es_auxiliar=True,
+                estado_situacion=True,
+                padre=cuenta_patrimonio,
+                activa=True
             )
         
         # Preparar líneas del asiento de cierre

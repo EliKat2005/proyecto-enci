@@ -10,6 +10,13 @@ requires-python = ">=3.13"
 dependencies = [
     "django>=5.2.8",
     "mysqlclient>=2.2.7",
+    "djangorestframework>=3.14.0",
+    "drf-spectacular>=0.29.0",
+    "django-cors-headers>=4.9.0",
+    "python-dotenv>=1.2.1",
+    "pytest>=9.0.2",
+    "pytest-django>=4.11.1",
+    "openpyxl>=3.1.5",
 ]
 
 [tool.setuptools.packages.find]
@@ -20,3 +27,20 @@ exclude = ["templates*", "static*", "scripts*"]
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.uv]
+# uv es el gestor de dependencias oficial del proyecto
+# NO USAR pip. Todas las dependencias deben instalarse con:
+#   uv sync
+#
+# Para agregar nuevas dependencias:
+#   uv add nombre-paquete
+#
+# Para actualizar dependencias:
+#   uv sync --upgrade
+#
+# Para ejecutar comandos en el entorno:
+#   uv run python manage.py ...
+#
+# Para versiones específicas:
+#   uv add "paquete>=1.0,<2.0"

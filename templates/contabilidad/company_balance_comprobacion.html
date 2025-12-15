@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Balance de Comprobación - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  {% include 'contabilidad/_company_header_minimal.html' with current_panel='balance' %}
+
+  <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mt-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="space-y-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">BC</div>
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Balance de Comprobación</h2>
+            <p class="text-sm text-slate-600">{{ fecha_inicio|date:"d/m/Y" }} — {{ fecha_fin|date:"d/m/Y" }}</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700">Empresa: {{ empresa.nombre }}</span>
+          {% if cuadra_todo %}
+            <span class="px-3 py-1 rounded-full bg-green-100 text-green-800">Balance cuadrado</span>
+          {% else %}
+            <span class="px-3 py-1 rounded-full bg-red-100 text-red-800">Descuadrado</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 justify-end">
+        <a href="{% url 'contabilidad:export_balance_csv' empresa.id %}?fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}" 
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+          CSV
+        </a>
+        <a href="{% url 'contabilidad:export_balance_xlsx' empresa.id %}?fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}" 
+           class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-2">
+          XLSX
+        </a>
+        <button onclick="window.print()" class="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors">
+          Imprimir
+        </button>
+      </div>
+    </div>
+
+    <form method="get" class="mt-6 grid gap-4 md:grid-cols-3 items-end p-4 bg-slate-50 rounded-lg border border-slate-200">
+      <div>
+        <label for="fecha_inicio" class="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+        <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}" 
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+      </div>
+      <div>
+        <label for="fecha_fin" class="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+        <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}" 
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+      </div>
+      <div class="flex gap-2 md:justify-end">
+        <button type="submit" class="px-5 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors">
+          Filtrar
+        </button>
+        <a href="{% url 'contabilidad:company_balance_comprobacion' empresa.id %}" 
+           class="px-5 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors">
+          Limpiar
+        </a>
+      </div>
+    </form>
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
+                <tr>
+                  <th class="px-4 py-3 text-left font-semibold">Código</th>
+                  <th class="px-4 py-3 text-left font-semibold">Cuenta</th>
+                  <th class="px-4 py-3 text-right font-semibold" colspan="2">Saldo Inicial</th>
+                  <th class="px-4 py-3 text-right font-semibold" colspan="2">Movimientos</th>
+                  <th class="px-4 py-3 text-right font-semibold" colspan="2">Saldo Final</th>
+                </tr>
+                <tr class="bg-slate-100 text-[11px] text-slate-500">
+                  <th></th><th></th>
+                  <th class="px-4 py-2 text-right">Deudor</th>
+                  <th class="px-4 py-2 text-right">Acreedor</th>
+                  <th class="px-4 py-2 text-right">Debe</th>
+                  <th class="px-4 py-2 text-right">Haber</th>
+                  <th class="px-4 py-2 text-right">Deudor</th>
+                  <th class="px-4 py-2 text-right">Acreedor</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                {% for item in cuentas %}
+                <tr class="hover:bg-amber-50/40">
+                  <td class="px-4 py-3 font-mono text-slate-700">{{ item.cuenta.codigo }}</td>
+                  <td class="px-4 py-3 text-slate-900">{{ item.cuenta.descripcion }}</td>
+                  <td class="px-4 py-3 text-right font-mono">{% if item.saldo_inicial_deudor > 0 %}${{ item.saldo_inicial_deudor|floatformat:2 }}{% else %}-{% endif %}</td>
+                  <td class="px-4 py-3 text-right font-mono">{% if item.saldo_inicial_acreedor > 0 %}${{ item.saldo_inicial_acreedor|floatformat:2 }}{% else %}-{% endif %}</td>
+                  <td class="px-4 py-3 text-right font-mono">{% if item.debe > 0 %}${{ item.debe|floatformat:2 }}{% else %}-{% endif %}</td>
+                  <td class="px-4 py-3 text-right font-mono">{% if item.haber > 0 %}${{ item.haber|floatformat:2 }}{% else %}-{% endif %}</td>
+                  <td class="px-4 py-3 text-right font-mono">{% if item.saldo_final_deudor > 0 %}${{ item.saldo_final_deudor|floatformat:2 }}{% else %}-{% endif %}</td>
+                  <td class="px-4 py-3 text-right font-mono">{% if item.saldo_final_acreedor > 0 %}${{ item.saldo_final_acreedor|floatformat:2 }}{% else %}-{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="px-4 py-8 text-center text-slate-500">No hay movimientos en el período seleccionado</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="bg-slate-800 text-white font-semibold">
+                <tr>
+                  <td colspan="2" class="px-4 py-3">Totales</td>
+                  <td class="px-4 py-3 text-right">${{ total_saldo_inicial.deudor|floatformat:2 }}</td>
+                  <td class="px-4 py-3 text-right">${{ total_saldo_inicial.acreedor|floatformat:2 }}</td>
+                  <td class="px-4 py-3 text-right">${{ total_movimientos.debe|floatformat:2 }}</td>
+                  <td class="px-4 py-3 text-right">${{ total_movimientos.haber|floatformat:2 }}</td>
+                  <td class="px-4 py-3 text-right">${{ total_saldo_final.deudor|floatformat:2 }}</td>
+                  <td class="px-4 py-3 text-right">${{ total_saldo_final.acreedor|floatformat:2 }}</td>
+                </tr>
+                <tr class="bg-slate-900 text-xs">
+                  <td colspan="2" class="px-4 py-2 text-slate-200">Verificación</td>
+                  <td colspan="2" class="px-4 py-2 text-center">{% if cuadra_inicial %}<span class="text-emerald-200">✓ Cuadra</span>{% else %}<span class="text-red-200">✗ Descuadrado</span>{% endif %}</td>
+                  <td colspan="2" class="px-4 py-2 text-center">{% if cuadra_movimientos %}<span class="text-emerald-200">✓ Cuadra</span>{% else %}<span class="text-red-200">✗ Descuadrado</span>{% endif %}</td>
+                  <td colspan="2" class="px-4 py-2 text-center">{% if cuadra_final %}<span class="text-emerald-200">✓ Cuadra</span>{% else %}<span class="text-red-200">✗ Descuadrado</span>{% endif %}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-900 text-white rounded-xl shadow-sm p-5 flex flex-col gap-2">
+        <div class="flex items-center justify-between text-sm opacity-80">
+          <span>Saldo inicial (D/H)</span>
+          <span>${{ total_saldo_inicial.deudor|floatformat:2 }} / ${{ total_saldo_inicial.acreedor|floatformat:2 }}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm opacity-80">
+          <span>Movimientos (D/H)</span>
+          <span>${{ total_movimientos.debe|floatformat:2 }} / ${{ total_movimientos.haber|floatformat:2 }}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm font-semibold">
+          <span>Saldo final (D/H)</span>
+          <span>${{ total_saldo_final.deudor|floatformat:2 }} / ${{ total_saldo_final.acreedor|floatformat:2 }}</span>
+        </div>
+        <div class="pt-2 border-t border-white/20 text-sm">
+          {% if cuadra_final %}
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-100">✓ Cuadra</span>
+          {% else %}
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-100">✗ Descuadrado</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex gap-3">
+      <button onclick="window.print()" class="px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors">
+        🖨️ Imprimir
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  .no-print { display: none !important; }
+  body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
