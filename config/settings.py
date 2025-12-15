@@ -4,6 +4,10 @@ Ajustes de Django para el proyecto ENCI.
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # (BASE_DIR apunta a la raíz: /mnt/universidad/Base de Datos II/proyecto-enci)
@@ -11,13 +15,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # --- AJUSTES DE SEGURIDAD ---
-# ¡IMPORTANTE! Cambia esto en producción.
-SECRET_KEY = 'django-insecure-tu-clave-secreta-aqui-reemplazame'
-
-# ¡IMPORTANTE! Cambia esto en producción.
-DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # En entornos con dominios personalizados o HTTPS añade los orígenes aquí,
 # por ejemplo: CSRF_TRUSTED_ORIGINS = ['https://tudominio.com']
@@ -35,6 +35,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    # APIs
+    'rest_framework',
+    'rest_framework.authtoken',
+    'drf_spectacular',
+    'corsheaders',
+    
     # Nuestras Apps (las crearemos en la Etapa 3)
     'core.apps.CoreConfig',
     'contabilidad.apps.ContabilidadConfig',
@@ -42,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -79,15 +86,19 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # --------------------------------------------------------------------------
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # El driver para MariaDB es el de MySQL
-        'NAME': 'enci', # El nombre de tu base de datos
-        'USER': 'elikat', # Tu usuario de MariaDB (ej: 'root' o 'tu_usuario')
-        'PASSWORD': 'ZoHg$0q6ld9Iqq', # Tu contraseña de MariaDB
-        'HOST': '127.0.0.1', # O 'localhost'
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME', 'enci'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT': os.getenv('DB_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
+        'TEST': {
+            'CREATE_DB': False,
+            'NAME': 'enci_test',
+        }
     }
 }
 
@@ -159,3 +170,53 @@ DEFAULT_FROM_EMAIL = 'no-reply@enci.local'
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = 'tu-email@gmail.com'
 # EMAIL_HOST_PASSWORD = 'tu-contraseña'
+
+# --- CONFIGURACIÓN DE DJANGO REST FRAMEWORK ---
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,
+    'DEFAULT_FILTER_BACKENDS': [
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# --- CONFIGURACIÓN DE SWAGGER/OPENAPI ---
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ENCI - Sistema de Gestión Contable API',
+    'DESCRIPTION': 'API REST para gestión de contabilidad empresarial. Documentación completa de endpoints, serializers y autenticación.',
+    'VERSION': '1.0.0',
+    'CONTACT': {
+        'name': 'Proyecto ENCI',
+        'email': 'admin@enci.local',
+    },
+    'LICENSE': {
+        'name': 'Licencia Académica',
+        'url': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    },
+    'SERVERS': [
+        {'url': 'http://localhost:9000', 'description': 'Development'},
+        {'url': 'http://localhost:8000', 'description': 'Development (puerto alternativo)'},
+    ],
+}
+
+# --- CONFIGURACIÓN DE CORS ---
+CORS_ALLOWED_ORIGINS = os.getenv(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000'
+).split(',')
+
+CORS_ALLOW_CREDENTIALS = True
+
+# --- CONFIGURACIÓN DE PYTEST ---
+if 'pytest' in os.sys.modules or 'PYTEST_CURRENT_TEST' in os.environ:
+    DATABASES['default']['NAME'] = 'enci_test'
+    LOGGING = {'version': 1, 'disable_existing_loggers': False}

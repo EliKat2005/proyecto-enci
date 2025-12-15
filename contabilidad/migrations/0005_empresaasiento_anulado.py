@@ -11,7 +11,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.SeparateDatabaseAndState(
-            database_operations=[],  # Columna ya existe en la BD legacy
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE contabilidad_empresa_asiento ADD COLUMN IF NOT EXISTS anulado TINYINT(1) DEFAULT 0 NOT NULL;",
+                    reverse_sql="ALTER TABLE contabilidad_empresa_asiento DROP COLUMN IF EXISTS anulado;",
+                    state_operations=[]
+                )
+            ],
             state_operations=[
                 migrations.AddField(
                     model_name='empresaasiento',

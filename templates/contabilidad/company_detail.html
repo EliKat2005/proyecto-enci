@@ -71,23 +71,43 @@
         </div>
       </div>
 
-      <!-- Reportes -->
+      <!-- Balance de Comprobación -->
       <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
         <div class="p-5">
           <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
+            <div class="flex-shrink-0 w-12 h-12 bg-amber-600 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Reportes</h3>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Estados financieros y análisis</p>
+              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Balance Comprobación</h3>
+              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Verificación de saldos y movimientos</p>
             </div>
           </div>
         </div>
         <div class="px-5 pb-5">
-          <button disabled class="block w-full px-4 py-2.5 bg-slate-300 text-slate-500 text-center rounded-lg text-sm font-semibold cursor-not-allowed">Próximamente</button>
+          <a href="{% url 'contabilidad:company_balance_comprobacion' empresa.id %}" class="block w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        </div>
+      </div>
+
+      <!-- Estados Financieros -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
+        <div class="p-5">
+          <div class="flex items-start space-x-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-rose-600 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Estados Financieros</h3>
+              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Balance General y Estado de Resultados</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pb-5">
+          <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="block w-full px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
         </div>
       </div>
       

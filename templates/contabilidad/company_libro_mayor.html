@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Libro Mayor - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  
+  {# Header #}
+  {% include 'contabilidad/_company_header_minimal.html' with current_panel='mayor' %}
+  
+  {# Selector de Cuenta y Filtros #}
+  <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mt-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900">Libro Mayor</h2>
+        <p class="text-sm text-slate-600 mt-1">Movimientos de la cuenta seleccionada</p>
+      </div>
+    </div>
+    
+    {# Formulario de Filtros #}
+    <form method="get" class="flex flex-wrap gap-4 items-end mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+      <div class="flex-1 min-w-[250px]">
+        <label for="cuenta_id" class="block text-sm font-medium text-slate-700 mb-1">Cuenta Auxiliar</label>
+        <select id="cuenta_id" name="cuenta_id" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+          <option value="">Selecciona una cuenta...</option>
+          {% for cuenta in cuentas_auxiliares %}
+            <option value="{{ cuenta.id }}" {% if cuenta.id == cuenta_id %}selected{% endif %}>
+              {{ cuenta.codigo }} - {{ cuenta.descripcion }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="flex-1 min-w-[200px]">
+        <label for="fecha_inicio" class="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+        <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}" 
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+      </div>
+      
+      <div class="flex-1 min-w-[200px]">
+        <label for="fecha_fin" class="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+        <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}" 
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+      </div>
+      
+      <button type="submit" class="px-6 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors">
+        Filtrar
+      </button>
+      <a href="{% url 'contabilidad:company_libro_mayor' empresa.id %}" 
+         class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors">
+        Limpiar
+      </a>
+    </form>
+    
+    {% if cuenta_actual %}
+    {# Información de la Cuenta #}
+    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <p class="text-sm text-slate-600">Código</p>
+          <p class="text-lg font-bold text-slate-900">{{ cuenta_actual.codigo }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-slate-600">Cuenta</p>
+          <p class="text-lg font-bold text-slate-900">{{ cuenta_actual.descripcion }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-slate-600">Naturaleza</p>
+          <p class="text-lg font-bold" style="color: {% if cuenta_actual.naturaleza == 'Deudora' %}#065f46{% else %}#7c2d12{% endif %}">
+            {{ cuenta_actual.naturaleza }}
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    {# Tabla del Libro Mayor #}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-100 border-b-2 border-slate-300">
+            <th class="px-4 py-3 text-left font-bold text-slate-700">Fecha</th>
+            <th class="px-4 py-3 text-left font-bold text-slate-700">Asiento</th>
+            <th class="px-4 py-3 text-left font-bold text-slate-700">Descripción</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-700">Debe</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-700">Haber</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-700">Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for movimiento in movimientos %}
+          <tr class="border-b border-slate-100 hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-slate-700">{{ movimiento.fecha|date:"d/m/Y" }}</td>
+            <td class="px-4 py-3 font-mono text-slate-700 text-blue-600 hover:underline">
+              <a href="{% url 'contabilidad:company_diario' empresa.id %}?asiento={{ movimiento.numero_asiento }}">
+                #{{ movimiento.numero_asiento }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-slate-900">{{ movimiento.descripcion }}</td>
+            <td class="px-4 py-3 text-right font-mono">
+              {% if movimiento.debe > 0 %}${{ movimiento.debe|floatformat:2 }}{% else %}-{% endif %}
+            </td>
+            <td class="px-4 py-3 text-right font-mono">
+              {% if movimiento.haber > 0 %}${{ movimiento.haber|floatformat:2 }}{% else %}-{% endif %}
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold {% if movimiento.saldo > 0 %}text-green-600{% elif movimiento.saldo < 0 %}text-red-600{% else %}text-slate-600{% endif %}">
+              {% if movimiento.saldo > 0 %}+{% endif %}${{ movimiento.saldo|floatformat:2 }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-6 text-center text-slate-500">
+              {% if cuenta_id %}
+                No hay movimientos para esta cuenta en el período seleccionado
+              {% else %}
+                Selecciona una cuenta para ver sus movimientos
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="bg-amber-100 border-t-2 border-slate-300">
+            <td colspan="3" class="px-4 py-3 text-right font-bold text-slate-700">TOTALES</td>
+            <td class="px-4 py-3 text-right font-mono font-bold text-slate-900">
+              ${{ totales.debe|floatformat:2 }}
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold text-slate-900">
+              ${{ totales.haber|floatformat:2 }}
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold" style="color: {% if saldo_final > 0 %}#065f46{% elif saldo_final < 0 %}#b91c1c{% else %}#374151{% endif %}">
+              {% if saldo_final > 0 %}+{% endif %}${{ saldo_final|floatformat:2 }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

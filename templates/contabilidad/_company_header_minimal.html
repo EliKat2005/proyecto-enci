@@ -9,6 +9,10 @@
       {% if current_panel == 'diario' %}bg-emerald-600 text-white border-emerald-600{% else %}bg-white text-slate-700 hover:bg-emerald-50 border-slate-300{% endif %}">Diario</a>
     <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors
       {% if current_panel == 'mayor' %}bg-purple-600 text-white border-purple-600{% else %}bg-white text-slate-700 hover:bg-purple-50 border-slate-300{% endif %}">Mayor</a>
+    <a href="{% url 'contabilidad:company_balance_comprobacion' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors
+      {% if current_panel == 'balance' %}bg-amber-600 text-white border-amber-600{% else %}bg-white text-slate-700 hover:bg-amber-50 border-slate-300{% endif %}">Balance</a>
+    <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors
+      {% if current_panel == 'estados' %}bg-rose-600 text-white border-rose-600{% else %}bg-white text-slate-700 hover:bg-rose-50 border-slate-300{% endif %}">Estados</a>
   </nav>
   {% if current_panel == 'plan' or current_panel == 'diario' or current_panel == 'mayor' %}
     <button id="panel-toggle-btn" type="button" class="absolute right-4 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors">Ocultar Paneles</button>

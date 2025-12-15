@@ -102,17 +102,17 @@ DATABASES = {
 
 4. **Ejecutar migraciones**
 ```bash
-./.venv/bin/python manage.py migrate
+uv run python manage.py migrate
 ```
 
 5. **Crear superusuario**
 ```bash
-./.venv/bin/python manage.py createsuperuser
+uv run python manage.py createsuperuser
 ```
 
 6. **Ejecutar servidor de desarrollo**
 ```bash
-./.venv/bin/python manage.py runserver
+uv run python manage.py runserver
 ```
 
 El proyecto estará disponible en `http://127.0.0.1:8000/`
