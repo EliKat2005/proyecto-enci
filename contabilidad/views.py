@@ -11,6 +11,8 @@ from datetime import date
 import json
 import csv
 import io
+import tempfile
+import os
 
 from core.models import UserProfile, Notification
 from .models import (
@@ -22,6 +24,7 @@ from .models import (
     EmpresaComment
 )
 from .services import AsientoService, LibroMayorService, EstadosFinancierosService
+from .services_excel_import import ExcelImportService
 
 
 @login_required
@@ -1048,5 +1051,243 @@ def company_libro_mayor(request, empresa_id):
         
         except EmpresaPlanCuenta.DoesNotExist:
             pass
+    
+    return render(request, 'contabilidad/company_libro_mayor.html', context)
+
+
+@login_required
+def import_plan_cuentas(request, empresa_id):
+    """Vista para importar Plan de Cuentas desde Excel."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    
+    # Check permission: owner, superuser, or supervisor
+    if not (request.user == empresa.owner or request.user.is_superuser or EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()):
+        return HttpResponseForbidden('No autorizado para editar esta empresa')
+    
+    # Solo propietario o superuser pueden importar
+    can_import = (request.user == empresa.owner) or request.user.is_superuser
+    if not can_import:
+        return HttpResponseForbidden('Solo el propietario puede importar el plan de cuentas')
+    
+    if request.method == 'GET':
+        # Mostrar formulario de importación
+        return render(request, 'contabilidad/import_plan_cuentas.html', {'empresa': empresa})
+    
+    # Actualizar nombre de la empresa si se envía
+    empresa_nombre = request.POST.get('empresa_nombre')
+    if empresa_nombre is not None:
+        nuevo_nombre = empresa_nombre.strip()
+        if nuevo_nombre and nuevo_nombre != empresa.nombre:
+            empresa.nombre = nuevo_nombre
+            empresa.save(update_fields=['nombre'])
+            # No devolvemos mensaje en JSON; el front lo refleja
+
+    # Procesar archivo subido
+    if 'file' not in request.FILES:
+        return JsonResponse({'error': 'No file provided'}, status=400)
+    
+    archivo = request.FILES['file']
+    
+    # Validar extensión
+    if not archivo.name.endswith(('.xlsx', '.xls')):
+        return JsonResponse({'error': 'El archivo debe ser Excel (.xlsx o .xls)'}, status=400)
+    
+    try:
+        # Guardar archivo temporalmente
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            for chunk in archivo.chunks():
+                tmp.write(chunk)
+            temp_path = tmp.name
+        
+        # Procesar con servicio
+        servicio = ExcelImportService(temp_path)
+        if not servicio.cargar_archivo():
+            return JsonResponse({
+                'error': 'Error al cargar el archivo',
+                'detalles': servicio.errores
+            }, status=400)
+        
+        # Validar y corregir
+        datos, errores, advertencias = servicio.validar_y_corregir()
+        
+        if errores:
+            return JsonResponse({
+                'error': 'El archivo contiene errores que no pueden ser corregidos',
+                'errores': errores,
+                'advertencias': advertencias
+            }, status=400)
+        
+        # Validar jerarquía
+        errores_jerarquia = servicio.validar_jerarquia(datos)
+        if errores_jerarquia:
+            return JsonResponse({
+                'error': 'Errores en la jerarquía de cuentas',
+                'errores_jerarquia': errores_jerarquia,
+                'advertencias': advertencias
+            }, status=400)
+        
+        # Retornar resumen para confirmación
+        return JsonResponse({
+            'success': True,
+            'datos_preview': datos[:5],  # Primeros 5 registros
+            'total_cuentas': len(datos),
+            'correcciones': servicio.correcciones,
+            'advertencias': advertencias,
+            'reporte': servicio.generar_reporte(datos)
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Error procesando archivo: {str(e)}'
+        }, status=500)
+    
+    finally:
+        # Limpiar archivo temporal
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+
+@login_required
+@require_POST
+def confirm_import_plan_cuentas(request, empresa_id):
+    """Confirmar e importar Plan de Cuentas."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    
+    # Check permission
+    can_import = (request.user == empresa.owner) or request.user.is_superuser
+    if not can_import:
+        return HttpResponseForbidden('No autorizado')
+    
+    try:
+        data = json.loads(request.body)
+        archivo_b64 = data.get('archivo')
+        auto_corregir = data.get('auto_corregir', False)
+        
+        if not archivo_b64:
+            return JsonResponse({'error': 'No hay datos para importar'}, status=400)
+        
+        # Decodificar archivo
+        import base64
+        archivo_bytes = base64.b64decode(archivo_b64)
+        
+        # Guardar temporalmente
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            tmp.write(archivo_bytes)
+            temp_path = tmp.name
+        
+        try:
+            # Procesar
+            servicio = ExcelImportService(temp_path)
+            servicio.cargar_archivo()
+            datos, _, _ = servicio.validar_y_corregir()
+            
+            # Importar dentro de transacción
+            with transaction.atomic():
+                cantidad, errores_import = servicio.importar(empresa, datos)
+            
+            if errores_import:
+                return JsonResponse({
+                    'error': f'Se importaron {cantidad} cuentas pero hubo {len(errores_import)} errores',
+                    'cantidad': cantidad,
+                    'errores': errores_import
+                }, status=400)
+            
+            messages.success(request, f'Se importaron {cantidad} cuentas exitosamente')
+            return JsonResponse({
+                'success': True,
+                'cantidad': cantidad,
+                'redirect_url': reverse('contabilidad:company_plan', args=[empresa.id])
+            })
+        
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Datos inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Error en importación: {str(e)}'}, status=500)
+
+
+@login_required
+def download_plan_cuentas_template(request):
+    """Descargar plantilla Excel para importación."""
+    import os
+    from django.conf import settings
+    
+    template_path = os.path.join(
+        settings.BASE_DIR, 
+        'templates_excel',
+        'plan_cuentas_template.xlsx'
+    )
+    
+    if not os.path.exists(template_path):
+        # Si no existe, crear uno temporal
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Plan de Cuentas'
+        
+        # Estilos
+        header_fill = PatternFill(start_color='1F4E78', end_color='1F4E78', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        
+        # Headers
+        headers = ['Código', 'Descripción', 'Tipo', 'Naturaleza', 'Estado Situación', 'Es Auxiliar', 'Código Padre']
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+        
+        # Ancho de columnas
+        ws.column_dimensions['A'].width = 12
+        ws.column_dimensions['B'].width = 30
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 12
+        ws.column_dimensions['E'].width = 18
+        ws.column_dimensions['F'].width = 12
+        ws.column_dimensions['G'].width = 15
+        
+        # Datos de ejemplo
+        datos_ejemplo = [
+            ['1', 'Activos', 'Activo', 'Deudora', 'Si', 'No', None],
+            ['1.1', 'Activo Corriente', 'Activo', 'Deudora', 'Si', 'No', '1'],
+            ['1.1.01', 'Caja', 'Activo', 'Deudora', 'Si', 'Si', '1.1'],
+        ]
+        
+        for row_num, fila in enumerate(datos_ejemplo, 2):
+            for col, valor in enumerate(fila, 1):
+                ws.cell(row=row_num, column=col, value=valor)
+        
+        # Guardar temporalmente
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            wb.save(tmp.name)
+            template_path = tmp.name
+        
+        # Enviar
+        response = HttpResponse(
+            open(template_path, 'rb').read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="plan_cuentas_template.xlsx"'
+        
+        # Limpiar
+        if os.path.exists(template_path):
+            os.unlink(template_path)
+        
+        return response
+    
+    # Archivo existe, enviarlo
+    response = HttpResponse(
+        open(template_path, 'rb').read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="plan_cuentas_template.xlsx"'
+    return response
     
     return render(request, 'contabilidad/company_libro_mayor.html', context)

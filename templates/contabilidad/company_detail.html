@@ -110,6 +110,28 @@
           <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="block w-full px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
         </div>
       </div>
+
+      {% if can_edit %}
+      <!-- Importador de Plan de Cuentas -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
+        <div class="p-5">
+          <div class="flex items-start space-x-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Importador Excel</h3>
+              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Importa plan de cuentas desde archivo Excel</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pb-5">
+          <a href="{% url 'contabilidad:import_plan_cuentas' empresa.id %}" class="block w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        </div>
+      </div>
+      {% endif %}
       
     </div>
   </div>

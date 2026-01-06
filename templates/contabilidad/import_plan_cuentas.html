@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Importar Plan de Cuentas | {{ empresa.nombre }} | ECAE{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-6">
+  <div class="mx-auto px-4 xl:px-8 max-w-4xl">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <a href="{% url 'contabilidad:company_plan' empresa.id %}" class="text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center gap-2 mb-4">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Volver al Plan de Cuentas
+      </a>
+      
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h1 class="text-2xl font-bold text-slate-900">Importar Plan de Cuentas</h1>
+            <p class="text-slate-600 mt-1">Sube un archivo Excel para importar masivamente cuentas contables con validación automática</p>
+            <p class="text-sm text-slate-500 mt-2">
+              <strong>Empresa:</strong> {{ empresa.nombre }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid gap-6 lg:grid-cols-3">
+      
+      <!-- Upload Area -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+          
+          <!-- Step 0: Company Name -->
+          <div id="step-name" class="space-y-6">
+            <div class="text-center">
+              <h2 class="text-lg font-bold text-slate-900 mb-2">Paso 0: Confirma el nombre de la empresa</h2>
+              <p class="text-slate-600 text-sm">Este nombre aparecerá en los reportes y servirá como referencia durante la importación.</p>
+            </div>
+            <div class="grid gap-3 md:grid-cols-3 items-end">
+              <div class="md:col-span-2">
+                <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Nombre de la Empresa</label>
+                <input id="empresaNombre" value="{{ empresa.nombre }}" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Ingresa el nombre de la empresa" />
+              </div>
+              <div>
+                <button type="button" onclick="confirmCompanyName()" class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">Continuar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 1: Upload -->
+          <div id="step-upload" class="space-y-6 hidden">
+            <div class="text-center">
+              <h2 class="text-lg font-bold text-slate-900 mb-2">Paso 1: Sube tu archivo Excel</h2>
+              <p class="text-slate-600 text-sm">Formatos soportados: .xlsx, .xls</p>
+            </div>
+
+            <!-- Drag & Drop Area -->
+            <div class="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50/50"
+                 id="dropzone"
+                 ondrop="handleDrop(event)"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)">
+              <svg class="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <p class="text-slate-900 font-semibold mb-1">Arrastra tu archivo aquí</p>
+              <p class="text-slate-600 text-sm">o haz clic para seleccionar</p>
+              <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+
+            <button type="button" onclick="document.getElementById('fileInput').click()" 
+                    class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
+              Seleccionar archivo
+            </button>
+          </div>
+
+          <!-- Step 2: Preview & Validation -->
+          <div id="step-validation" class="space-y-6 hidden">
+            <div class="text-center">
+              <h2 class="text-lg font-bold text-slate-900 mb-2">Paso 2: Validación y Vista Previa</h2>
+            </div>
+
+            <!-- Loading -->
+            <div id="validation-loading" class="flex items-center justify-center py-8">
+              <div class="animate-spin">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </div>
+              <span class="ml-3 text-slate-600">Validando archivo...</span>
+            </div>
+
+            <!-- Results -->
+            <div id="validation-results" class="hidden space-y-4">
+              
+              <!-- Summary -->
+              <div class="grid grid-cols-3 gap-4">
+                <div class="bg-blue-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-blue-600" id="total-cuentas">0</div>
+                  <div class="text-sm text-slate-600 mt-1">Total de Cuentas</div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-green-600" id="correcciones-count">0</div>
+                  <div class="text-sm text-slate-600 mt-1">Correcciones</div>
+                </div>
+                <div class="bg-amber-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-amber-600" id="advertencias-count">0</div>
+                  <div class="text-sm text-slate-600 mt-1">Advertencias</div>
+                </div>
+              </div>
+
+              <!-- Corrections -->
+              <div id="correcciones-section" class="hidden">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 class="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Correcciones Aplicadas
+                  </h3>
+                  <ul id="correcciones-list" class="space-y-1 text-sm text-green-700"></ul>
+                </div>
+              </div>
+
+              <!-- Warnings -->
+              <div id="advertencias-section" class="hidden">
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 class="font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Advertencias
+                  </h3>
+                  <ul id="advertencias-list" class="space-y-1 text-sm text-amber-700"></ul>
+                </div>
+              </div>
+
+              <!-- Preview Table -->
+              <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <div class="bg-slate-100 p-4 border-b border-slate-200">
+                  <h3 class="font-semibold text-slate-900">Vista Previa (primeras 5 cuentas)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th class="px-4 py-2 text-left text-slate-700 font-semibold">Código</th>
+                        <th class="px-4 py-2 text-left text-slate-700 font-semibold">Descripción</th>
+                        <th class="px-4 py-2 text-left text-slate-700 font-semibold">Tipo</th>
+                        <th class="px-4 py-2 text-left text-slate-700 font-semibold">Naturaleza</th>
+                        <th class="px-4 py-2 text-left text-slate-700 font-semibold">Padre</th>
+                      </tr>
+                    </thead>
+                    <tbody id="preview-table" class="divide-y divide-slate-200"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Report -->
+              <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <h3 class="font-semibold text-slate-900 mb-2">Reporte de Validación</h3>
+                <pre id="reporte-text" class="text-xs text-slate-700 bg-white rounded p-3 overflow-auto max-h-48 border border-slate-200"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Confirmation -->
+          <div id="step-confirmation" class="space-y-6 hidden">
+            <div class="text-center">
+              <h2 class="text-lg font-bold text-slate-900 mb-2">Paso 3: Confirmar Importación</h2>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-900">
+              <p>Revisa los detalles arriba. Si todo es correcto, haz clic en "Importar" para proceder.</p>
+            </div>
+
+            <div id="import-loading" class="hidden flex items-center justify-center py-8">
+              <div class="animate-spin">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </div>
+              <span class="ml-3 text-slate-600">Importando cuentas...</span>
+            </div>
+
+            <div id="import-success" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <div>
+                  <h3 class="font-semibold text-green-900">¡Importación completada!</h3>
+                  <p class="text-sm text-green-700 mt-1" id="success-message"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex gap-3 mt-8 border-t border-slate-200 pt-6">
+            <button type="button" id="btn-reset" onclick="resetForm()" 
+                    class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-semibold transition-colors hidden">
+              Importar otro archivo
+            </button>
+            <button type="button" id="btn-import" onclick="confirmImport()" 
+                    class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors hidden">
+              ✓ Importar
+            </button>
+            <a href="{% url 'contabilidad:company_plan' empresa.id %}" 
+               class="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-semibold transition-colors">
+              Volver
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar: Help & Template -->
+      <div class="lg:col-span-1 space-y-6">
+        
+        <!-- Info Box -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+          <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+            Requisitos del Archivo
+          </h3>
+          <ul class="text-sm text-slate-600 space-y-2">
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold mt-0.5">•</span>
+              <span><strong>Formato:</strong> Excel (.xlsx o .xls)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold mt-0.5">•</span>
+              <span><strong>Cabeceras:</strong> Código, Descripción, Tipo, Naturaleza, Estado Situación, Es Auxiliar, Código Padre</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold mt-0.5">•</span>
+              <span><strong>Códigos:</strong> Únicos (ej: 1, 1.1, 1.1.01)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold mt-0.5">•</span>
+              <span><strong>Tipos válidos:</strong> Activo, Pasivo, Patrimonio, Ingreso, Costo, Gasto</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Download Template -->
+        <div class="bg-blue-50 rounded-lg border border-blue-200 p-6 text-center">
+          <h3 class="font-bold text-blue-900 mb-3 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Plantilla Excel
+          </h3>
+          <p class="text-sm text-blue-700 mb-4">Descarga nuestra plantilla con ejemplo y formato correcto</p>
+          <a href="{% url 'contabilidad:download_plan_cuentas_template' %}" download="plan_cuentas_template.xlsx"
+             class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">
+            📥 Descargar Plantilla
+          </a>
+        </div>
+
+        <!-- Features -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+          <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            Funcionalidades
+          </h3>
+          <ul class="text-sm text-slate-600 space-y-2">
+            <li>✓ Validación automática</li>
+            <li>✓ Corrección de errores comunes</li>
+            <li>✓ Detección de jerarquía</li>
+            <li>✓ Prevención de ciclos</li>
+            <li>✓ Vista previa antes de importar</li>
+            <li>✓ Transacciones seguras</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for storing base64 -->
+<input type="hidden" id="fileBase64">
+
+<script>
+// Configuración
+const empresa_id = {{ empresa.id }};
+const csrf_token = '{{ csrf_token }}';
+
+// Estado global
+let currentFile = null;
+let validationData = null;
+let empresaNombre = null;
+
+// Drag & Drop
+const dropzone = document.getElementById('dropzone');
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dropzone.classList.add('border-blue-500', 'bg-blue-50');
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+  
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    handleFileSelect({ target: { files: files } });
+  }
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    alert('Por favor selecciona un archivo Excel (.xlsx o .xls)');
+    return;
+  }
+  
+  currentFile = file;
+  uploadAndValidate(file);
+}
+
+function uploadAndValidate(file) {
+  // Mostrar validación
+  document.getElementById('step-upload').classList.add('hidden');
+  document.getElementById('step-validation').classList.remove('hidden');
+  document.getElementById('validation-results').classList.add('hidden');
+  document.getElementById('validation-loading').classList.remove('hidden');
+  
+  // Leer archivo como base64
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64 = btoa(e.target.result);
+    document.getElementById('fileBase64').value = base64;
+    
+    // Enviar para validación
+    const formData = new FormData();
+    formData.append('file', file);
+    if (empresaNombre) formData.append('empresa_nombre', empresaNombre);
+    formData.append('csrfmiddlewaretoken', csrf_token);
+    
+    fetch(`/contabilidad/${empresa_id}/plan/import/`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        showValidationError(data);
+      } else {
+        showValidationSuccess(data);
+      }
+    })
+    .catch(err => {
+      showValidationError({ error: err.message });
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showValidationError(data) {
+  document.getElementById('validation-loading').classList.add('hidden');
+  document.getElementById('validation-results').classList.remove('hidden');
+  
+  alert('❌ Error en validación:\n\n' + (data.error || 'Error desconocido'));
+  resetForm();
+}
+
+function showValidationSuccess(data) {
+  validationData = data;
+  
+  // Actualizar resumen
+  document.getElementById('total-cuentas').textContent = data.total_cuentas;
+  document.getElementById('correcciones-count').textContent = data.correcciones.length;
+  document.getElementById('advertencias-count').textContent = data.advertencias.length;
+  
+  // Correcciones
+  if (data.correcciones.length > 0) {
+    document.getElementById('correcciones-section').classList.remove('hidden');
+    const list = document.getElementById('correcciones-list');
+    list.innerHTML = data.correcciones.map(c => `<li>• ${c}</li>`).join('');
+  }
+  
+  // Advertencias
+  if (data.advertencias.length > 0) {
+    document.getElementById('advertencias-section').classList.remove('hidden');
+    const list = document.getElementById('advertencias-list');
+    list.innerHTML = data.advertencias.map(a => `<li>• ${a}</li>`).join('');
+  }
+  
+  // Preview
+  if (data.datos_preview) {
+    const tbody = document.getElementById('preview-table');
+    tbody.innerHTML = data.datos_preview.map(row => `
+      <tr class="hover:bg-slate-50">
+        <td class="px-4 py-2 font-mono text-slate-900">${row.codigo}</td>
+        <td class="px-4 py-2 text-slate-700">${row.descripcion}</td>
+        <td class="px-4 py-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">${row.tipo}</span></td>
+        <td class="px-4 py-2"><span class="bg-slate-100 text-slate-800 px-2 py-1 rounded text-xs font-semibold">${row.naturaleza}</span></td>
+        <td class="px-4 py-2 text-slate-600">${row.codigo_padre || '-'}</td>
+      </tr>
+    `).join('');
+  }
+  
+  // Reporte
+  if (data.reporte) {
+    document.getElementById('reporte-text').textContent = data.reporte;
+  }
+  
+  // Mostrar resultados y botón
+  document.getElementById('validation-loading').classList.add('hidden');
+  document.getElementById('validation-results').classList.remove('hidden');
+  document.getElementById('step-confirmation').classList.remove('hidden');
+  document.getElementById('btn-import').classList.remove('hidden');
+  document.getElementById('btn-reset').classList.remove('hidden');
+}
+
+function confirmImport() {
+  document.getElementById('btn-import').classList.add('hidden');
+  document.getElementById('import-loading').classList.remove('hidden');
+  
+  const payload = {
+    archivo: document.getElementById('fileBase64').value,
+    auto_corregir: false
+  };
+  
+  fetch(`/contabilidad/${empresa_id}/plan/import/confirm/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrf_token
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('import-loading').classList.add('hidden');
+      document.getElementById('import-success').classList.remove('hidden');
+      document.getElementById('success-message').textContent = 
+        `Se importaron ${data.cantidad} cuentas exitosamente.`;
+      
+      // Redirigir después de 2 segundos
+      setTimeout(() => {
+        window.location.href = data.redirect_url;
+      }, 2000);
+    } else {
+      alert('Error en importación:\n' + (data.error || 'Error desconocido'));
+      document.getElementById('import-loading').classList.add('hidden');
+      document.getElementById('btn-import').classList.remove('hidden');
+    }
+  })
+  .catch(err => {
+    alert('Error: ' + err.message);
+    document.getElementById('import-loading').classList.add('hidden');
+    document.getElementById('btn-import').classList.remove('hidden');
+  });
+}
+
+function resetForm() {
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileBase64').value = '';
+  document.getElementById('step-name').classList.remove('hidden');
+  document.getElementById('step-upload').classList.add('hidden');
+  document.getElementById('step-validation').classList.add('hidden');
+  document.getElementById('step-confirmation').classList.add('hidden');
+  document.getElementById('btn-import').classList.add('hidden');
+  document.getElementById('btn-reset').classList.add('hidden');
+  document.getElementById('import-success').classList.add('hidden');
+  currentFile = null;
+  validationData = null;
+  empresaNombre = null;
+}
+
+function confirmCompanyName() {
+  const input = document.getElementById('empresaNombre');
+  const value = (input.value || '').trim();
+  if (!value) {
+    alert('Por favor ingresa un nombre de empresa.');
+    input.focus();
+    return;
+  }
+  empresaNombre = value;
+  // Continuar al paso de upload
+  document.getElementById('step-name').classList.add('hidden');
+  document.getElementById('step-upload').classList.remove('hidden');
+}
+</script>
+{% endblock %}

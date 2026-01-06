@@ -16,6 +16,8 @@ urlpatterns = [
     path('import/', views.import_company, name='import_company'),
     path('<int:empresa_id>/plan/', views.company_plan, name='company_plan'),
     path('<int:empresa_id>/plan/add-account/', views.add_account, name='add_account'),
+    path('<int:empresa_id>/plan/import/', views.import_plan_cuentas, name='import_plan_cuentas'),
+    path('<int:empresa_id>/plan/import/confirm/', views.confirm_import_plan_cuentas, name='confirm_import_plan_cuentas'),
     path('<int:empresa_id>/diario/', views.company_diario, name='company_diario'),
     path('<int:empresa_id>/diario/add/', views.create_journal_entry, name='create_journal_entry'),
     path('<int:empresa_id>/mayor/', views.company_mayor, name='company_mayor'),
@@ -28,5 +30,7 @@ urlpatterns = [
     path('<int:empresa_id>/estados/export/xlsx/', views.export_estados_xlsx, name='export_estados_xlsx'),
     path('<int:empresa_id>/estados/export/csv/', views.export_estados_csv, name='export_estados_csv'),
     path('<int:empresa_id>/comment/<str:section>/', views.add_comment, name='add_comment'),
+    # Plantilla Excel
+    path('plan-cuentas/template/', views.download_plan_cuentas_template, name='download_plan_cuentas_template'),
 ]
 
