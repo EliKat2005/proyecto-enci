@@ -258,9 +258,17 @@ class EmpresaPlanCuenta(models.Model):
                 ancestro = ancestro.padre
 
         # Validar jerarquía: cuentas con hijas no pueden ser auxiliares
-        if self.es_auxiliar and self.tiene_hijas:
+        # Evitar acceso a relaciones antes de tener PK
+        if self.es_auxiliar and self.pk:
+            if self.hijas.exists():
+                raise ValidationError({
+                    'es_auxiliar': 'Las cuentas que tienen subcuentas no pueden ser marcadas como auxiliares.'
+                })
+
+        # No permitir agregar hijas a una cuenta auxiliar
+        if self.padre and self.padre.es_auxiliar:
             raise ValidationError({
-                'es_auxiliar': 'Las cuentas que tienen subcuentas no pueden ser marcadas como auxiliares.'
+                'padre': 'No se puede agregar subcuentas a una cuenta auxiliar.'
             })
 
     def save(self, *args, **kwargs):
