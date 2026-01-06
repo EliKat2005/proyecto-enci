@@ -76,10 +76,17 @@ class Migration(migrations.Migration):
             name='fecha_creacion',
             field=models.DateTimeField(auto_now_add=True, null=True),
         ),
-        migrations.AddField(
-            model_name='plandecuentas',
-            name='padre',
-            field=models.ForeignKey(blank=True, db_comment='Clave foránea recursiva para la estructura de árbol', null=True, on_delete=django.db.models.deletion.PROTECT, to='contabilidad.plandecuentas'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(sql="SELECT 1", reverse_sql="SELECT 1"),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='plandecuentas',
+                    name='padre',
+                    field=models.ForeignKey(blank=True, db_comment='Clave foránea recursiva para la estructura de árbol', null=True, on_delete=django.db.models.deletion.PROTECT, to='contabilidad.plandecuentas'),
+                ),
+            ],
         ),
         migrations.AlterField(
             model_name='empresaasiento',
