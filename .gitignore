@@ -58,4 +58,5 @@ coverage.xml
 # Archivos de backup
 *.bak
 *.backup
-*.html.bakbackup_*.sql
+*.html.bak
+backup_*.sql
