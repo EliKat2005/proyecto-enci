@@ -125,9 +125,9 @@ class EmpresaViewSet(viewsets.ReadOnlyModelViewSet):
         fecha_inicio_str = request.query_params.get('fecha_inicio')
         fecha_fin_str = request.query_params.get('fecha_fin')
         
-        hoy = date.today()
-        fecha_inicio = date(hoy.year, 1, 1)
-        fecha_fin = hoy
+        # Por defecto, incluir todo el historial (sin límites de fecha)
+        fecha_inicio = None
+        fecha_fin = None
         
         if fecha_inicio_str:
             try:
