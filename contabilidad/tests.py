@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import date
 
@@ -127,3 +128,125 @@ class CierrePeriodoTests(TestCase):
 		EstadosFinancierosService.asiento_de_cierre(self.empresa, date(2025, 1, 31), self.user)
 		balance = EstadosFinancierosService.balance_general(self.empresa, date(2025, 1, 31))
 		self.assertTrue(balance['balanceado'])
+
+
+class PlanCuentasHierarchyValidationTests(TestCase):
+	"""
+	Tests para validar que las cuentas con hijas no pueden ser marcadas como auxiliares.
+	Esta regla garantiza que solo las hojas del árbol de cuentas puedan recibir transacciones.
+	"""
+	
+	def setUp(self):
+		User = get_user_model()
+		self.user = User.objects.create_user(username='owner', password='pass')
+		self.empresa = Empresa.objects.create(nombre='Empresa Hierarchy', owner=self.user, visible_to_supervisor=True)
+		
+		# Crear estructura de cuentas: 1 -> 1.1 -> 1.1.01
+		self.nivel_1 = EmpresaPlanCuenta.objects.create(
+			empresa=self.empresa,
+			codigo='1',
+			descripcion='ACTIVOS',
+			tipo=TipoCuenta.ACTIVO,
+			naturaleza=NaturalezaCuenta.DEUDORA,
+			es_auxiliar=False,
+			estado_situacion=True
+		)
+		self.nivel_2 = EmpresaPlanCuenta.objects.create(
+			empresa=self.empresa,
+			codigo='1.1',
+			descripcion='Activos Circulantes',
+			tipo=TipoCuenta.ACTIVO,
+			naturaleza=NaturalezaCuenta.DEUDORA,
+			es_auxiliar=False,
+			estado_situacion=True,
+			padre=self.nivel_1
+		)
+		self.nivel_3 = EmpresaPlanCuenta.objects.create(
+			empresa=self.empresa,
+			codigo='1.1.01',
+			descripcion='Caja',
+			tipo=TipoCuenta.ACTIVO,
+			naturaleza=NaturalezaCuenta.DEUDORA,
+			es_auxiliar=True,
+			estado_situacion=True,
+			padre=self.nivel_2,
+			activa=True
+		)
+	
+	def test_account_without_children_can_be_auxiliary(self):
+		"""Una cuenta sin hijas puede ser marcada como auxiliar (permitido)."""
+		cuenta = EmpresaPlanCuenta.objects.create(
+			empresa=self.empresa,
+			codigo='2',
+			descripcion='PASIVO',
+			tipo=TipoCuenta.PASIVO,
+			naturaleza=NaturalezaCuenta.ACREEDORA,
+			es_auxiliar=True,  # Sin hijas, es válido
+			estado_situacion=True,
+			activa=True
+		)
+		# No debe lanzar ValidationError
+		self.assertIsNotNone(cuenta.id)
+	
+	def test_account_with_children_cannot_be_auxiliary(self):
+		"""Una cuenta con hijas NO puede ser marcada como auxiliar (prohibido)."""
+		# nivel_2 tiene una hija (nivel_3), así que no puede ser auxiliar
+		self.nivel_2.es_auxiliar = True
+		
+		# Intentar guardar debe lanzar ValidationError
+		with self.assertRaises(ValidationError) as context:
+			self.nivel_2.save()
+		
+		# Verificar que el error es sobre el campo es_auxiliar
+		self.assertIn('es_auxiliar', context.exception.error_dict)
+		self.assertIn('subcuentas', str(context.exception).lower())
+	
+	def test_cannot_add_child_to_auxiliary_account(self):
+		"""No se puede agregar una cuenta hija a una cuenta auxiliar."""
+		# Crear una cuenta auxiliar sin hijas
+		cuenta_auxiliar = EmpresaPlanCuenta.objects.create(
+			empresa=self.empresa,
+			codigo='3',
+			descripcion='PATRIMONIO',
+			tipo=TipoCuenta.PATRIMONIO,
+			naturaleza=NaturalezaCuenta.ACREEDORA,
+			es_auxiliar=True,
+			estado_situacion=True,
+			activa=True
+		)
+		
+		# Intentar agregar una hija a la cuenta auxiliar
+		# Esto debe fallar porque primero se debe cambiar es_auxiliar a False
+		with self.assertRaises(ValidationError):
+			hija = EmpresaPlanCuenta(
+				empresa=self.empresa,
+				codigo='3.1',
+				descripcion='Capital',
+				tipo=TipoCuenta.PATRIMONIO,
+				naturaleza=NaturalezaCuenta.ACREEDORA,
+				es_auxiliar=True,
+				estado_situacion=True,
+				padre=cuenta_auxiliar
+			)
+			hija.full_clean()
+	
+	def test_changing_parent_to_auxiliary_fails_if_parent_has_children(self):
+		"""Cambiar padre a auxiliar falla si el padre ya tiene hijas."""
+		# nivel_2 es padre de nivel_3, así que no puede ser auxiliar
+		self.nivel_2.es_auxiliar = True
+		
+		with self.assertRaises(ValidationError):
+			self.nivel_2.full_clean()
+	
+	def test_leaf_account_can_receive_transactions(self):
+		"""Una cuenta hoja (sin hijas, auxiliar, activa) puede recibir transacciones."""
+		# nivel_3 es hoja, auxiliar y activa
+		self.assertTrue(self.nivel_3.puede_recibir_transacciones)
+	
+	def test_non_leaf_account_cannot_receive_transactions(self):
+		"""Una cuenta no-hoja (tiene hijas) no puede recibir transacciones."""
+		# nivel_2 tiene una hija (nivel_3)
+		self.assertFalse(self.nivel_2.puede_recibir_transacciones)
+		
+		# nivel_1 tiene nieta (nivel_3) a través de nivel_2
+		self.assertFalse(self.nivel_1.puede_recibir_transacciones)

@@ -257,6 +257,20 @@ class EmpresaPlanCuenta(models.Model):
                     raise ValidationError({'padre': 'Asignar este padre genera un ciclo en el plan de cuentas.'})
                 ancestro = ancestro.padre
 
+        # Validar jerarquía: cuentas con hijas no pueden ser auxiliares
+        # Evitar acceso a relaciones antes de tener PK
+        if self.es_auxiliar and self.pk:
+            if self.hijas.exists():
+                raise ValidationError({
+                    'es_auxiliar': 'Las cuentas que tienen subcuentas no pueden ser marcadas como auxiliares.'
+                })
+
+        # No permitir agregar hijas a una cuenta auxiliar
+        if self.padre and self.padre.es_auxiliar:
+            raise ValidationError({
+                'padre': 'No se puede agregar subcuentas a una cuenta auxiliar.'
+            })
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)

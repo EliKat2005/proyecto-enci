@@ -12,25 +12,9 @@ class Migration(migrations.Migration):
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
+    # This migration previously attempted to add a FK to a table created in 0015,
+    # causing MySQL errno 150 (incorrectly formed FK) in test databases.
+    # It's now a no-op; the proper ForeignKey is added in 0015 via Django operations.
     operations = [
-        migrations.RunSQL(
-            sql='''
-                ALTER TABLE contabilidad_empresa_transaccion
-                  ADD COLUMN IF NOT EXISTS tercero_id bigint NULL;
-                ALTER TABLE contabilidad_empresa_transaccion
-                  DROP FOREIGN KEY IF EXISTS contabilidad_empr_trans_tercero_fk;
-                ALTER TABLE contabilidad_empresa_transaccion
-                  ADD CONSTRAINT contabilidad_empr_trans_tercero_fk
-                  FOREIGN KEY (tercero_id) REFERENCES contabilidad_empresa_tercero(id)
-                  ON DELETE SET NULL;
-                ALTER TABLE contabilidad_empresa_transaccion
-                  ADD INDEX IF NOT EXISTS contab_empresatransaccion_tercero_idx (tercero_id);
-            ''',
-            reverse_sql='''
-                ALTER TABLE contabilidad_empresa_transaccion
-                  DROP FOREIGN KEY IF EXISTS contabilidad_empr_trans_tercero_fk;
-                ALTER TABLE contabilidad_empresa_transaccion
-                  DROP COLUMN IF EXISTS tercero_id;
-            '''
-        )
+        migrations.RunSQL(sql="SELECT 1", reverse_sql="SELECT 1")
     ]
