@@ -36,11 +36,15 @@ class Migration(migrations.Migration):
                 'ordering': ['tipo', 'nombre'],
             },
         ),
-        migrations.DeleteModel(
-            name='Asiento',
-        ),
-        migrations.DeleteModel(
-            name='Transaccion',
+        # Remove legacy unmanaged models from state without touching the database
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(sql="SELECT 1", reverse_sql="SELECT 1"),
+            ],
+            state_operations=[
+                migrations.DeleteModel(name='Asiento'),
+                migrations.DeleteModel(name='Transaccion'),
+            ],
         ),
         migrations.AddField(
             model_name='empresaasiento',
