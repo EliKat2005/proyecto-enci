@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contabilidad', '0001_squashed_0016_convert_int_pk_to_bigint'),
+        ('contabilidad', '0016_convert_int_pk_to_bigint'),
     ]
 
     operations = [
