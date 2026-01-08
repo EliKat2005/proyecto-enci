@@ -19,6 +19,12 @@ dependencies = [
     "openpyxl>=3.1.5",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.9",
+    "pre-commit>=3.7.1",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["config*", "core*", "contabilidad*"]
@@ -44,3 +50,55 @@ build-backend = "setuptools.build_meta"
 #
 # Para versiones específicas:
 #   uv add "paquete>=1.0,<2.0"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["config", "core", "contabilidad"]
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "migrations",
+    "proyecto_enci.egg-info",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "DJ",  # Django rules
+]
+ignore = [
+    "E501",  # long lines: mantener textos legibles sin romper por ahora
+    "SIM105", "SIM210",  # simplificaciones opcionales
+    "DJ001",  # null=True en CharField permitido en este proyecto
+    "W191",   # tabs en tests heredados; no bloquear
+    "W293",   # espacios en blanco en líneas en blanco
+    "F405",   # nombres importados con * en ejemplos
+    "B904",   # raise inside except chaining
+    "E741",   # nombres ambiguos en variables locales
+    "E722",   # bare except heredado
+    "F841",   # variables asignadas sin uso en ejemplos/tests
+    "DJ012",  # orden de métodos/fields en modelos heredados
+    "SIM102", "SIM103",  # simplificaciones no críticas
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+known-first-party = ["config", "core", "contabilidad"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false

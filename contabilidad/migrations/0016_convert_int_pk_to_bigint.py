@@ -15,6 +15,10 @@ def convert_int_pk_fk_to_bigint(apps, schema_editor):
     This operates across the current MySQL schema and is safe to re-run: if a
     column is already BIGINT it will be skipped.
     """
+    # Solo aplica a MySQL. En SQLite/PostgreSQL se omite.
+    if schema_editor.connection.vendor != 'mysql':
+        return
+
     with connection.cursor() as cursor:
         cursor.execute("SELECT DATABASE()")
         schema = cursor.fetchone()[0]

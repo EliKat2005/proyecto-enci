@@ -67,8 +67,8 @@ proyecto-enci/
 ### Requisitos Previos
 
 - Python 3.13+
-- MariaDB/MySQL
 - uv (gestor de paquetes Python)
+- MariaDB/MariaDB Server instalado localmente
 
 ### Pasos de Instalación
 
@@ -83,39 +83,67 @@ cd proyecto-enci
 uv sync
 ```
 
-3. **Configurar base de datos**
+3. **Crear BD y usuario en MariaDB**
 
-Editar `config/settings.py` y actualizar las credenciales de la base de datos:
-
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'enci',
-        'USER': 'tu_usuario',
-        'PASSWORD': 'tu_contraseña',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-    }
-}
+Accede al prompt de MariaDB como root:
+```bash
+sudo mariadb -u root
+```
+Dentro del prompt SQL:
+```sql
+CREATE DATABASE enci CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'enci'@'127.0.0.1' IDENTIFIED BY 'strong-password';
+GRANT ALL PRIVILEGES ON enci.* TO 'enci'@'127.0.0.1';
+FLUSH PRIVILEGES;
+EXIT;
 ```
 
-4. **Ejecutar migraciones**
-```bash
-uv run python manage.py migrate
+4. **Configurar entorno (.env)**
+Define estas variables en `.env`:
+```env
+DB_ENGINE=django.db.backends.mysql
+DB_NAME=enci
+DB_USER=enci
+DB_PASSWORD=strong-password
+DB_HOST=127.0.0.1
+DB_PORT=3306
 ```
 
-5. **Crear superusuario**
+5. **Ejecutar migraciones (MariaDB)**
 ```bash
-uv run python manage.py createsuperuser
+uv run python manage.py migrate --no-input
 ```
 
-6. **Ejecutar servidor de desarrollo**
+6. **Crear superusuario**
 ```bash
-uv run python manage.py runserver
+uv run python manage.py createsuperuser --username admin --email admin@local.test
+```
+
+7. **Ejecutar servidor de desarrollo (MariaDB)**
+```bash
+uv run python manage.py runserver 8000
 ```
 
 El proyecto estará disponible en `http://127.0.0.1:8000/`
+
+### Tests con MariaDB
+
+Crea una BD de pruebas y credenciales (opcional, recomendado):
+```sql
+CREATE DATABASE enci_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON enci_test.* TO 'enci'@'127.0.0.1';
+FLUSH PRIVILEGES;
+```
+En `.env` añade (si usas distinto usuario para tests, ajusta):
+```env
+DB_TEST_NAME=enci_test
+# DB_TEST_USER=enci
+# DB_TEST_PASSWORD=strong-password
+```
+Ejecuta tests:
+```bash
+uv run pytest -xvs
+```
 
 ## Uso
 
@@ -190,3 +218,53 @@ Proyecto de Base de Datos II
 ---
 
 **Nota**: Este es un proyecto educativo. No usar en producción sin las debidas configuraciones de seguridad adicionales.
+
+## Guía de Desarrollo
+
+- Dependencias: uv gestiona el entorno. No usar pip.
+- Estilo: Ruff (formateo y lint). Estándares definidos en pyproject.toml.
+- Hooks: pre-commit opcional para validar antes de cada commit.
+
+### Primeros pasos
+
+```bash
+# Instalar dependencias
+uv sync
+
+# Copiar variables de entorno
+cp .env.example .env
+
+# Verificar configuración de Django
+uv run python manage.py check
+```
+
+### Formateo y Lint
+
+```bash
+# Revisar y corregir problemas automáticamente
+uv run ruff check . --fix
+
+# Formatear código
+uv run ruff format .
+```
+
+Para instalar los hooks de pre-commit:
+
+```bash
+uv run pre-commit install
+```
+
+### Pruebas
+
+```bash
+# Ejecutar tests
+uv run pytest -q
+```
+
+Si usas MariaDB/MySQL, asegúrate de que el usuario tenga permisos para crear la base de datos de pruebas o configura `DB_*` en `.env`.
+
+### Notas de mantenimiento
+
+- Archivos temporales, caches, entornos y backups SQL están excluidos por `.gitignore`.
+- Evita versionar `__pycache__`, `*.egg-info`, y dumps SQL en el root.
+- Consulta `CONTABILIDAD_BEST_PRACTICES.md` para prácticas funcionales del dominio.

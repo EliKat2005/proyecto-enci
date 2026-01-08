@@ -1,4 +1,55 @@
-# Python-generated files
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Envs
+.venv/
+venv/
+ENV/
+.env
+.env.*
+
+# Django
+*.log
+staticfiles/
+media/
+local_settings.py
+db.sqlite3
+
+# Packaging
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+proyecto_enci.egg-info/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Coverage / tox
+.coverage*
+htmlcov/
+.tox/
+
+# Backups y dumps
+backup_*.sql
+backups/
+
+# Misc
+.ropeproject/
+*.swp
+*.swo# Python-generated files
 __pycache__/
 *.py[oc]
 build/

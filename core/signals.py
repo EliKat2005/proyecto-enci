@@ -1,13 +1,14 @@
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.core.mail import EmailMultiAlternatives
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import Group
-from .models import UserProfile
-from django.contrib.auth import get_user_model
-from .models import Notification
-from core.models import AuditLog
 from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
-from django.conf import settings
+
+from core.models import AuditLog
+
+from .models import Notification, UserProfile
 
 User = get_user_model()
 
@@ -32,7 +33,7 @@ def sync_group_on_profile_save(sender, instance, **kwargs):
         role_group.user_set.add(user)
 
         # Opcional: quitar de otros grupos de rol conocidos
-        known_roles = ['docente', 'estudiante', 'admin']
+        known_roles = ["docente", "estudiante", "admin"]
         for other in known_roles:
             if other == role_name:
                 continue
@@ -65,9 +66,9 @@ def notify_admins_on_docente_create(sender, instance, created, **kwargs):
                 Notification.objects.create(
                     recipient=admin,
                     actor=None,
-                    verb='docente_registered',
+                    verb="docente_registered",
                     target_user=instance.user,
-                    unread=True
+                    unread=True,
                 )
             except Exception:
                 pass
@@ -78,26 +79,44 @@ def notify_admins_on_docente_create(sender, instance, created, **kwargs):
         if admin_emails:
             subject = f"Nuevo docente registrado: {instance.user.username}"
             try:
-                text = render_to_string('emails/new_docente_admins.txt', {'docente': instance.user, 'dashboard_url': '/admin/'})
+                text = render_to_string(
+                    "emails/new_docente_admins.txt",
+                    {"docente": instance.user, "dashboard_url": "/admin/"},
+                )
             except Exception:
                 text = f"Se ha registrado el docente {instance.user.get_full_name() or instance.user.username}."
             try:
-                html = render_to_string('emails/new_docente_admins.html', {'docente': instance.user, 'dashboard_url': '/admin/'})
+                html = render_to_string(
+                    "emails/new_docente_admins.html",
+                    {"docente": instance.user, "dashboard_url": "/admin/"},
+                )
             except Exception:
                 html = None
             try:
-                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'SERVER_EMAIL', 'no-reply@example.com')
+                from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(
+                    settings, "SERVER_EMAIL", "no-reply@example.com"
+                )
                 msg = EmailMultiAlternatives(subject, text, from_email, list(set(admin_emails)))
                 if html:
-                    msg.attach_alternative(html, 'text/html')
+                    msg.attach_alternative(html, "text/html")
                 msg.send(fail_silently=False)
                 try:
-                    AuditLog.objects.create(actor=None, target_user=None, action='email_sent_admins_docente', description=f'Notificación enviada a admins sobre docente {instance.user.username}')
+                    AuditLog.objects.create(
+                        actor=None,
+                        target_user=None,
+                        action="email_sent_admins_docente",
+                        description=f"Notificación enviada a admins sobre docente {instance.user.username}",
+                    )
                 except Exception:
                     pass
             except Exception as e:
                 try:
-                    AuditLog.objects.create(actor=None, target_user=None, action='email_failed_admins_docente', description=f'Error enviando email a admins: {e}')
+                    AuditLog.objects.create(
+                        actor=None,
+                        target_user=None,
+                        action="email_failed_admins_docente",
+                        description=f"Error enviando email a admins: {e}",
+                    )
                 except Exception:
                     pass
     except Exception:

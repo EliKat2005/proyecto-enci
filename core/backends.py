@@ -1,8 +1,10 @@
-from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
+
 from .models import UserProfile
 
 User = get_user_model()
+
 
 class ActiveStudentBackend(ModelBackend):
     """
@@ -28,8 +30,8 @@ class ActiveStudentBackend(ModelBackend):
 
         # Regla B: Si es un usuario normal, revisa su UserProfile.
         try:
-            profile = user.userprofile # (user.userprofile viene del 'OneToOneField')
-            
+            profile = user.userprofile  # (user.userprofile viene del 'OneToOneField')
+
             if profile.esta_activo:
                 # ¡Es un usuario (docente/estudiante) y ESTÁ ACTIVO!
                 return user
@@ -37,7 +39,7 @@ class ActiveStudentBackend(ModelBackend):
                 # Es un usuario (estudiante) pero NO ESTÁ ACTIVO.
                 # Rechazamos el login.
                 return None
-        
+
         except UserProfile.DoesNotExist:
             # Caso raro: un usuario normal sin perfil. Lo rechazamos.
             return None
