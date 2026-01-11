@@ -1,10 +1,12 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
 app_name = "contabilidad"
 
 urlpatterns = [
+    # Machine Learning & Analytics APIs
+    path("api/ml/", include("contabilidad.urls_api_ml", namespace="api_ml")),
     path("my/", views.my_companies, name="my_companies"),
     path("<int:empresa_id>/", views.company_detail, name="company_detail"),
     path("create/", views.create_company, name="create_company"),
