@@ -41,39 +41,8 @@
     <div class="max-w-[1600px] mx-auto py-6 px-4 xl:px-8">
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Información (columna izquierda - colapsable) -->
-            <div id="infoPanel" class="lg:col-span-3 space-y-6 transition-all duration-300">
-                <div class="bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 p-6 rounded-lg shadow-sm border-l-4 border-blue-600 dark:border-blue-500 card-hover relative">
-                    <button onclick="toggleInfoPanel()" class="absolute top-4 right-4 p-1.5 hover:bg-white/60 dark:hover:bg-slate-800 rounded-lg transition-colors group" title="Cerrar panel">
-                        <svg class="w-4 h-4 text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0">
-                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 dark:text-slate-100 mb-2 text-sm uppercase tracking-wide">Información</h4>
-                            {% if is_docente %}
-                                <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">Como docente, puede crear plantillas empresariales y generar códigos de acceso para que sus estudiantes importen copias independientes. Supervise el progreso y proporcione retroalimentación detallada.</p>
-                            {% else %}
-                                <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">Como estudiante, puede crear empresas para practicar de forma autónoma. Para compartir su trabajo con el docente, active la opción "Visible a docente" en la configuración de la empresa.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botón flotante para mostrar información cuando está oculta -->
-            <button id="showInfoButton" onclick="toggleInfoPanel()" class="hidden fixed left-4 top-32 z-40 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg shadow-lg transition-all p-3 group" title="Mostrar información">
-                <svg class="w-5 h-5 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </button>
-
             <!-- Main column (empresas) -->
-            <div id="mainColumn" class="lg:col-span-6 space-y-6 transition-all duration-300">
+            <div class="lg:col-span-9 space-y-6">
 
                 <!-- Empresas -->
                 <div class="bg-white dark:bg-slate-900 p-7 rounded-lg shadow-sm border dark:border-slate-800 card-hover">
@@ -151,50 +120,5 @@
         </div>
     </div>
 </div>
-
-<script>
-function toggleInfoPanel() {
-    const infoPanel = document.getElementById('infoPanel');
-    const showButton = document.getElementById('showInfoButton');
-    const mainColumn = document.getElementById('mainColumn');
-    const sidebar = document.getElementById('sidebar');
-
-    if (infoPanel.classList.contains('hidden')) {
-        // Mostrar panel
-        infoPanel.classList.remove('hidden');
-        showButton.classList.add('hidden');
-
-        // Ajustar grid a 3 columnas (3-6-3)
-        setTimeout(() => {
-            infoPanel.classList.add('lg:col-span-3');
-            mainColumn.classList.remove('lg:col-span-9');
-            mainColumn.classList.add('lg:col-span-6');
-        }, 10);
-
-        // Guardar preferencia
-        localStorage.setItem('infoPanelVisible', 'true');
-    } else {
-        // Ocultar panel
-        infoPanel.classList.add('hidden');
-        showButton.classList.remove('hidden');
-
-        // Ajustar grid a 2 columnas (9-3)
-        infoPanel.classList.remove('lg:col-span-3');
-        mainColumn.classList.remove('lg:col-span-6');
-        mainColumn.classList.add('lg:col-span-9');
-
-        // Guardar preferencia
-        localStorage.setItem('infoPanelVisible', 'false');
-    }
-}
-
-// Restaurar estado al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    const isVisible = localStorage.getItem('infoPanelVisible');
-    if (isVisible === 'false') {
-        toggleInfoPanel();
-    }
-});
-</script>
 
 {% endblock %}
