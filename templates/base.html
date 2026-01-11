@@ -65,67 +65,128 @@
         <div class="max-w-[1600px] mx-auto px-4 lg:px-6">
             <div class="flex justify-between items-center h-16">
 
-                <!-- Logo compacto -->
-                <a href="{% url 'home' %}" class="flex items-center gap-3 group">
-                    <div class="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg group-hover:shadow-blue-500/50 transition-all duration-200 group-hover:scale-105">
-                        EC
-                    </div>
-                    <div class="hidden sm:block">
-                        <div class="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors leading-none">ECAE</div>
-                        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">Plataforma Contable</div>
-                    </div>
-                </a>
-
-                <!-- Acciones y usuario -->
+                <!-- Left: Logo Section -->
                 <div class="flex items-center gap-4">
+                    <a href="{% url 'home' %}" class="flex items-center gap-3 group">
+                        <div class="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg group-hover:shadow-blue-500/50 transition-all duration-200 group-hover:scale-105">
+                            EC
+                        </div>
+                        <div class="hidden sm:block">
+                            <div class="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors leading-none">ECAE</div>
+                            <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">Plataforma Contable</div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Right: Actions and User Section -->
+                <div class="flex items-center gap-3">
                     {% if user.is_authenticated %}
-                        <!-- Botón Ultra compacto -->
-                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-slate-700 to-slate-600 text-white hover:from-slate-600 hover:to-slate-500 transition-all duration-200 shadow-lg hover:shadow-xl" title="Modo Ultra Compacto">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-                            <span class="hidden xl:inline">Ultra</span>
-                        </button>
+                        <!-- Quick Actions Group -->
+                        <div class="hidden lg:flex items-center gap-2">
+                            <!-- Botón Ultra -->
+                            <button id="btn-ultra-toggle" type="button" class="p-2.5 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200" title="Modo Ultra Compacto">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                            </button>
 
-                        <!-- Toggle Modo Oscuro -->
-                        <button id="dark-mode-toggle" type="button" class="relative w-16 h-8 bg-slate-700 dark:bg-slate-600 rounded-full transition-all duration-300 hover:bg-slate-600 dark:hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900" title="Cambiar modo">
-                            <span class="absolute inset-0 flex items-center justify-between px-2">
-                                <!-- Sol: visible en modo claro, oculto en oscuro -->
-                                <svg class="w-4 h-4 text-yellow-400 transition-opacity duration-300 opacity-100 dark:opacity-30" id="sun-icon" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
-                                </svg>
-                                <!-- Luna: oculta en modo claro, visible en oscuro -->
-                                <svg class="w-4 h-4 text-slate-300 transition-opacity duration-300 opacity-30 dark:opacity-100" id="moon-icon" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
-                                </svg>
-                            </span>
-                            <!-- Círculo: posición inicial left-1, se mueve con dark: -->
-                            <span class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out dark:translate-x-8" id="toggle-circle"></span>
-                        </button>
+                            <!-- Toggle Modo Oscuro -->
+                            <button id="dark-mode-toggle" type="button" class="relative w-14 h-7 bg-slate-700 dark:bg-slate-600 rounded-full transition-all duration-300 hover:bg-slate-600 dark:hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900" title="Cambiar modo">
+                                <span class="absolute inset-0 flex items-center justify-between px-1.5">
+                                    <svg class="w-3.5 h-3.5 text-yellow-400 transition-opacity duration-300 opacity-100 dark:opacity-30" id="sun-icon" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <svg class="w-3.5 h-3.5 text-slate-300 transition-opacity duration-300 opacity-30 dark:opacity-100" id="moon-icon" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                                    </svg>
+                                </span>
+                                <span class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out dark:translate-x-7" id="toggle-circle"></span>
+                            </button>
 
-                        <!-- Notificaciones -->
-                        <a href="{% url 'notifications' %}" class="relative p-2.5 text-slate-300 hover:text-blue-400 transition-all duration-200 rounded-lg hover:bg-slate-700/50" title="Notificaciones">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                            {% unread_count user as unread_count %}
-                            {% if unread_count > 0 %}
-                                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full ring-2 ring-slate-900 shadow-lg">{{ unread_count }}</span>
-                            {% endif %}
-                        </a>
+                            <!-- Notificaciones -->
+                            <a href="{% url 'notifications' %}" class="relative p-2.5 text-slate-300 hover:text-blue-400 hover:bg-slate-700/50 rounded-lg transition-all duration-200" title="Notificaciones">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                {% unread_count user as unread_count %}
+                                {% if unread_count > 0 %}
+                                    <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full ring-2 ring-slate-900 shadow-lg">{{ unread_count }}</span>
+                                {% endif %}
+                            </a>
+                        </div>
 
-                        <!-- Usuario y logout -->
-                        <div class="flex items-center gap-3 pl-4 border-l-2 border-slate-700">
-                            <div class="text-right hidden lg:block">
-                                <div class="text-sm font-bold text-white leading-tight">{{ user.get_full_name|default:user.username }}</div>
-                                <div class="text-[10px] text-slate-400 flex items-center justify-end gap-1.5 mt-1">
-                                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></span>
-                                    En línea
+                        <!-- Divider -->
+                        <div class="hidden lg:block h-8 w-px bg-slate-700"></div>
+
+                        <!-- Panel Role Button (Docente/Admin) -->
+                        {% if not user.is_superuser and user.userprofile.rol == 'docente' %}
+                            <a href="{% url 'docente_dashboard' %}" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                                <span>Panel Docente</span>
+                            </a>
+                        {% endif %}
+                        {% if user.is_superuser %}
+                            <a href="/admin/" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-lg text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span>Panel Admin</span>
+                            </a>
+                        {% endif %}
+
+                        <!-- User Profile Section -->
+                        <div class="relative group">
+                            <button class="flex items-center gap-3 hover:bg-slate-700/30 dark:hover:bg-slate-900/30 px-3 py-2 rounded-xl transition-all" id="user-menu-button">
+                                <!-- Avatar con badge de rol -->
+                                <div class="relative">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                        {% if user.first_name and user.last_name %}
+                                            {{ user.first_name|first }}{{ user.last_name|first }}
+                                        {% else %}
+                                            {{ user.username|slice:":2"|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <!-- Status dot -->
+                                    <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-slate-900 dark:border-black animate-pulse shadow-lg"></span>
+                                </div>
+                                <!-- User info -->
+                                <div class="hidden lg:block text-left">
+                                    <div class="text-sm font-bold text-white leading-tight">{{ user.get_full_name|default:user.username }}</div>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <!-- Role badge -->
+                                        {% if user.is_superuser %}
+                                            <span class="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[9px] font-bold uppercase tracking-wider rounded">Admin</span>
+                                        {% elif user.userprofile.rol == 'docente' %}
+                                            <span class="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-bold uppercase tracking-wider rounded">Docente</span>
+                                        {% else %}
+                                            <span class="px-2 py-0.5 bg-slate-500/20 text-slate-400 text-[9px] font-bold uppercase tracking-wider rounded">Estudiante</span>
+                                        {% endif %}
+                                        <!-- Online status -->
+                                        <span class="flex items-center gap-1 text-[10px] text-emerald-400">
+                                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                            En línea
+                                        </span>
+                                    </div>
+                                </div>
+                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                    <div class="py-2">
+                                        <a href="{% url 'user_profile' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            <span>Mi Perfil</span>
+                                        </a>
+                                        <a href="{% url 'home' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                            <span>Dashboard</span>
+                                        </a>
+                                        <div class="border-t border-slate-200 dark:border-slate-700 my-2"></div>
+                                        <form method="post" action="{% url 'logout' %}" class="px-4 py-2">
+                                            {% csrf_token %}
+                                            <button type="submit" class="flex items-center gap-2 w-full text-left text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                                <span>Cerrar Sesión</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-
-                            <form method="post" action="{% url 'logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="p-2.5 text-slate-300 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 border border-transparent hover:border-red-500/30" title="Cerrar Sesión">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                </button>
-                            </form>
                         </div>
                     {% else %}
                         <!-- Usuario no autenticado -->

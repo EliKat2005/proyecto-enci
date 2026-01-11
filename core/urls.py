@@ -30,4 +30,9 @@ urlpatterns = [
     path(
         "notifications/delete-all/", views.delete_all_notifications, name="delete_all_notifications"
     ),
+    # Perfil de usuario
+    path("profile/", views.user_profile_view, name="user_profile"),
+    path("profile/update/", views.update_profile_view, name="update_profile"),
+    path("profile/change-password/", views.change_password_view, name="change_password"),
+    path("profile/delete/", views.delete_account_view, name="delete_account"),
 ]

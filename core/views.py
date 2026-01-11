@@ -700,3 +700,151 @@ def student_profile_view(request, student_id, grupo_id):
     }
 
     return render(request, "core/student_profile.html", context)
+
+
+@login_required
+def user_profile_view(request):
+    """Vista para mostrar el perfil del usuario actual con estadísticas."""
+
+    from contabilidad.models import EmpresaAsiento
+
+    # Obtener estadísticas del usuario
+    total_empresas = Empresa.objects.filter(owner=request.user).count()
+    total_asientos = EmpresaAsiento.objects.filter(
+        empresa__owner=request.user, anulado=False
+    ).count()
+
+    stats = {
+        "total_empresas": total_empresas,
+        "total_asientos": total_asientos,
+    }
+
+    context = {"user": request.user, "stats": stats}
+
+    return render(request, "core/user_profile.html", context)
+
+
+@login_required
+def update_profile_view(request):
+    """Vista para actualizar la información del perfil del usuario."""
+    if request.method != "POST":
+        return HttpResponseForbidden("Invalid method")
+
+    user = request.user
+
+    # Actualizar campos
+    first_name = request.POST.get("first_name", "").strip()
+    last_name = request.POST.get("last_name", "").strip()
+    username = request.POST.get("username", "").strip()
+    email = request.POST.get("email", "").strip()
+
+    # Validaciones básicas
+    errors = []
+
+    if not username:
+        errors.append("El nombre de usuario es requerido")
+    elif username != user.username and User.objects.filter(username=username).exists():
+        errors.append("Este nombre de usuario ya está en uso")
+
+    if email and email != user.email and User.objects.filter(email=email).exists():
+        errors.append("Este correo electrónico ya está registrado")
+
+    if errors:
+        for error in errors:
+            messages.error(request, error)
+        return redirect("user_profile")
+
+    # Actualizar usuario
+    user.first_name = first_name
+    user.last_name = last_name
+    user.username = username
+    user.email = email
+    user.save()
+
+    # Registrar en audit log
+    AuditLog.objects.create(
+        actor=user, target_user=user, action="update_profile", description="Perfil actualizado"
+    )
+
+    messages.success(request, "Tu perfil ha sido actualizado exitosamente")
+    return redirect("user_profile")
+
+
+@login_required
+def change_password_view(request):
+    """Vista para cambiar la contraseña del usuario."""
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.password_validation import validate_password
+    from django.core.exceptions import ValidationError
+
+    if request.method != "POST":
+        return HttpResponseForbidden("Invalid method")
+
+    user = request.user
+    old_password = request.POST.get("old_password", "")
+    new_password1 = request.POST.get("new_password1", "")
+    new_password2 = request.POST.get("new_password2", "")
+
+    # Validar contraseña actual
+    if not user.check_password(old_password):
+        messages.error(request, "La contraseña actual es incorrecta")
+        return redirect("user_profile")
+
+    # Validar que las nuevas contraseñas coincidan
+    if new_password1 != new_password2:
+        messages.error(request, "Las nuevas contraseñas no coinciden")
+        return redirect("user_profile")
+
+    # Validar la nueva contraseña con las reglas de Django
+    try:
+        validate_password(new_password1, user)
+    except ValidationError as e:
+        for error in e.messages:
+            messages.error(request, error)
+        return redirect("user_profile")
+
+    # Cambiar contraseña
+    user.set_password(new_password1)
+    user.save()
+
+    # Mantener la sesión activa después de cambiar contraseña
+    update_session_auth_hash(request, user)
+
+    # Registrar en audit log
+    AuditLog.objects.create(
+        actor=user, target_user=user, action="change_password", description="Contraseña cambiada"
+    )
+
+    messages.success(request, "Tu contraseña ha sido cambiada exitosamente")
+    return redirect("user_profile")
+
+
+@login_required
+def delete_account_view(request):
+    """Vista para eliminar la cuenta del usuario (soft delete o hard delete)."""
+    if request.method != "POST":
+        return HttpResponseForbidden("Invalid method")
+
+    confirm_text = request.POST.get("confirm_text", "")
+
+    if confirm_text != "ELIMINAR":
+        messages.error(request, "Debes escribir 'ELIMINAR' para confirmar la eliminación")
+        return redirect("user_profile")
+
+    user = request.user
+
+    # Registrar en audit log antes de eliminar
+    AuditLog.objects.create(
+        actor=user, target_user=user, action="delete_account", description="Cuenta eliminada"
+    )
+
+    # Cerrar sesión
+    logout(request)
+
+    # Eliminar usuario (esto eliminará en cascada los datos relacionados)
+    user.delete()
+
+    messages.success(
+        request, "Tu cuenta ha sido eliminada exitosamente. Esperamos verte pronto de nuevo."
+    )
+    return redirect("login")
