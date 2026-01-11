@@ -53,6 +53,9 @@ backups/
 *.backup
 *.html.bak
 
+# Scripts de desarrollo y testing
+scripts/
+
 # IDE / OS
 .idea/
 .vscode/
