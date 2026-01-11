@@ -1391,3 +1391,89 @@ def company_libro_mayor(request, empresa_id):
             pass
 
     return render(request, "contabilidad/company_libro_mayor.html", context)
+
+
+# ============================================================================
+# VISTAS DE MACHINE LEARNING / INTELIGENCIA ARTIFICIAL
+# ============================================================================
+
+
+@login_required
+def ml_dashboard(request, empresa_id):
+    """Dashboard principal de ML/AI con métricas y visualizaciones."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    if not empresa.user_can_view(request.user):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_dashboard",
+        "titulo_pagina": "Dashboard ML/AI",
+    }
+    return render(request, "contabilidad/ml_dashboard.html", context)
+
+
+@login_required
+def ml_analytics(request, empresa_id):
+    """Vista de analytics y métricas financieras."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    if not empresa.user_can_view(request.user):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_analytics",
+        "titulo_pagina": "Analytics Financiero",
+    }
+    return render(request, "contabilidad/ml_analytics.html", context)
+
+
+@login_required
+def ml_predictions(request, empresa_id):
+    """Vista de predicciones financieras con Prophet."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    if not empresa.user_can_view(request.user):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_predictions",
+        "titulo_pagina": "Predicciones Financieras",
+    }
+    return render(request, "contabilidad/ml_predictions.html", context)
+
+
+@login_required
+def ml_anomalies(request, empresa_id):
+    """Vista de detección y gestión de anomalías."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    if not empresa.user_can_view(request.user):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_anomalies",
+        "titulo_pagina": "Detección de Anomalías",
+    }
+    return render(request, "contabilidad/ml_anomalies.html", context)
+
+
+@login_required
+def ml_embeddings(request, empresa_id):
+    """Vista de búsqueda semántica con embeddings."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    if not empresa.user_can_view(request.user):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_embeddings",
+        "titulo_pagina": "Búsqueda Semántica",
+    }
+    return render(request, "contabilidad/ml_embeddings.html", context)

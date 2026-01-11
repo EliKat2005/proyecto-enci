@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard ML/AI - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                        🤖 Dashboard ML/AI
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Análisis inteligente para <span class="font-semibold">{{ empresa.nombre }}</span>
+                    </p>
+                </div>
+                <a href="{% url 'contabilidad:company_detail' empresa.id %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                    ← Volver a la empresa
+                </a>
+            </div>
+        </div>
+
+        <!-- Navegación de secciones ML -->
+        <div class="mb-8">
+            <nav class="flex space-x-4 overflow-x-auto">
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    📊 Dashboard
+                </a>
+                <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    📈 Analytics
+                </a>
+                <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🔮 Predicciones
+                </a>
+                <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🚨 Anomalías
+                </a>
+                <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🧠 Búsqueda Semántica
+                </a>
+            </nav>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-metricas" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">Cargando métricas...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-metricas" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+            <p class="text-red-800 dark:text-red-300 text-sm"></p>
+        </div>
+
+        <!-- KPIs Principales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Liquidez -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Liquidez Corriente</p>
+                        <p id="liquidez-value" class="text-3xl font-bold mt-2">-</p>
+                    </div>
+                    <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-3">
+                        <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Capacidad de pago a corto plazo
+                </p>
+            </div>
+
+            <!-- Rentabilidad -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">ROA</p>
+                        <p id="rentabilidad-value" class="text-3xl font-bold mt-2">-</p>
+                    </div>
+                    <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-3">
+                        <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Rentabilidad sobre activos
+                </p>
+            </div>
+
+            <!-- Endeudamiento -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Endeudamiento</p>
+                        <p id="endeudamiento-value" class="text-3xl font-bold mt-2">-</p>
+                    </div>
+                    <div class="bg-orange-100 dark:bg-orange-900/30 rounded-full p-3">
+                        <svg class="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Nivel de deuda total
+                </p>
+            </div>
+
+            <!-- Margen Neto -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Margen Neto</p>
+                        <p id="margen-value" class="text-3xl font-bold mt-2">-</p>
+                    </div>
+                    <div class="bg-purple-100 dark:bg-purple-900/30 rounded-full p-3">
+                        <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Margen de utilidad neta
+                </p>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Gráfico Radar -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Análisis Multidimensional
+                </h3>
+                <div class="h-80">
+                    <canvas id="metricsRadarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico de Barras -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Comparativa de Ratios
+                </h3>
+                <div class="h-80">
+                    <canvas id="metricsBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accesos Rápidos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
+               class="block bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div class="text-white">
+                    <div class="text-3xl mb-2">📈</div>
+                    <h3 class="text-lg font-semibold mb-1">Analytics</h3>
+                    <p class="text-sm opacity-90">Tendencias y análisis detallado</p>
+                </div>
+            </a>
+
+            <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
+               class="block bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div class="text-white">
+                    <div class="text-3xl mb-2">🔮</div>
+                    <h3 class="text-lg font-semibold mb-1">Predicciones</h3>
+                    <p class="text-sm opacity-90">Forecasting con Prophet</p>
+                </div>
+            </a>
+
+            <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
+               class="block bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div class="text-white">
+                    <div class="text-3xl mb-2">🚨</div>
+                    <h3 class="text-lg font-semibold mb-1">Anomalías</h3>
+                    <p class="text-sm opacity-90">Detección automática con ML</p>
+                </div>
+            </a>
+
+            <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
+               class="block bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div class="text-white">
+                    <div class="text-3xl mb-2">🧠</div>
+                    <h3 class="text-lg font-semibold mb-1">Búsqueda IA</h3>
+                    <p class="text-sm opacity-90">Búsqueda semántica inteligente</p>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Analytics JS -->
+<script src="{% static 'contabilidad/js/analytics.js' %}"></script>
+
+<script>
+    // Cargar métricas al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        const empresaId = {{ empresa.id }};
+        cargarMetricas(empresaId);
+    });
+</script>
+{% endblock %}

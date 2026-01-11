@@ -68,4 +68,10 @@ urlpatterns = [
         "<int:empresa_id>/estados/export/csv/", views.export_estados_csv, name="export_estados_csv"
     ),
     path("<int:empresa_id>/comment/<str:section>/", views.add_comment, name="add_comment"),
+    # Machine Learning & AI Dashboard Views
+    path("<int:empresa_id>/ml-dashboard/", views.ml_dashboard, name="ml_dashboard"),
+    path("<int:empresa_id>/ml-analytics/", views.ml_analytics, name="ml_analytics"),
+    path("<int:empresa_id>/ml-predictions/", views.ml_predictions, name="ml_predictions"),
+    path("<int:empresa_id>/ml-anomalies/", views.ml_anomalies, name="ml_anomalies"),
+    path("<int:empresa_id>/ml-embeddings/", views.ml_embeddings, name="ml_embeddings"),
 ]

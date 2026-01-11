@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Anomalías - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center py-12">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">🚨 Detección de Anomalías</h1>
+            <p class="text-gray-600 dark:text-gray-400">Próximamente: Detección automática con ML</p>
+            <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}" class="mt-4 inline-block text-blue-600 hover:text-blue-700">← Volver al Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
