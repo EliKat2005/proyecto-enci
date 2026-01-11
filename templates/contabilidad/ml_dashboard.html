@@ -17,6 +17,20 @@
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Análisis inteligente para <span class="font-semibold">{{ empresa.nombre }}</span>
                     </p>
+                    <div class="flex items-center space-x-3 mt-2">
+                        <span class="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Última actualización: <span id="ultima-actualizacion" class="font-medium ml-1">Cargando...</span>
+                        </span>
+                        <button onclick="cargarDashboard()" class="inline-flex items-center text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Actualizar
+                        </button>
+                    </div>
                 </div>
                 <a href="{% url 'contabilidad:company_detail' empresa.id %}"
                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -62,6 +76,48 @@
             <p class="text-red-800 dark:text-red-300 text-sm"></p>
         </div>
 
+        <!-- Resumen Ejecutivo -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" id="resumen-ejecutivo" style="display: none;">
+            <!-- Semáforo de Salud Financiera -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Estado General</h3>
+                    <span id="semaforo-icon" class="text-3xl">🟢</span>
+                </div>
+                <p id="semaforo-texto" class="text-sm text-gray-600 dark:text-gray-400 mb-3">Evaluando...</p>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500 dark:text-gray-400">Liquidez</span>
+                        <span id="semaforo-liquidez" class="font-medium">-</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500 dark:text-gray-400">Rentabilidad</span>
+                        <span id="semaforo-rentabilidad" class="font-medium">-</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500 dark:text-gray-400">Endeudamiento</span>
+                        <span id="semaforo-endeudamiento" class="font-medium">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Automáticos -->
+            <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg shadow-lg p-6 border border-blue-200 dark:border-blue-800">
+                <div class="flex items-center mb-3">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Insights IA</h3>
+                </div>
+                <div id="insights-container" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <p class="flex items-start">
+                        <span class="mr-2">💡</span>
+                        <span>Analizando patrones...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- KPIs Principales -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Liquidez -->
@@ -70,6 +126,10 @@
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Liquidez Corriente</p>
                         <p id="liquidez-value" class="text-3xl font-bold mt-2">-</p>
+                        <p class="text-xs mt-2">
+                            <span class="text-gray-500 dark:text-gray-400">Óptimo:</span>
+                            <span class="text-green-600 dark:text-green-400 font-medium">1.5 - 2.0</span>
+                        </p>
                     </div>
                     <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-3">
                         <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,6 +148,10 @@
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">ROA</p>
                         <p id="rentabilidad-value" class="text-3xl font-bold mt-2">-</p>
+                        <p class="text-xs mt-2">
+                            <span class="text-gray-500 dark:text-gray-400">Bueno:</span>
+                            <span class="text-green-600 dark:text-green-400 font-medium">> 5%</span>
+                        </p>
                     </div>
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-3">
                         <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,6 +170,10 @@
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Endeudamiento</p>
                         <p id="endeudamiento-value" class="text-3xl font-bold mt-2">-</p>
+                        <p class="text-xs mt-2">
+                            <span class="text-gray-500 dark:text-gray-400">Bajo:</span>
+                            <span class="text-green-600 dark:text-green-400 font-medium">< 50%</span>
+                        </p>
                     </div>
                     <div class="bg-orange-100 dark:bg-orange-900/30 rounded-full p-3">
                         <svg class="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,6 +192,10 @@
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Margen Neto</p>
                         <p id="margen-value" class="text-3xl font-bold mt-2">-</p>
+                        <p class="text-xs mt-2">
+                            <span class="text-gray-500 dark:text-gray-400">Bueno:</span>
+                            <span class="text-green-600 dark:text-green-400 font-medium">> 10%</span>
+                        </p>
                     </div>
                     <div class="bg-purple-100 dark:bg-purple-900/30 rounded-full p-3">
                         <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,14 +210,20 @@
         </div>
 
         <!-- Gráficos -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Gráfico Radar -->
             <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Análisis Multidimensional
                 </h3>
-                <div class="h-80">
+                <div class="h-80 mb-4">
                     <canvas id="metricsRadarChart"></canvas>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Interpretación:</strong> El área azul muestra su situación actual. La línea verde punteada representa los valores ideales. Cuanto más cerca esté del objetivo, mejor.
+                    </p>
                 </div>
             </div>
 
@@ -154,49 +232,15 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Comparativa de Ratios
                 </h3>
-                <div class="h-80">
+                <div class="h-80 mb-4">
                     <canvas id="metricsBarChart"></canvas>
                 </div>
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border-l-4 border-green-500">
+                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Interpretación:</strong> <span class="text-green-600 dark:text-green-400">Verde</span> = Bueno, <span class="text-yellow-600 dark:text-yellow-400">Amarillo</span> = Atención, <span class="text-red-600 dark:text-red-400">Rojo</span> = Requiere mejora.
+                    </p>
+                </div>
             </div>
-        </div>
-
-        <!-- Accesos Rápidos -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
-               class="block bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div class="text-white">
-                    <div class="text-3xl mb-2">📈</div>
-                    <h3 class="text-lg font-semibold mb-1">Analytics</h3>
-                    <p class="text-sm opacity-90">Tendencias y análisis detallado</p>
-                </div>
-            </a>
-
-            <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
-               class="block bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div class="text-white">
-                    <div class="text-3xl mb-2">🔮</div>
-                    <h3 class="text-lg font-semibold mb-1">Predicciones</h3>
-                    <p class="text-sm opacity-90">Forecasting con Prophet</p>
-                </div>
-            </a>
-
-            <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
-               class="block bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div class="text-white">
-                    <div class="text-3xl mb-2">🚨</div>
-                    <h3 class="text-lg font-semibold mb-1">Anomalías</h3>
-                    <p class="text-sm opacity-90">Detección automática con ML</p>
-                </div>
-            </a>
-
-            <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
-               class="block bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div class="text-white">
-                    <div class="text-3xl mb-2">🧠</div>
-                    <h3 class="text-lg font-semibold mb-1">Búsqueda IA</h3>
-                    <p class="text-sm opacity-90">Búsqueda semántica inteligente</p>
-                </div>
-            </a>
         </div>
 
     </div>
@@ -207,14 +251,489 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-<!-- Analytics JS -->
-<script src="{% static 'contabilidad/js/analytics.js' %}"></script>
-
 <script>
+
+    // Variables globales para los gráficos
+    let radarChart = null;
+    let barChart = null;
+
+    // Función para obtener el CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Función para cargar métricas del dashboard
+    async function cargarMetricas(empresaId) {
+
+        const loadingEl = document.getElementById('loading-metricas');
+        const errorEl = document.getElementById('error-metricas');
+
+        if (!loadingEl || !errorEl) {
+            return;
+        }
+
+        try {
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+
+            const url = `/contabilidad/api/ml/dashboard/${empresaId}/`;
+
+            const csrftoken = getCookie('csrftoken');
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken,
+                },
+                credentials: 'same-origin',
+            });
+
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Error ${response.status}: ${errorText.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+
+            // Actualizar KPIs con colores según el valor
+            const liquidezEl = document.getElementById('liquidez-value');
+            const roaEl = document.getElementById('rentabilidad-value');
+            const endeudamientoEl = document.getElementById('endeudamiento-value');
+            const margenEl = document.getElementById('margen-value');
+
+            if (liquidezEl) {
+                const valor = data.liquidez.toFixed(2);
+                liquidezEl.textContent = valor;
+                // Verde si >= 1.5, amarillo si >= 1, rojo si < 1
+                liquidezEl.className = 'text-3xl font-bold mt-2 ' +
+                    (data.liquidez >= 1.5 ? 'text-green-600 dark:text-green-400' :
+                     data.liquidez >= 1 ? 'text-yellow-600 dark:text-yellow-400' :
+                     'text-red-600 dark:text-red-400');
+            }
+            if (roaEl) {
+                const valor = data.roa.toFixed(2) + '%';
+                roaEl.textContent = valor;
+                // Verde si > 5%, amarillo si > 0%, rojo si <= 0%
+                roaEl.className = 'text-3xl font-bold mt-2 ' +
+                    (data.roa > 5 ? 'text-green-600 dark:text-green-400' :
+                     data.roa > 0 ? 'text-yellow-600 dark:text-yellow-400' :
+                     'text-red-600 dark:text-red-400');
+            }
+            if (endeudamientoEl) {
+                const valor = data.endeudamiento.toFixed(2) + '%';
+                endeudamientoEl.textContent = valor;
+                // Verde si < 50%, amarillo si < 70%, rojo si >= 70%
+                endeudamientoEl.className = 'text-3xl font-bold mt-2 ' +
+                    (data.endeudamiento < 50 ? 'text-green-600 dark:text-green-400' :
+                     data.endeudamiento < 70 ? 'text-yellow-600 dark:text-yellow-400' :
+                     'text-red-600 dark:text-red-400');
+            }
+            if (margenEl) {
+                const valor = data.margen_neto.toFixed(2) + '%';
+                margenEl.textContent = valor;
+                // Verde si > 10%, amarillo si > 5%, rojo si <= 5%
+                margenEl.className = 'text-3xl font-bold mt-2 ' +
+                    (data.margen_neto > 10 ? 'text-green-600 dark:text-green-400' :
+                     data.margen_neto > 5 ? 'text-yellow-600 dark:text-yellow-400' :
+                     'text-red-600 dark:text-red-400');
+            }
+
+
+            // Crear gráfico radar
+            crearGraficoRadar(data);
+
+            // Crear gráfico de barras
+            crearGraficoBarras(data);
+
+            // Actualizar semáforo de salud financiera
+            actualizarSemaforo(data);
+
+            // Generar insights automáticos
+            const insights = generarInsights(data);
+            const insightsContainer = document.getElementById('insights-container');
+            if (insightsContainer) {
+                insightsContainer.innerHTML = insights.map(insight => `
+                    <p class="flex items-start">
+                        <span class="mr-2">${insight.substring(0, 2)}</span>
+                        <span>${insight.substring(3)}</span>
+                    </p>
+                `).join('');
+            }
+
+            // Mostrar panel de resumen ejecutivo
+            document.getElementById('resumen-ejecutivo').style.display = 'grid';
+
+            loadingEl.classList.add('hidden');
+
+        } catch (error) {
+            loadingEl.classList.add('hidden');
+            errorEl.classList.remove('hidden');
+            const errorP = errorEl.querySelector('p');
+            if (errorP) {
+                errorP.textContent = 'Error al cargar métricas: ' + error.message;
+            }
+        }
+    }
+
+    function crearGraficoRadar(data) {
+        const ctx = document.getElementById('metricsRadarChart');
+        if (!ctx) {
+            return;
+        }
+
+        // Destruir gráfico existente si existe
+        if (radarChart) {
+            radarChart.destroy();
+            radarChart = null;
+        }
+
+
+        // Normalizar valores para el radar (0-100)
+        const liquidezNorm = Math.min((data.liquidez / 2) * 100, 100); // Óptimo: 2.0
+        const roaNorm = Math.max(0, Math.min((data.roa + 50) * 2, 100)); // Rango: -50 a +50
+        const margenNorm = Math.max(0, Math.min((data.margen_neto + 20) * 2.5, 100)); // Rango: -20 a +20
+        const solvenciaNorm = Math.max(0, 100 - data.endeudamiento); // Inverso del endeudamiento
+
+        radarChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: [
+                    'Liquidez',
+                    'Rentabilidad (ROA)',
+                    'Margen Neto',
+                    'Solvencia',
+                    'Eficiencia'
+                ],
+                datasets: [{
+                    label: 'Métricas Actuales',
+                    data: [liquidezNorm, roaNorm, margenNorm, solvenciaNorm, 50],
+                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(59, 130, 246)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }, {
+                    label: 'Objetivo Ideal',
+                    data: [80, 75, 75, 70, 75],
+                    backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                    borderColor: 'rgba(34, 197, 94, 0.5)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151',
+                            font: { size: 12, weight: '500' },
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                label += Math.round(context.parsed.r) + '/100';
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        min: 0,
+                        ticks: {
+                            stepSize: 20,
+                            color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280',
+                            backdropColor: 'transparent',
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            color: document.documentElement.classList.contains('dark') ? 'rgba(75, 85, 99, 0.3)' : 'rgba(209, 213, 219, 0.5)'
+                        },
+                        pointLabels: {
+                            color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#4b5563',
+                            font: { size: 12, weight: '500' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function crearGraficoBarras(data) {
+        const ctx = document.getElementById('metricsBarChart');
+        if (!ctx) {
+            return;
+        }
+
+        // Destruir gráfico existente si existe
+        if (barChart) {
+            barChart.destroy();
+            barChart = null;
+        }
+
+
+        // Colores según si el valor es bueno o malo
+        const getColor = (metrica, valor) => {
+            if (metrica === 'liquidez') {
+                return valor >= 1.5 ? 'rgba(34, 197, 94, 0.8)' :
+                       valor >= 1 ? 'rgba(251, 191, 36, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+            } else if (metrica === 'roa' || metrica === 'margen') {
+                return valor > 5 ? 'rgba(34, 197, 94, 0.8)' :
+                       valor > 0 ? 'rgba(251, 191, 36, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+            } else if (metrica === 'endeudamiento') {
+                return valor < 50 ? 'rgba(34, 197, 94, 0.8)' :
+                       valor < 70 ? 'rgba(251, 191, 36, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+            }
+            return 'rgba(59, 130, 246, 0.8)';
+        };
+
+        const valores = [
+            data.liquidez,
+            data.roa,
+            data.endeudamiento,
+            data.margen_neto
+        ];
+
+        const colores = [
+            getColor('liquidez', data.liquidez),
+            getColor('roa', data.roa),
+            getColor('endeudamiento', data.endeudamiento),
+            getColor('margen', data.margen_neto)
+        ];
+
+        barChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Liquidez (ratio)', 'ROA (%)', 'Endeudamiento (%)', 'Margen Neto (%)'],
+                datasets: [{
+                    label: 'Valor Actual',
+                    data: valores,
+                    backgroundColor: colores,
+                    borderColor: colores.map(c => c.replace('0.8', '1')),
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label;
+                                let value = context.parsed.y;
+
+                                if (label.includes('Liquidez')) {
+                                    return `Liquidez: ${value.toFixed(2)}x (Óptimo: 1.5-2.0)`;
+                                } else if (label.includes('ROA')) {
+                                    return `ROA: ${value.toFixed(2)}% (Bueno: >5%)`;
+                                } else if (label.includes('Endeudamiento')) {
+                                    return `Endeudamiento: ${value.toFixed(2)}% (Bajo: <50%)`;
+                                } else if (label.includes('Margen')) {
+                                    return `Margen Neto: ${value.toFixed(2)}% (Bueno: >10%)`;
+                                }
+                                return value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: document.documentElement.classList.contains('dark') ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280',
+                            font: { size: 11 },
+                            callback: function(value) {
+                                return value.toFixed(0);
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#4b5563',
+                            font: { size: 11, weight: '500' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     // Cargar métricas al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
+        cargarDashboard();
+    });
+
+    function cargarDashboard() {
         const empresaId = {{ empresa.id }};
         cargarMetricas(empresaId);
-    });
+        actualizarFechaHora();
+    }
+
+    function actualizarFechaHora() {
+        const ahora = new Date();
+        const opciones = {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        };
+        document.getElementById('ultima-actualizacion').textContent =
+            ahora.toLocaleDateString('es-ES', opciones);
+    }
+
+    function generarInsights(data) {
+        const insights = [];
+
+        // Análisis de liquidez
+        if (data.liquidez >= 1.5 && data.liquidez <= 2.0) {
+            insights.push('✅ Tu liquidez está en el rango óptimo. Buena capacidad de pago.');
+        } else if (data.liquidez < 1.0) {
+            insights.push('⚠️ Liquidez baja. Considera mejorar la gestión de efectivo.');
+        } else if (data.liquidez > 3.0) {
+            insights.push('💰 Liquidez alta. Podrías invertir el exceso de efectivo.');
+        }
+
+        // Análisis de rentabilidad
+        if (data.roa > 10) {
+            insights.push('🚀 Excelente rentabilidad sobre activos (ROA > 10%).');
+        } else if (data.roa > 5) {
+            insights.push('✅ Buena rentabilidad. Mantén esta tendencia.');
+        } else if (data.roa < 0) {
+            insights.push('🔴 ROA negativo. Revisa estructura de costos.');
+        }
+
+        // Análisis de endeudamiento
+        if (data.endeudamiento < 30) {
+            insights.push('💪 Bajo endeudamiento. Buena salud financiera.');
+        } else if (data.endeudamiento > 70) {
+            insights.push('⚠️ Alto endeudamiento. Considera reducir pasivos.');
+        }
+
+        // Análisis de margen
+        if (data.margen_neto > 15) {
+            insights.push('📊 Excelente margen neto. Muy rentable.');
+        } else if (data.margen_neto < 5 && data.margen_neto > 0) {
+            insights.push('📉 Margen neto bajo. Optimiza costos operativos.');
+        }
+
+        // Si no hay insights, agregar uno genérico
+        if (insights.length === 0) {
+            insights.push('📊 Continúa monitoreando tus métricas regularmente.');
+        }
+
+        return insights;
+    }
+
+    function actualizarSemaforo(data) {
+        let puntuacion = 0;
+        let detalles = [];
+
+        // Evaluar liquidez (30%)
+        if (data.liquidez >= 1.5 && data.liquidez <= 2.0) {
+            puntuacion += 30;
+            detalles.push({ nombre: 'Liquidez', estado: '🟢 Óptima', color: 'text-green-600 dark:text-green-400' });
+        } else if (data.liquidez >= 1.0 && data.liquidez < 3.0) {
+            puntuacion += 20;
+            detalles.push({ nombre: 'Liquidez', estado: '🟡 Aceptable', color: 'text-yellow-600 dark:text-yellow-400' });
+        } else {
+            puntuacion += 10;
+            detalles.push({ nombre: 'Liquidez', estado: '🔴 Crítica', color: 'text-red-600 dark:text-red-400' });
+        }
+
+        // Evaluar rentabilidad (35%)
+        if (data.roa > 10) {
+            puntuacion += 35;
+            detalles.push({ nombre: 'Rentabilidad', estado: '🟢 Excelente', color: 'text-green-600 dark:text-green-400' });
+        } else if (data.roa > 5) {
+            puntuacion += 25;
+            detalles.push({ nombre: 'Rentabilidad', estado: '🟡 Buena', color: 'text-yellow-600 dark:text-yellow-400' });
+        } else {
+            puntuacion += 10;
+            detalles.push({ nombre: 'Rentabilidad', estado: '🔴 Baja', color: 'text-red-600 dark:text-red-400' });
+        }
+
+        // Evaluar endeudamiento (35%)
+        if (data.endeudamiento < 30) {
+            puntuacion += 35;
+            detalles.push({ nombre: 'Endeudamiento', estado: '🟢 Bajo', color: 'text-green-600 dark:text-green-400' });
+        } else if (data.endeudamiento < 50) {
+            puntuacion += 25;
+            detalles.push({ nombre: 'Endeudamiento', estado: '🟡 Moderado', color: 'text-yellow-600 dark:text-yellow-400' });
+        } else {
+            puntuacion += 10;
+            detalles.push({ nombre: 'Endeudamiento', estado: '🔴 Alto', color: 'text-red-600 dark:text-red-400' });
+        }
+
+        // Determinar semáforo general
+        let icono, texto;
+        if (puntuacion >= 80) {
+            icono = '🟢';
+            texto = 'Excelente salud financiera';
+        } else if (puntuacion >= 60) {
+            icono = '🟡';
+            texto = 'Salud financiera aceptable';
+        } else {
+            icono = '🔴';
+            texto = 'Requiere atención urgente';
+        }
+
+        // Actualizar UI
+        document.getElementById('semaforo-icon').textContent = icono;
+        document.getElementById('semaforo-texto').textContent = texto;
+
+        detalles.forEach(detalle => {
+            const elemento = document.getElementById(`semaforo-${detalle.nombre.toLowerCase()}`);
+            if (elemento) {
+                elemento.innerHTML = `<span class="${detalle.color}">${detalle.estado}</span>`;
+            }
+        });
+    }
 </script>
 {% endblock %}

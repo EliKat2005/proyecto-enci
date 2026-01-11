@@ -1,15 +1,432 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Búsqueda Semántica - {{ empresa.nombre }}{% endblock %}
+{% block title %}Búsqueda de Cuentas - {{ empresa.nombre }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center py-12">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">🧠 Búsqueda Semántica</h1>
-            <p class="text-gray-600 dark:text-gray-400">Próximamente: Búsqueda inteligente con embeddings</p>
-            <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}" class="mt-4 inline-block text-blue-600 hover:text-blue-700">← Volver al Dashboard</a>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                        🔍 Búsqueda Inteligente de Cuentas
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Encuentra cuentas rápidamente - <span class="font-semibold">{{ empresa.nombre }}</span>
+                    </p>
+                </div>
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                    ← Dashboard ML
+                </a>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <div class="mb-8">
+            <nav class="flex space-x-4 overflow-x-auto">
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    📊 Dashboard
+                </a>
+                <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    📈 Analytics
+                </a>
+                <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🔮 Predicciones
+                </a>
+                <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🚨 Anomalías
+                </a>
+                <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    🔍 Búsqueda
+                </a>
+            </nav>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow p-6 mb-8 border border-gray-200 dark:border-dark-border">
+            <div class="flex items-center space-x-4">
+                <div class="flex-1">
+                    <input
+                        type="text"
+                        id="search-query"
+                        placeholder="Busca por código o descripción: ej. caja, 1105, gastos de oficina..."
+                        class="block w-full px-4 py-2 border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        onkeypress="if(event.key === 'Enter') buscarSemantica()"
+                    />
+                </div>
+
+                <div>
+                    <select id="limit-resultados" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="5">5 resultados</option>
+                        <option value="10" selected>10 resultados</option>
+                        <option value="20">20 resultados</option>
+                        <option value="50">50 resultados</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button onclick="buscarSemantica()"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        🔍 Buscar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Search Suggestions - Dynamic -->
+            <div class="mt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-medium text-gray-600 dark:text-gray-400">💡 Sugerencias de tu empresa:</p>
+                    {% if sugerencias %}
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ sugerencias|length }} cuenta{{ sugerencias|length|pluralize }} más usada{{ sugerencias|length|pluralize }}</span>
+                    {% endif %}
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    {% if sugerencias %}
+                        {% for sugerencia in sugerencias %}
+                        <button onclick="searchSuggestion('{{ sugerencia.texto }}')"
+                                title="{{ sugerencia.codigo }} - {{ sugerencia.texto_completo }}"
+                                class="group relative px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-gray-700 dark:text-gray-300 rounded-lg hover:from-blue-100 hover:to-purple-100 dark:hover:from-blue-800/30 dark:hover:to-purple-800/30 border border-gray-200 dark:border-gray-700 transition-all hover:shadow-md hover:scale-105">
+                            {{ sugerencia.emoji }} {{ sugerencia.texto }}
+                            <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-gray-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                {{ sugerencia.codigo }}
+                            </span>
+                        </button>
+                        {% endfor %}
+                    {% else %}
+                        <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>
+                                Aún no hay cuentas con movimientos. Agrega cuentas en
+                                <a href="{% url 'contabilidad:company_plan' empresa.id %}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Plan de Cuentas</a>
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="search-stats" style="display: none;">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Resultados</p>
+                        <p id="total-resultados" class="text-2xl font-bold text-green-600 dark:text-green-400">0</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Cuentas encontradas</p>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Mayor Similitud</p>
+                        <p id="max-similarity" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0%</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mejor coincidencia</p>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Promedio</p>
+                        <p id="avg-similarity" class="text-2xl font-bold text-purple-600 dark:text-purple-400">0%</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Similitud media</p>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                        <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Tiempo</p>
+                        <p id="search-time" class="text-2xl font-bold text-orange-600 dark:text-orange-400">0ms</p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Velocidad de búsqueda</p>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-search" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">Procesando búsqueda con embeddings...</p>
+        </div>
+
+        <!-- Search Results -->
+        <div id="search-results" class="space-y-4 hidden">
+            <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Empty State / Info Panel -->
+        <div id="empty-state" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-gray-200 dark:border-dark-border overflow-hidden">
+            <div class="text-center py-12">
+                <svg class="mx-auto h-16 w-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <h3 class="mt-4 text-xl font-bold text-gray-900 dark:text-white">🔍 Búsqueda Inteligente</h3>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Busca cuentas por código o descripción. El sistema encuentra las cuentas más relevantes automáticamente.
+                </p>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10 px-8 py-6 border-t border-gray-200 dark:border-gray-700">
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">✨ Cómo Usar</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="bg-white dark:bg-dark-surface rounded-lg p-3 shadow-sm">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-xs">1</span>
+                            <span class="font-medium text-gray-900 dark:text-white">Escribe tu búsqueda</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400">Ingresa código (ej. 1105) o descripción (ej. caja, gastos)</p>
+                    </div>
+                    <div class="bg-white dark:bg-dark-surface rounded-lg p-3 shadow-sm">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-bold text-xs">2</span>
+                            <span class="font-medium text-gray-900 dark:text-white">Búsqueda rápida</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400">El sistema busca en todas las cuentas activas instantáneamente</p>
+                    </div>
+                    <div class="bg-white dark:bg-dark-surface rounded-lg p-3 shadow-sm">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs">3</span>
+                            <span class="font-medium text-gray-900 dark:text-white">Resultados ordenados</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400">Las cuentas más relevantes aparecen primero con % de coincidencia</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>Búsqueda optimizada para velocidad y precisión</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const empresaId = {{ empresa.id }};
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function searchSuggestion(query) {
+    document.getElementById('search-query').value = query;
+    buscarSemantica();
+}
+
+async function buscarSemantica() {
+    const query = document.getElementById('search-query').value.trim();
+    const limit = document.getElementById('limit-resultados').value;
+
+    if (!query) {
+        alert('Por favor ingresa un texto de búsqueda');
+        return;
+    }
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('search-results').classList.add('hidden');
+    document.getElementById('search-stats').style.display = 'none';
+    document.getElementById('loading-search').classList.remove('hidden');
+
+    const startTime = performance.now();
+
+    try {
+        const response = await fetch(`/contabilidad/api/ml/embeddings/${empresaId}/buscar/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                query: query,
+                limit: parseInt(limit)
+            })
+        });
+
+        if (!response.ok) throw new Error('Error en la búsqueda');
+
+        const data = await response.json();
+        const endTime = performance.now();
+        const searchTime = Math.round(endTime - startTime);
+
+        mostrarResultados(data, searchTime);
+
+    } catch (error) {
+        alert('Error al realizar la búsqueda. Por favor intenta nuevamente.');
+        document.getElementById('loading-search').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+    }
+}
+
+function mostrarResultados(data, searchTime) {
+    document.getElementById('loading-search').classList.add('hidden');
+
+    const resultados = data.results || [];
+
+    if (resultados.length === 0) {
+        const emptyState = document.getElementById('empty-state');
+        emptyState.innerHTML = `
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Sin resultados</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Intenta con otros términos de búsqueda</p>
+        `;
+        emptyState.classList.remove('hidden');
+        return;
+    }
+
+    // Update stats
+    document.getElementById('search-stats').style.display = 'grid';
+    document.getElementById('total-resultados').textContent = resultados.length;
+
+    const maxSim = Math.max(...resultados.map(r => r.score || 0));
+    const avgSim = resultados.reduce((sum, r) => sum + (r.score || 0), 0) / resultados.length;
+
+    document.getElementById('max-similarity').textContent = `${(maxSim * 100).toFixed(1)}%`;
+    document.getElementById('avg-similarity').textContent = `${(avgSim * 100).toFixed(1)}%`;
+    document.getElementById('search-time').textContent = `${searchTime}ms`;
+
+    // Create result cards
+    const container = document.getElementById('search-results');
+    container.innerHTML = '';
+    container.classList.remove('hidden');
+
+    resultados.forEach((resultado, index) => {
+        const similarity = (resultado.score || 0) * 100;
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border-l-4 border border-gray-200 dark:border-dark-border hover:shadow-xl transition-all';
+
+        let colorClass, emoji, badgeText;
+        if (similarity >= 95) {
+            colorClass = 'green';
+            emoji = '🎯';
+            badgeText = 'Coincidencia Perfecta';
+            card.style.borderLeftColor = '#10b981';
+        } else if (similarity >= 80) {
+            colorClass = 'blue';
+            emoji = '✅';
+            badgeText = 'Alta Relevancia';
+            card.style.borderLeftColor = '#3b82f6';
+        } else if (similarity >= 60) {
+            colorClass = 'purple';
+            emoji = '👍';
+            badgeText = 'Relevante';
+            card.style.borderLeftColor = '#a855f7';
+        } else {
+            colorClass = 'gray';
+            emoji = '📄';
+            badgeText = 'Posible Coincidencia';
+            card.style.borderLeftColor = '#6b7280';
+        }
+
+        card.innerHTML = `
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-${colorClass}-100 dark:bg-${colorClass}-900/30 text-${colorClass}-700 dark:text-${colorClass}-300 font-bold text-lg">
+                            ${emoji}
+                        </span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                ${resultado.codigo}
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                ${resultado.descripcion || 'Sin descripción'}
+                            </p>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-${colorClass}-100 dark:bg-${colorClass}-900/30 text-${colorClass}-700 dark:text-${colorClass}-300">
+                            ${badgeText}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 mt-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white capitalize">${resultado.tipo || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Naturaleza</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white capitalize">${resultado.naturaleza || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">ID Cuenta</p>
+                            <p class="text-sm font-mono font-medium text-gray-900 dark:text-white">#${resultado.id}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ml-6 flex flex-col items-center">
+                    <div class="relative w-24 h-24">
+                        <svg class="transform -rotate-90 w-24 h-24">
+                            <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="transparent" class="text-gray-200 dark:text-gray-700"/>
+                            <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="transparent"
+                                    stroke-dasharray="${2 * Math.PI * 40}"
+                                    stroke-dashoffset="${2 * Math.PI * 40 * (1 - similarity / 100)}"
+                                    class="text-${colorClass}-600 dark:text-${colorClass}-400 transition-all duration-1000 ease-out"
+                                    stroke-linecap="round"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-${colorClass}-600 dark:text-${colorClass}-400">${similarity.toFixed(0)}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">Similitud<br/>Semántica</p>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+</script>
 {% endblock %}

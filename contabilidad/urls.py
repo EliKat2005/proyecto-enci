@@ -74,4 +74,26 @@ urlpatterns = [
     path("<int:empresa_id>/ml-predictions/", views.ml_predictions, name="ml_predictions"),
     path("<int:empresa_id>/ml-anomalies/", views.ml_anomalies, name="ml_anomalies"),
     path("<int:empresa_id>/ml-embeddings/", views.ml_embeddings, name="ml_embeddings"),
+    # ML/AI API Endpoints
+    path(
+        "api/ml/dashboard/<int:empresa_id>/",
+        views.ml_api_dashboard_metrics,
+        name="ml_api_dashboard",
+    ),
+    path("api/ml/analytics/<int:empresa_id>/", views.ml_api_analytics, name="ml_api_analytics"),
+    path(
+        "api/ml/predictions/<int:empresa_id>/generar/",
+        views.ml_api_predictions,
+        name="ml_api_predictions",
+    ),
+    path(
+        "api/ml/anomalies/<int:empresa_id>/detectar/",
+        views.ml_api_anomalies,
+        name="ml_api_anomalies",
+    ),
+    path(
+        "api/ml/embeddings/<int:empresa_id>/buscar/",
+        views.ml_api_embeddings,
+        name="ml_api_embeddings",
+    ),
 ]

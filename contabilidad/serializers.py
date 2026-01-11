@@ -18,7 +18,7 @@ class EmpresaBasicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Empresa
-        fields = ["id", "nombre", "nit"]
+        fields = ["id", "nombre"]
 
 
 class EmpresaMetricaSerializer(serializers.ModelSerializer):
