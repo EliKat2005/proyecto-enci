@@ -11,13 +11,21 @@ Endpoints:
 from datetime import date
 from decimal import Decimal
 
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from contabilidad.models import Empresa, EmpresaAsiento, EmpresaPlanCuenta, EmpresaTransaccion
+from contabilidad.models import (
+    Empresa,
+    EmpresaAsiento,
+    EmpresaPlanCuenta,
+    EmpresaTransaccion,
+    EstadoAsiento,
+    NaturalezaCuenta,
+)
 from contabilidad.services import EstadosFinancierosService, LibroMayorService
 
 
@@ -155,37 +163,99 @@ class EmpresaViewSet(viewsets.ReadOnlyModelViewSet):
             except (ValueError, TypeError):
                 pass
 
-        # Calcular balance
-        cuentas = empresa.cuentas.filter(es_auxiliar=True).order_by("codigo")
-        balance_data = []
+        # Calcular balance en forma set-based (evita N+1 por cuenta)
+        cuentas = list(
+            empresa.cuentas.filter(es_auxiliar=True)
+            .only("id", "codigo", "descripcion", "naturaleza")
+            .order_by("codigo")
+        )
+        cuentas_by_id = {c.id: c for c in cuentas}
 
+        tx = EmpresaTransaccion.objects.filter(
+            asiento__empresa=empresa,
+            asiento__estado=EstadoAsiento.CONFIRMADO,
+            cuenta_id__in=cuentas_by_id.keys(),
+        )
+
+        # Agregados (saldo inicial antes de fecha_inicio, y movimientos del período)
+        filtro_periodo = Q()
+        if fecha_inicio:
+            filtro_periodo &= Q(asiento__fecha__gte=fecha_inicio)
+        if fecha_fin:
+            filtro_periodo &= Q(asiento__fecha__lte=fecha_fin)
+        filtro_anterior = Q()
+        if fecha_inicio:
+            filtro_anterior = Q(asiento__fecha__lt=fecha_inicio)
+
+        agregados = tx.values("cuenta_id").annotate(
+            debe_ant=Sum("debe", filter=filtro_anterior)
+            if fecha_inicio
+            else Sum("debe", filter=Q(pk__isnull=True)),
+            haber_ant=Sum("haber", filter=filtro_anterior)
+            if fecha_inicio
+            else Sum("haber", filter=Q(pk__isnull=True)),
+            debe_per=Sum("debe", filter=filtro_periodo)
+            if (fecha_inicio or fecha_fin)
+            else Sum("debe"),
+            haber_per=Sum("haber", filter=filtro_periodo)
+            if (fecha_inicio or fecha_fin)
+            else Sum("haber"),
+        )
+
+        # Normalizar None -> 0
+        agg_by_cuenta = {
+            row["cuenta_id"]: {
+                "debe_ant": row["debe_ant"] or Decimal("0.00"),
+                "haber_ant": row["haber_ant"] or Decimal("0.00"),
+                "debe": row["debe_per"] or Decimal("0.00"),
+                "haber": row["haber_per"] or Decimal("0.00"),
+            }
+            for row in agregados
+        }
+
+        balance_data = []
         total_debe = Decimal("0.00")
         total_haber = Decimal("0.00")
 
         for cuenta in cuentas:
-            saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
+            row = agg_by_cuenta.get(
+                cuenta.id,
+                {
+                    "debe_ant": Decimal("0.00"),
+                    "haber_ant": Decimal("0.00"),
+                    "debe": Decimal("0.00"),
+                    "haber": Decimal("0.00"),
+                },
+            )
 
-            si_d = saldos["saldo_inicial"] if saldos["saldo_inicial"] > 0 else Decimal("0.00")
-            si_a = abs(saldos["saldo_inicial"]) if saldos["saldo_inicial"] < 0 else Decimal("0.00")
-            sf_d = saldos["saldo_final"] if saldos["saldo_final"] > 0 else Decimal("0.00")
-            sf_a = abs(saldos["saldo_final"]) if saldos["saldo_final"] < 0 else Decimal("0.00")
+            if cuenta.naturaleza == NaturalezaCuenta.DEUDORA:
+                saldo_inicial = row["debe_ant"] - row["haber_ant"]
+                saldo_final = saldo_inicial + row["debe"] - row["haber"]
+            else:
+                saldo_inicial = row["haber_ant"] - row["debe_ant"]
+                saldo_final = saldo_inicial + row["haber"] - row["debe"]
 
-            if si_d or si_a or saldos["debe"] or saldos["haber"] or sf_d or sf_a:
+            si_d = saldo_inicial if saldo_inicial > 0 else Decimal("0.00")
+            si_a = abs(saldo_inicial) if saldo_inicial < 0 else Decimal("0.00")
+            sf_d = saldo_final if saldo_final > 0 else Decimal("0.00")
+            sf_a = abs(saldo_final) if saldo_final < 0 else Decimal("0.00")
+
+            if si_d or si_a or row["debe"] or row["haber"] or sf_d or sf_a:
                 balance_data.append(
                     {
                         "codigo": cuenta.codigo,
                         "cuenta": cuenta.descripcion,
                         "saldo_inicial_deudor": si_d,
                         "saldo_inicial_acreedor": si_a,
-                        "debe": saldos["debe"],
-                        "haber": saldos["haber"],
+                        "debe": row["debe"],
+                        "haber": row["haber"],
                         "saldo_final_deudor": sf_d,
                         "saldo_final_acreedor": sf_a,
                     }
                 )
 
-                total_debe += saldos["debe"]
-                total_haber += saldos["haber"]
+                total_debe += row["debe"]
+                total_haber += row["haber"]
 
         return Response(
             {

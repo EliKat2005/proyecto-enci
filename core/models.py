@@ -132,7 +132,8 @@ class Invitation(models.Model):
         verbose_name_plural = "Invitations"
 
     def __str__(self):
-        return f"{self.code} - {self.grupo.nombre} (by {self.creator.username})"
+        grupo_nombre = self.grupo.nombre if self.grupo else "(sin grupo)"
+        return f"{self.code} - {grupo_nombre} (by {self.creator.username})"
 
     def is_valid(self):
         from django.utils import timezone
@@ -183,7 +184,8 @@ class Referral(models.Model):
         unique_together = ("student", "grupo")  # Un estudiante solo puede estar una vez en un grupo
 
     def __str__(self):
-        return f"{self.student.username} -> {self.grupo.nombre} ({self.docente.username})"
+        grupo_nombre = self.grupo.nombre if self.grupo else "(sin grupo)"
+        return f"{self.student.username} -> {grupo_nombre} ({self.docente.username})"
 
 
 class Notification(models.Model):
@@ -193,7 +195,7 @@ class Notification(models.Model):
     - `actor`: quién causó el evento (opcional).
     - `verb`: acción corta (ej. 'registered', 'activated', 'commented').
     - `target_user`: usuario objetivo del evento, cuando aplique.
-    - `empresa_id`: ID de la empresa relacionada (para comentarios).
+    - `empresa`: Empresa relacionada (para comentarios).
     - `comment_section`: sección del comentario (PL, DI, RP).
     - `url`: URL directa a la acción/recurso.
     - `unread`: si la notificación aún no fue leída.
@@ -218,7 +220,13 @@ class Notification(models.Model):
         blank=True,
         related_name="target_notifications",
     )
-    empresa_id = models.IntegerField(null=True, blank=True)
+    empresa = models.ForeignKey(
+        "contabilidad.Empresa",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
     comment_section = models.CharField(max_length=2, null=True, blank=True)
     url = models.CharField(max_length=500, null=True, blank=True)
     unread = models.BooleanField(default=True)

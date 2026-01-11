@@ -4,75 +4,23 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+
+# Caches / tooling
 .ruff_cache/
 .pytest_cache/
 .mypy_cache/
 
-# Envs
-.venv/
-venv/
-ENV/
-.env
-.env.*
-
-# Django
-*.log
-staticfiles/
-media/
-local_settings.py
-db.sqlite3
-
-# Packaging
-build/
-dist/
-downloads/
-eggs/
-.eggs/
-*.egg-info/
-proyecto_enci.egg-info/
-
-# IDE / OS
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db
-
-# Coverage / tox
-.coverage*
-htmlcov/
-.tox/
-
-# Backups y dumps
-backup_*.sql
-backups/
-
-# Misc
-.ropeproject/
-*.swp
-*.swo# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-*.pyc
-*.pyo
-*.pyd
-.Python
-
-# Entornos virtuales de Python
+# Virtual environments
 .venv/
 venv/
 env/
 ENV/
+
+# Environment files
 .env
-.env.local
+.env.*
 
-# Archivos del `uv init` original que no usaremos
-main.py
-
-# Archivos generados por Django
+# Django
 *.log
 *.pot
 *.sqlite3
@@ -80,34 +28,46 @@ db.sqlite3
 media/
 staticfiles/
 static_root/
-/node_modules/
-/staticfiles_build/
+local_settings.py
+config/settings_production.py
 
-# Archivos de IDE
+# Packaging
+build/
+dist/
+wheels/
+*.egg-info/
+proyecto_enci.egg-info/
+
+# Coverage / tox
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.tox/
+
+# Backups y dumps
+backup_*.sql
+backups/
+*.bak
+*.backup
+*.html.bak
+
+# IDE / OS
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Archivos de migración temporal (solo si es necesario)
-# */migrations/*.py
-# !*/migrations/__init__.py
+# Node (si aplica)
+node_modules/
+staticfiles_build/
 
-# Configuración local
-local_settings.py
-config/settings_production.py
+# Misc
+.ropeproject/
 
-# Cobertura de tests
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
-
-# Archivos de backup
-*.bak
-*.backup
-*.html.bak
-backup_*.sql
+# Archivos del `uv init` original que no usaremos
+main.py

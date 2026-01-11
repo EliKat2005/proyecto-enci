@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 # --- Clases de Opciones (ENUMs) ---
@@ -124,74 +124,88 @@ class Empresa(models.Model):
         """Crea una copia completa (cuentas, asientos, transacciones) de esta empresa
         asignada a `new_owner`. Devuelve la nueva Empresa.
         """
-        # 1) crear la empresa destino
-        new_emp = Empresa.objects.create(
-            nombre=self.nombre,
-            descripcion=self.descripcion,
-            owner=new_owner,
-            is_template=False,
-            original=self,
-            visible_to_supervisor=False,  # por defecto off: el estudiante debe habilitarlo
-        )
-
-        # 2) copiar cuentas (mantener estructura padre-hijo)
-        old_accounts = EmpresaPlanCuenta.objects.filter(empresa=self).order_by("id")
-        mapping = {}  # viejo_id -> nuevo_obj
-        for acc in old_accounts:
-            new_acc = EmpresaPlanCuenta.objects.create(
-                empresa=new_emp,
-                codigo=acc.codigo,
-                descripcion=acc.descripcion,
-                tipo=acc.tipo,
-                naturaleza=acc.naturaleza,
-                estado_situacion=acc.estado_situacion,
-                es_auxiliar=acc.es_auxiliar,
-                padre=None,  # asignaremos padre más tarde
-            )
-            mapping[acc.id] = new_acc
-
-        # asignar padres ahora que existen todos los nuevos accounts
-        for acc in old_accounts:
-            if acc.padre_id:
-                new_obj = mapping.get(acc.id)
-                parent_new = mapping.get(acc.padre_id)
-                if new_obj and parent_new:
-                    new_obj.padre = parent_new
-                    new_obj.save(update_fields=["padre"])
-
-        # 3) copiar asientos y transacciones
-        old_asientos = EmpresaAsiento.objects.filter(empresa=self).order_by("id")
-        for ast in old_asientos:
-            new_ast = EmpresaAsiento.objects.create(
-                empresa=new_emp,
-                fecha=ast.fecha,
-                descripcion_general=ast.descripcion_general,
-                estado=ast.estado,
-                creado_por=new_owner,  # asignamos al estudiante como creador de la copia
+        with transaction.atomic():
+            # 1) crear la empresa destino
+            new_emp = Empresa.objects.create(
+                nombre=self.nombre,
+                descripcion=self.descripcion,
+                owner=new_owner,
+                is_template=False,
+                original=self,
+                visible_to_supervisor=False,  # por defecto off: el estudiante debe habilitarlo
             )
 
-            old_lines = EmpresaTransaccion.objects.filter(asiento=ast).order_by("id")
-            for ln in old_lines:
-                # mapear la cuenta al nuevo account correspondiente por codigo
-                new_cuenta = None
-                if ln.cuenta and ln.cuenta.codigo:
-                    try:
-                        new_cuenta = EmpresaPlanCuenta.objects.get(
-                            empresa=new_emp, codigo=ln.cuenta.codigo
-                        )
-                    except EmpresaPlanCuenta.DoesNotExist:
-                        new_cuenta = None
+            # 2) copiar cuentas (mantener estructura padre-hijo) evitando N+1
+            old_accounts = list(EmpresaPlanCuenta.objects.filter(empresa=self).order_by("id"))
+            new_accounts = [
+                EmpresaPlanCuenta(
+                    empresa=new_emp,
+                    codigo=acc.codigo,
+                    descripcion=acc.descripcion,
+                    tipo=acc.tipo,
+                    naturaleza=acc.naturaleza,
+                    estado_situacion=acc.estado_situacion,
+                    es_auxiliar=acc.es_auxiliar,
+                    activa=acc.activa,
+                    padre=None,
+                )
+                for acc in old_accounts
+            ]
+            EmpresaPlanCuenta.objects.bulk_create(new_accounts, batch_size=1000)
 
-                EmpresaTransaccion.objects.create(
-                    asiento=new_ast,
-                    cuenta=new_cuenta,
-                    detalle_linea=ln.detalle_linea,
-                    parcial=ln.parcial,
-                    debe=ln.debe,
-                    haber=ln.haber,
+            mapping = {old.id: new for old, new in zip(old_accounts, new_accounts, strict=True)}
+            codigo_to_new = {acc.codigo: acc for acc in new_accounts}
+
+            to_update = []
+            for old in old_accounts:
+                if old.padre_id:
+                    new_obj = mapping.get(old.id)
+                    parent_new = mapping.get(old.padre_id)
+                    if new_obj and parent_new:
+                        new_obj.padre = parent_new
+                        to_update.append(new_obj)
+
+            if to_update:
+                EmpresaPlanCuenta.objects.bulk_update(to_update, ["padre"], batch_size=1000)
+
+            # 3) copiar asientos y transacciones (prefetch + bulk_create por asiento)
+            old_asientos = (
+                EmpresaAsiento.objects.filter(empresa=self)
+                .prefetch_related("lineas", "lineas__cuenta")
+                .order_by("id")
+            )
+
+            for ast in old_asientos:
+                new_ast = EmpresaAsiento.objects.create(
+                    empresa=new_emp,
+                    fecha=ast.fecha,
+                    descripcion_general=ast.descripcion_general,
+                    estado=ast.estado,
+                    creado_por=new_owner,
+                    anulado=ast.anulado,
                 )
 
-        return new_emp
+                transacciones = []
+                for ln in ast.lineas.all():
+                    new_cuenta = None
+                    if ln.cuenta_id:
+                        new_cuenta = codigo_to_new.get(ln.cuenta.codigo)
+
+                    transacciones.append(
+                        EmpresaTransaccion(
+                            asiento=new_ast,
+                            cuenta=new_cuenta,
+                            detalle_linea=ln.detalle_linea,
+                            debe=ln.debe,
+                            haber=ln.haber,
+                            creado_por=new_owner,
+                        )
+                    )
+
+                if transacciones:
+                    EmpresaTransaccion.objects.bulk_create(transacciones, batch_size=2000)
+
+            return new_emp
 
 
 class EmpresaPlanCuenta(models.Model):

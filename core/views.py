@@ -68,34 +68,21 @@ def login_view(request):
         username = (request.POST.get("username") or "").strip()
         password = request.POST.get("password") or ""
 
-        # Caso A: usuario no existe
-        try:
-            user_check = User.objects.get(username=username)
-        except User.DoesNotExist:
-            # Usuario no existe
-            messages.error(request, "El usuario no existe.")
-            # Devolver formulario vacío pero conservar el username en el campo
+        # Autenticar sin revelar si el usuario existe o no
+        user = authenticate(request, username=username, password=password)
+        if user is None:
+            messages.error(request, "Credenciales inválidas.")
             empty_form = AuthenticationForm()
             return render(
                 request, "core/login.html", {"form": empty_form, "username_value": username}
             )
 
-        # A estas alturas el usuario existe. Comprobamos la contraseña.
-        if not user_check.check_password(password):
-            # Contraseña incorrecta
-            messages.error(request, "Contraseña incorrecta. Por favor verifica tus credenciales.")
-            empty_form = AuthenticationForm()
-            return render(
-                request, "core/login.html", {"form": empty_form, "username_value": username}
-            )
-
-        # La contraseña es correcta. Ahora verificamos el estado del perfil.
+        # La contraseña fue correcta: ahora verificamos estado del perfil.
         # NOTA: los superusuarios siempre pueden entrar (no requieren perfil activo).
-        if not user_check.is_superuser:
+        if not user.is_superuser:
             try:
-                profile = user_check.userprofile
+                profile = user.userprofile
                 if not profile.esta_activo:
-                    # Cuenta existente, contraseña correcta, pero perfil no activo
                     messages.warning(
                         request,
                         "Tu cuenta está registrada, pero pendiente de activación por un administrador.",
@@ -105,7 +92,6 @@ def login_view(request):
                         request, "core/login.html", {"form": empty_form, "username_value": username}
                     )
             except UserProfile.DoesNotExist:
-                # Si no tiene perfil definido, no permitimos el login por seguridad
                 messages.error(
                     request, "Perfil de usuario no encontrado. Contacta al administrador."
                 )
@@ -114,17 +100,8 @@ def login_view(request):
                     request, "core/login.html", {"form": empty_form, "username_value": username}
                 )
 
-        # Si llegamos aquí, el usuario existe, contraseña correcta y perfil activo (o es superuser)
-        # Autenticamos vía backend para mantener compatibilidad
-        user = authenticate(request, username=username, password=password)
-        if user is None:
-            # Raro: no autenticó a través de los backends (causa externa). Hacemos login manual como fallback.
-            user_check.backend = "django.contrib.auth.backends.ModelBackend"
-            login(request, user_check)
-            logged_user = user_check
-        else:
-            login(request, user)
-            logged_user = user
+        login(request, user)
+        logged_user = user
 
         # Respetar parámetro `next` si viene y es seguro
         next_url = request.POST.get("next") or request.GET.get("next")

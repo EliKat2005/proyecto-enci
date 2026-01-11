@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Exists, OuterRef, Q, Sum
 
 from .models import (
     Empresa,
@@ -70,9 +70,57 @@ class AsientoService:
         Raises:
             ValidationError: Si las validaciones fallan
         """
-        # 1. Validar partida doble
-        total_debe = sum(Decimal(str(l.get("debe", 0))) for l in lineas)
-        total_haber = sum(Decimal(str(l.get("haber", 0))) for l in lineas)
+        if not lineas:
+            raise ValidationError("El asiento debe tener al menos una línea.")
+
+        # 1. Validar y normalizar líneas + partida doble
+        total_debe = Decimal("0.00")
+        total_haber = Decimal("0.00")
+        cuenta_ids: list[int] = []
+        tercero_ids: list[int] = []
+        lineas_norm: list[dict] = []
+
+        for linea in lineas:
+            if "cuenta_id" not in linea:
+                raise ValidationError("Cada línea debe incluir cuenta_id.")
+
+            try:
+                cuenta_id = int(linea["cuenta_id"])
+            except (TypeError, ValueError):
+                raise ValidationError("cuenta_id inválido.")
+
+            debe = Decimal(str(linea.get("debe", 0)))
+            haber = Decimal(str(linea.get("haber", 0)))
+
+            if debe < 0 or haber < 0:
+                raise ValidationError("Los montos no pueden ser negativos.")
+            if debe > 0 and haber > 0:
+                raise ValidationError(
+                    "Una línea no puede tener valores tanto en debe como en haber. Use líneas separadas."
+                )
+            if debe == 0 and haber == 0:
+                raise ValidationError("Debe o Haber debe ser mayor a cero.")
+
+            tercero_id = linea.get("tercero_id")
+            if tercero_id:
+                try:
+                    tercero_ids.append(int(tercero_id))
+                except (TypeError, ValueError):
+                    raise ValidationError("tercero_id inválido.")
+
+            cuenta_ids.append(cuenta_id)
+            total_debe += debe
+            total_haber += haber
+
+            lineas_norm.append(
+                {
+                    "cuenta_id": cuenta_id,
+                    "detalle": linea.get("detalle", ""),
+                    "debe": debe,
+                    "haber": haber,
+                    "tercero_id": int(tercero_id) if tercero_id else None,
+                }
+            )
 
         if total_debe != total_haber:
             raise ValidationError(
@@ -99,36 +147,55 @@ class AsientoService:
         )
         asiento.save()
 
-        # 4. Crear líneas
-        for linea_data in lineas:
-            cuenta = EmpresaPlanCuenta.objects.get(id=linea_data["cuenta_id"], empresa=empresa)
+        # 4. Resolver cuentas/terceros en bloque (evita N+1) y validar cuentas hoja
+        cuentas_qs = EmpresaPlanCuenta.objects.filter(id__in=cuenta_ids, empresa=empresa).annotate(
+            _has_children=Exists(EmpresaPlanCuenta.objects.filter(padre=OuterRef("pk")))
+        )
+        cuentas_by_id = {c.id: c for c in cuentas_qs}
+        if len(cuentas_by_id) != len(set(cuenta_ids)):
+            raise ValidationError("Una o más cuentas no existen o no pertenecen a la empresa.")
 
-            # Tercero opcional
-            tercero = None
-            tercero_id = linea_data.get("tercero_id")
-            if tercero_id:
-                try:
-                    tercero = EmpresaTercero.objects.get(id=tercero_id, empresa=empresa)
-                except EmpresaTercero.DoesNotExist:
-                    raise ValidationError(
-                        f"El tercero con id {tercero_id} no pertenece a la empresa."
-                    )
+        terceros_by_id = {}
+        if tercero_ids:
+            terceros_qs = EmpresaTercero.objects.filter(id__in=set(tercero_ids), empresa=empresa)
+            terceros_by_id = {t.id: t for t in terceros_qs}
+            if len(terceros_by_id) != len(set(tercero_ids)):
+                raise ValidationError("Uno o más terceros no pertenecen a la empresa.")
 
-            # Validar que la cuenta pueda recibir transacciones
-            if not cuenta.puede_recibir_transacciones:
+        transacciones = []
+        for linea_data in lineas_norm:
+            cuenta = cuentas_by_id[linea_data["cuenta_id"]]
+
+            puede_recibir = (
+                bool(cuenta.es_auxiliar)
+                and bool(cuenta.activa)
+                and not bool(getattr(cuenta, "_has_children", False))
+            )
+            if not puede_recibir:
                 raise ValidationError(
                     f"La cuenta {cuenta.codigo} - {cuenta.descripcion} no puede recibir transacciones. "
                     f"Debe ser auxiliar, sin cuentas hijas y estar activa."
                 )
 
-            EmpresaTransaccion.objects.create(
-                asiento=asiento,
-                cuenta=cuenta,
-                detalle_linea=linea_data.get("detalle", ""),
-                debe=Decimal(str(linea_data.get("debe", 0))),
-                haber=Decimal(str(linea_data.get("haber", 0))),
-                tercero=tercero,
+            tercero = None
+            tercero_id = linea_data.get("tercero_id")
+            if tercero_id:
+                tercero = terceros_by_id.get(tercero_id)
+
+            transacciones.append(
+                EmpresaTransaccion(
+                    asiento=asiento,
+                    cuenta=cuenta,
+                    detalle_linea=linea_data.get("detalle", ""),
+                    debe=linea_data["debe"],
+                    haber=linea_data["haber"],
+                    tercero=tercero,
+                    creado_por=creado_por,
+                )
             )
+
+        # Bulk insert (las validaciones ya se realizaron arriba)
+        EmpresaTransaccion.objects.bulk_create(transacciones, batch_size=1000)
 
         # 5. Verificar balance final
         if not asiento.esta_balanceado:

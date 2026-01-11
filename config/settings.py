@@ -78,10 +78,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # --- BASE DE DATOS (MariaDB/MySQL) ---
-# Configuración única para MariaDB/MySQL. SQLite no es soportado aquí.
+# Configuración única para MariaDB/MySQL. SQLite no es soportado en este proyecto.
+DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.mysql")
+if DB_ENGINE != "django.db.backends.mysql":
+    raise RuntimeError(
+        "Base de datos no soportada: este proyecto permite únicamente MariaDB "
+        "(ENGINE=django.db.backends.mysql)."
+    )
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": DB_ENGINE,
         "NAME": os.getenv("DB_NAME", "enci"),
         "USER": os.getenv("DB_USER", "enci"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),

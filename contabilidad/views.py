@@ -616,7 +616,7 @@ def add_comment(request, empresa_id, section):
             recipient=empresa.owner,
             actor=request.user,
             verb="commented",
-            empresa_id=empresa.id,
+            empresa=empresa,
             comment_section=section,
             url=url,
             unread=True,
