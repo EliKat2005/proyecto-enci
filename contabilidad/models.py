@@ -828,3 +828,229 @@ class EmpresaComment(models.Model):
 
     def __str__(self):
         return f"Comentario {self.id} en {self.empresa.nombre} - {self.get_section_display()}"
+
+
+# -------------------------
+# Modelos de Análisis e Inteligencia Artificial
+# -------------------------
+
+
+class EmpresaMetrica(models.Model):
+    """Almacena métricas financieras calculadas para análisis y dashboards."""
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="metricas")
+    fecha_calculo = models.DateTimeField(auto_now_add=True)
+    periodo_inicio = models.DateField()
+    periodo_fin = models.DateField()
+
+    # Métricas de liquidez
+    activo_corriente = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    pasivo_corriente = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    razon_corriente = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    prueba_acida = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+
+    # Métricas de rentabilidad
+    ingresos_totales = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    gastos_totales = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    utilidad_neta = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    margen_neto = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    roe = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True, help_text="Return on Equity"
+    )
+    roa = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True, help_text="Return on Assets"
+    )
+
+    # Métricas de endeudamiento
+    total_activos = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    total_pasivos = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    total_patrimonio = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    razon_endeudamiento = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True
+    )
+
+    # Métricas operacionales
+    num_transacciones = models.IntegerField(default=0)
+    num_cuentas_activas = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "contabilidad_empresa_metrica"
+        verbose_name = "Métrica Empresarial"
+        verbose_name_plural = "Métricas Empresariales"
+        ordering = ["-fecha_calculo"]
+        indexes = [
+            models.Index(fields=["empresa", "-fecha_calculo"]),
+            models.Index(fields=["periodo_inicio", "periodo_fin"]),
+        ]
+
+    def __str__(self):
+        return f"Métricas {self.empresa.nombre} - {self.periodo_inicio} a {self.periodo_fin}"
+
+
+class EmpresaCuentaEmbedding(models.Model):
+    """Almacena embeddings vectoriales de cuentas contables para búsqueda semántica y ML."""
+
+    cuenta = models.ForeignKey(
+        "EmpresaPlanCuenta", on_delete=models.CASCADE, related_name="embeddings"
+    )
+
+    # Embedding como JSON (MariaDB 11.8 soporta VECTOR pero Django ORM no tiene soporte nativo aún)
+    # Usaremos raw SQL para insertar/buscar con VECTOR type directamente
+    embedding_json = models.JSONField(
+        help_text="Representación vectorial de la cuenta (768 dimensiones)"
+    )
+
+    # Metadata del embedding
+    modelo_usado = models.CharField(
+        max_length=100, default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+    dimension = models.IntegerField(default=768)
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+
+    # Texto usado para generar el embedding
+    texto_fuente = models.TextField(
+        help_text="Código + Descripción + Tipo usado para generar embedding"
+    )
+
+    class Meta:
+        db_table = "contabilidad_cuenta_embedding"
+        verbose_name = "Embedding de Cuenta"
+        verbose_name_plural = "Embeddings de Cuentas"
+        indexes = [
+            models.Index(fields=["cuenta"]),
+            models.Index(fields=["-fecha_generacion"]),
+        ]
+
+    def __str__(self):
+        return f"Embedding: {self.cuenta.codigo} - {self.cuenta.descripcion[:50]}"
+
+
+class PrediccionFinanciera(models.Model):
+    """Almacena predicciones generadas por modelos ML (Prophet, ARIMA, etc)."""
+
+    TIPO_PREDICCION_CHOICES = [
+        ("INGR", "Ingresos"),
+        ("GAST", "Gastos"),
+        ("FLUJ", "Flujo de Efectivo"),
+        ("PATR", "Patrimonio"),
+        ("UTIL", "Utilidad"),
+    ]
+
+    MODELO_CHOICES = [
+        ("PROPHET", "Facebook Prophet"),
+        ("ARIMA", "ARIMA"),
+        ("LINEAR", "Regresión Lineal"),
+        ("RF", "Random Forest"),
+    ]
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="predicciones")
+    tipo_prediccion = models.CharField(max_length=4, choices=TIPO_PREDICCION_CHOICES)
+    modelo_usado = models.CharField(max_length=10, choices=MODELO_CHOICES)
+
+    # Datos de la predicción
+    fecha_prediccion = models.DateField(help_text="Fecha para la cual se hace la predicción")
+    valor_predicho = models.DecimalField(max_digits=20, decimal_places=2)
+    limite_inferior = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Intervalo de confianza inferior",
+    )
+    limite_superior = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Intervalo de confianza superior",
+    )
+    confianza = models.DecimalField(
+        max_digits=5, decimal_places=2, default=95.00, help_text="Nivel de confianza en %"
+    )
+
+    # Metadata
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+    metricas_modelo = models.JSONField(null=True, blank=True, help_text="MAE, RMSE, R², etc.")
+    datos_entrenamiento = models.JSONField(
+        null=True, blank=True, help_text="Referencia a datos usados"
+    )
+
+    class Meta:
+        db_table = "contabilidad_prediccion_financiera"
+        verbose_name = "Predicción Financiera"
+        verbose_name_plural = "Predicciones Financieras"
+        ordering = ["fecha_prediccion"]
+        indexes = [
+            models.Index(fields=["empresa", "tipo_prediccion", "fecha_prediccion"]),
+            models.Index(fields=["-fecha_generacion"]),
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_prediccion_display()} - {self.empresa.nombre} ({self.fecha_prediccion}): ${self.valor_predicho}"
+
+
+class AnomaliaDetectada(models.Model):
+    """Registra anomalías detectadas en transacciones mediante ML (Isolation Forest, etc)."""
+
+    TIPO_ANOMALIA_CHOICES = [
+        ("MONTO", "Monto Inusual"),
+        ("FREQ", "Frecuencia Anormal"),
+        ("PTRN", "Patrón Sospechoso"),
+        ("CONT", "Inconsistencia Contable"),
+        ("TEMP", "Temporal Atípica"),
+    ]
+
+    SEVERIDAD_CHOICES = [
+        ("BAJA", "Baja"),
+        ("MEDIA", "Media"),
+        ("ALTA", "Alta"),
+        ("CRITICA", "Crítica"),
+    ]
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="anomalias")
+    asiento_id = models.BigIntegerField(null=True, blank=True, help_text="ID del asiento anómalo")
+    transaccion_id = models.BigIntegerField(
+        null=True, blank=True, help_text="ID de la transacción anómala"
+    )
+
+    tipo_anomalia = models.CharField(max_length=5, choices=TIPO_ANOMALIA_CHOICES)
+    severidad = models.CharField(max_length=7, choices=SEVERIDAD_CHOICES, default="MEDIA")
+
+    # Detalles de la anomalía
+    score_anomalia = models.DecimalField(
+        max_digits=10,
+        decimal_places=6,
+        help_text="Score del algoritmo (ej: -0.5 en Isolation Forest)",
+    )
+    descripcion = models.TextField(help_text="Explicación de por qué es anómala")
+
+    # Metadata
+    algoritmo_usado = models.CharField(max_length=100, default="IsolationForest")
+    fecha_deteccion = models.DateTimeField(auto_now_add=True)
+
+    # Estado
+    revisada = models.BooleanField(default=False)
+    es_falso_positivo = models.BooleanField(default=False)
+    notas_revision = models.TextField(blank=True)
+    revisada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="anomalias_revisadas",
+    )
+    fecha_revision = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "contabilidad_anomalia_detectada"
+        verbose_name = "Anomalía Detectada"
+        verbose_name_plural = "Anomalías Detectadas"
+        ordering = ["-fecha_deteccion", "-severidad"]
+        indexes = [
+            models.Index(fields=["empresa", "-fecha_deteccion"]),
+            models.Index(fields=["severidad", "revisada"]),
+            models.Index(fields=["tipo_anomalia"]),
+        ]
+
+    def __str__(self):
+        return f"Anomalía {self.get_tipo_anomalia_display()} - {self.empresa.nombre} ({self.severidad})"

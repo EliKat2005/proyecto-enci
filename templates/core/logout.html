@@ -3,21 +3,21 @@
 {% block title %}Sesión Cerrada | ECAE{% endblock %}
 
 {% block content %}
-<div class="min-h-[calc(100vh-8rem)] bg-slate-50 flex items-center justify-center p-6">
+<div class="min-h-[calc(100vh-8rem)] bg-slate-50 dark:bg-black flex items-center justify-center p-6">
   <div class="max-w-5xl w-full">
-    <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-800 overflow-hidden">
       <div class="grid md:grid-cols-2 gap-0">
-        
+
         <!-- Lado Izquierdo - Información -->
         <div class="p-10 flex flex-col justify-center">
           <div class="mb-6">
-            <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-100 rounded-xl mb-4">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl mb-4">
               <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">Sesión Cerrada Exitosamente</h1>
-            <p class="text-slate-600 text-base">Tu sesión ha finalizado de forma segura. Todos los datos han sido protegidos correctamente.</p>
+            <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Sesión Cerrada Exitosamente</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-base">Tu sesión ha finalizado de forma segura. Todos los datos han sido protegidos correctamente.</p>
           </div>
 
           <div class="space-y-3 mb-8">
@@ -26,8 +26,8 @@
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
               <div>
-                <p class="font-semibold text-slate-800">Datos protegidos</p>
-                <p class="text-slate-600">Información de sesión eliminada del navegador</p>
+                <p class="font-semibold text-slate-800 dark:text-slate-200">Datos protegidos</p>
+                <p class="text-slate-600 dark:text-slate-400">Información de sesión eliminada del navegador</p>
               </div>
             </div>
             <div class="flex items-start space-x-3 text-sm">
@@ -35,8 +35,8 @@
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
               <div>
-                <p class="font-semibold text-slate-800">Conexión cerrada</p>
-                <p class="text-slate-600">No hay sesiones activas en este dispositivo</p>
+                <p class="font-semibold text-slate-800 dark:text-slate-200">Conexión cerrada</p>
+                <p class="text-slate-600 dark:text-slate-400">No hay sesiones activas en este dispositivo</p>
               </div>
             </div>
             <div class="flex items-start space-x-3 text-sm">
@@ -44,8 +44,8 @@
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
               <div>
-                <p class="font-semibold text-slate-800">Acceso seguro</p>
-                <p class="text-slate-600">Puedes volver a iniciar sesión cuando quieras</p>
+                <p class="font-semibold text-slate-800 dark:text-slate-200">Acceso seguro</p>
+                <p class="text-slate-600 dark:text-slate-400">Puedes volver a iniciar sesión cuando quieras</p>
               </div>
             </div>
           </div>
@@ -57,7 +57,7 @@
               </svg>
               Iniciar Sesión
             </a>
-            <a href="{% url 'registro' %}" class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors">
+            <a href="{% url 'registro' %}" class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-lg transition-colors">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
               </svg>
@@ -72,11 +72,11 @@
           <div class="absolute inset-0 opacity-10">
             <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
           </div>
-          
+
           <!-- Círculos decorativos -->
           <div class="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
           <div class="absolute bottom-10 left-10 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl"></div>
-          
+
           <!-- Contenido -->
           <div class="relative z-10 text-center">
             <div class="inline-flex items-center justify-center w-24 h-24 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 mb-6 shadow-xl">
@@ -102,7 +102,7 @@
       </div>
     </div>
 
-    
+
   </div>
 </div>
 
