@@ -86,7 +86,17 @@
                             <span class="text-sm font-semibold text-slate-300">Bienvenid@,</span>
                             <span class="text-sm font-bold text-blue-400">{{ user.first_name|default:user.username }}</span>
                             <span class="text-slate-600 dark:text-slate-700 mx-1">•</span>
-                            <span class="text-xs text-slate-400">Panel de Control</span>
+                            {% if user.is_superuser %}
+                                <span class="text-xs font-bold text-amber-400">Administrador</span>
+                            {% else %}
+                                {% with user.groups.all|first as user_group %}
+                                    {% if user_group.name == 'Docentes' %}
+                                        <span class="text-xs font-bold text-blue-400">Panel Docente</span>
+                                    {% else %}
+                                        <span class="text-xs text-slate-400">Estudiante</span>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>
@@ -128,16 +138,20 @@
                         <!-- Usuario y logout -->
                         <div class="flex items-center gap-3 pl-4 border-l-2 border-slate-700">
                             <!-- Panel Docente/Admin Buttons -->
-                            {% if user.groups.all.0.name == 'Docentes' or user.is_superuser %}
-                                <a href="{% url 'docente_dashboard' %}" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                                    <span>Docente</span>
-                                </a>
+                            {% if not user.is_superuser %}
+                                {% with user.groups.all|first as user_group %}
+                                    {% if user_group.name == 'Docentes' %}
+                                        <a href="{% url 'docente_dashboard' %}" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                                            <span>Panel Docente</span>
+                                        </a>
+                                    {% endif %}
+                                {% endwith %}
                             {% endif %}
                             {% if user.is_superuser %}
                                 <a href="/admin/" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-lg text-xs font-bold transition-all duration-200 shadow-md hover:shadow-lg">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span>Admin</span>
+                                    <span>Panel Admin</span>
                                 </a>
                             {% endif %}
 
