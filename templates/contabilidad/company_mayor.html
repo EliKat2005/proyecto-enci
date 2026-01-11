@@ -3,23 +3,23 @@
 {% block title %}Libro Mayor - {{ empresa.nombre }} | ECAE{% endblock %}
 
 {% block content %}
-<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100 py-6">
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
   <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
-    
+
     {% with current_panel='mayor' %}{% include 'contabilidad/_company_header_minimal.html' %}{% endwith %}
 
     <!-- Grid: Selector (izq) + Movimientos (centro) + Filtros (der) -->
     <div id="mayor-grid" class="grid gap-4 xl:grid-cols-4 items-start mb-4">
-      
+
       <!-- Panel Izquierdo: Selector de Cuenta -->
       <div id="mayor-selector" class="xl:col-span-1 space-y-4">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 sticky top-20">
-          <h2 class="text-sm font-bold text-purple-800 mb-4 tracking-wide">Seleccionar Cuenta</h2>
-          
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 sticky top-20">
+          <h2 class="text-sm font-bold text-purple-800 dark:text-purple-400 mb-4 tracking-wide">Seleccionar Cuenta</h2>
+
           <form method="get" class="space-y-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Cuenta</label>
-              <select name="cuenta_id" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" onchange="this.form.submit()">
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase">Cuenta</label>
+              <select name="cuenta_id" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm" onchange="this.form.submit()">
                 <option value="">-- Seleccione una cuenta --</option>
                 {% for cuenta in cuentas_aux %}
                 <option value="{{ cuenta.id }}" {% if cuenta_seleccionada and cuenta.id == cuenta_seleccionada.id %}selected{% endif %}>
@@ -28,7 +28,7 @@
                 {% endfor %}
               </select>
             </div>
-            
+
             <!-- Mantener filtros de fecha en el formulario -->
             {% if fecha_inicio %}
             <input type="hidden" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}">
@@ -39,9 +39,9 @@
           </form>
 
           {% if cuenta_seleccionada %}
-          <div class="mt-4 pt-4 border-t border-slate-200">
-            <h3 class="text-xs font-bold text-slate-700 mb-2">Detalles de la Cuenta</h3>
-            <div class="space-y-1 text-xs text-slate-600">
+          <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Detalles de la Cuenta</h3>
+            <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">
               <p><span class="font-semibold">Código:</span> {{ cuenta_seleccionada.codigo }}</p>
               <p><span class="font-semibold">Tipo:</span> {{ cuenta_seleccionada.get_tipo_display }}</p>
               <p><span class="font-semibold">Naturaleza:</span> {{ cuenta_seleccionada.get_naturaleza_display }}</p>
@@ -54,11 +54,11 @@
       <!-- Panel Central: Movimientos del Libro Mayor -->
       <div id="mayor-main" class="xl:col-span-2">
         {% if cuenta_seleccionada and saldos_data %}
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
           <!-- Encabezado de la Cuenta -->
-          <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4">
+          <div class="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 text-white px-6 py-4">
             <h2 class="text-lg font-bold">{{ cuenta_seleccionada.codigo }} - {{ cuenta_seleccionada.descripcion }}</h2>
-            <p class="text-sm text-purple-100 mt-1">
+            <p class="text-sm text-purple-100 dark:text-purple-200 mt-1">
               {% if fecha_inicio and fecha_fin %}
                 Período: {{ fecha_inicio|date:"d/m/Y" }} - {{ fecha_fin|date:"d/m/Y" }}
               {% elif fecha_inicio %}
@@ -72,22 +72,22 @@
           </div>
 
           <!-- Resumen de Saldos -->
-          <div class="grid grid-cols-4 gap-4 p-4 bg-slate-50 border-b border-slate-200">
+          <div class="grid grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
             <div class="text-center">
-              <p class="text-xs text-slate-600 font-semibold uppercase">Saldo Inicial</p>
-              <p class="text-lg font-bold text-slate-800">${{ saldos_data.saldo_inicial|floatformat:2 }}</p>
+              <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold uppercase">Saldo Inicial</p>
+              <p class="text-lg font-bold text-slate-800 dark:text-slate-200">${{ saldos_data.saldo_inicial|floatformat:2 }}</p>
             </div>
             <div class="text-center">
-              <p class="text-xs text-slate-600 font-semibold uppercase">Debe</p>
-              <p class="text-lg font-bold text-emerald-600">${{ saldos_data.debe|floatformat:2 }}</p>
+              <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold uppercase">Debe</p>
+              <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400">${{ saldos_data.debe|floatformat:2 }}</p>
             </div>
             <div class="text-center">
-              <p class="text-xs text-slate-600 font-semibold uppercase">Haber</p>
-              <p class="text-lg font-bold text-rose-600">${{ saldos_data.haber|floatformat:2 }}</p>
+              <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold uppercase">Haber</p>
+              <p class="text-lg font-bold text-blue-600 dark:text-blue-400">${{ saldos_data.haber|floatformat:2 }}</p>
             </div>
             <div class="text-center">
-              <p class="text-xs text-slate-600 font-semibold uppercase">Saldo Final</p>
-              <p class="text-lg font-bold text-purple-700">${{ saldos_data.saldo_final|floatformat:2 }}</p>
+              <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold uppercase">Saldo Final</p>
+              <p class="text-lg font-bold text-purple-700 dark:text-purple-400">${{ saldos_data.saldo_final|floatformat:2 }}</p>
             </div>
           </div>
 
@@ -95,7 +95,7 @@
           {% if saldos_data.movimientos %}
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
-              <thead class="bg-slate-100 text-slate-700">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 <tr>
                   <th class="px-4 py-3 text-left font-semibold">Fecha</th>
                   <th class="px-4 py-3 text-left font-semibold">Asiento</th>
@@ -104,22 +104,22 @@
                   <th class="px-4 py-3 text-right font-semibold">Haber</th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-slate-200">
+              <tbody class="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
                 {% for mov in saldos_data.movimientos %}
-                <tr class="hover:bg-purple-50 transition-colors">
-                  <td class="px-4 py-3 text-slate-700">{{ mov.asiento.fecha|date:"d/m/Y" }}</td>
-                  <td class="px-4 py-3 text-slate-600 text-xs">
-                    <span class="font-mono bg-slate-100 px-2 py-1 rounded">
+                <tr class="hover:bg-purple-50 dark:hover:bg-slate-800 transition-colors">
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ mov.asiento.fecha|date:"d/m/Y" }}</td>
+                  <td class="px-4 py-3 text-slate-600 dark:text-slate-400 text-xs">
+                    <span class="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                       A-{{ mov.asiento.numero_asiento }}
                     </span>
                   </td>
-                  <td class="px-4 py-3 text-slate-700">
+                  <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
                     {{ mov.detalle_linea|default:mov.asiento.descripcion_general|truncatewords:10 }}
                   </td>
-                  <td class="px-4 py-3 text-right text-emerald-600 font-semibold">
+                  <td class="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">
                     {% if mov.debe > 0 %}${{ mov.debe|floatformat:2 }}{% else %}-{% endif %}
                   </td>
-                  <td class="px-4 py-3 text-right text-rose-600 font-semibold">
+                  <td class="px-4 py-3 text-right text-rose-600 dark:text-rose-400 font-semibold">
                     {% if mov.haber > 0 %}${{ mov.haber|floatformat:2 }}{% else %}-{% endif %}
                   </td>
                 </tr>
@@ -128,8 +128,8 @@
             </table>
           </div>
           {% else %}
-          <div class="p-8 text-center text-slate-500">
-            <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="p-8 text-center text-slate-500 dark:text-slate-400">
+            <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <p class="mt-3 text-sm">No hay movimientos en el período seleccionado</p>
@@ -138,14 +138,14 @@
         </div>
         {% else %}
         <!-- Mensaje de bienvenida cuando no hay cuenta seleccionada -->
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-          <div class="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-            <svg class="w-8 h-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-12 text-center">
+          <div class="mx-auto w-16 h-16 bg-purple-100 dark:bg-purple-950 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <h3 class="text-lg font-bold text-slate-800 mb-2">Libro Mayor</h3>
-          <p class="text-slate-600 max-w-md mx-auto">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-gray-100 mb-2">Libro Mayor</h3>
+          <p class="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
             Seleccione una cuenta del panel izquierdo para ver sus movimientos y saldos.
             Puede filtrar por rango de fechas usando el panel derecho.
           </p>
@@ -155,18 +155,18 @@
 
       <!-- Panel Derecho: Filtros de Fecha -->
       <div id="mayor-sidebar" class="xl:col-span-1 space-y-4">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 sticky top-20">
-          <h2 class="text-sm font-bold text-slate-800 mb-4 tracking-wide">Filtros de Fecha</h2>
-          
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 sticky top-20">
+          <h2 class="text-sm font-bold text-slate-800 dark:text-gray-100 mb-4 tracking-wide">Filtros de Fecha</h2>
+
           <form method="get" class="space-y-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Desde</label>
-              <input type="date" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase">Desde</label>
+              <input type="date" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm" />
             </div>
-            
+
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1 uppercase">Hasta</label>
-              <input type="date" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase">Hasta</label>
+              <input type="date" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm" />
             </div>
 
             <!-- Mantener cuenta seleccionada -->
@@ -175,29 +175,29 @@
             {% endif %}
 
             <div class="flex gap-2">
-              <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors">
+              <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-800 text-white text-sm font-semibold rounded-lg transition-colors">
                 Aplicar
               </button>
-              <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="flex-1 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition-colors text-center">
+              <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg transition-colors text-center">
                 Limpiar
               </a>
             </div>
           </form>
 
           <!-- Atajos rápidos -->
-          <div class="mt-4 pt-4 border-t border-slate-200">
-            <p class="text-xs font-semibold text-slate-600 mb-2 uppercase">Atajos</p>
+          <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2 uppercase">Atajos</p>
             <div class="space-y-2">
-              <a href="?{% if cuenta_seleccionada %}cuenta_id={{ cuenta_seleccionada.id }}&{% endif %}fecha_inicio={{ today|date:'Y-m-d' }}&fecha_fin={{ today|date:'Y-m-d' }}" 
-                 class="block text-xs text-purple-600 hover:text-purple-800 hover:underline">
+              <a href="?{% if cuenta_seleccionada %}cuenta_id={{ cuenta_seleccionada.id }}&{% endif %}fecha_inicio={{ today|date:'Y-m-d' }}&fecha_fin={{ today|date:'Y-m-d' }}"
+                 class="block text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline">
                 Hoy
               </a>
-              <a href="?{% if cuenta_seleccionada %}cuenta_id={{ cuenta_seleccionada.id }}&{% endif %}fecha_inicio={{ mes_inicio|date:'Y-m-d' }}&fecha_fin={{ mes_fin|date:'Y-m-d' }}" 
-                 class="block text-xs text-purple-600 hover:text-purple-800 hover:underline">
+              <a href="?{% if cuenta_seleccionada %}cuenta_id={{ cuenta_seleccionada.id }}&{% endif %}fecha_inicio={{ mes_inicio|date:'Y-m-d' }}&fecha_fin={{ mes_fin|date:'Y-m-d' }}"
+                 class="block text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline">
                 Este mes
               </a>
-              <a href="?{% if cuenta_seleccionada %}cuenta_id={{ cuenta_seleccionada.id }}&{% endif %}fecha_inicio={{ anio_inicio|date:'Y-m-d' }}&fecha_fin={{ anio_fin|date:'Y-m-d' }}" 
-                 class="block text-xs text-purple-600 hover:text-purple-800 hover:underline">
+              <a href="?{% if cuenta_seleccionada %}cuenta_id={{ cuenta_seleccionada.id }}&{% endif %}fecha_inicio={{ anio_inicio|date:'Y-m-d' }}&fecha_fin={{ anio_fin|date:'Y-m-d' }}"
+                 class="block text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline">
                 Este año
               </a>
             </div>
@@ -207,38 +207,8 @@
 
     </div>
 
-    <!-- Comentarios de Docentes (solo para estudiantes y supervisores) -->
-    {% if is_supervisor or not is_docente %}
-    <div class="mt-6 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-      <h2 class="text-lg font-bold text-slate-800 mb-4">Comentarios del Docente</h2>
-      
-      {% if is_supervisor %}
-      <form method="post" action="{% url 'contabilidad:add_comment' empresa.id 'MA' %}" class="mb-4">
-        {% csrf_token %}
-        <textarea name="content" rows="3" placeholder="Escribir comentario..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm" required></textarea>
-        <button type="submit" class="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold">
-          Publicar Comentario
-        </button>
-      </form>
-      {% endif %}
-
-      <div class="space-y-3">
-        {% for comment in comments %}
-        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="font-semibold text-sm text-slate-800">{{ comment.author.get_full_name|default:comment.author.username }}</p>
-              <p class="text-xs text-slate-500">{{ comment.created_at|date:"d/m/Y H:i" }}</p>
-            </div>
-          </div>
-          <p class="mt-2 text-sm text-slate-700">{{ comment.content }}</p>
-        </div>
-        {% empty %}
-        <p class="text-sm text-slate-500 italic">No hay comentarios aún.</p>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
+    <!-- Comentarios del Docente - Componente Unificado -->
+    {% include 'contabilidad/_comments_section.html' with section_code='MA' %}
 
   </div>
 </div>
@@ -248,21 +218,21 @@
 document.addEventListener('DOMContentLoaded', function() {
   const toggleBtn = document.getElementById('panel-toggle-btn');
   const sidebar = document.getElementById('mayor-sidebar');
-  
+
   if (toggleBtn && sidebar) {
     let sidebarHidden = localStorage.getItem('mayor-sidebar-hidden') === 'true';
-    
+
     if (sidebarHidden) {
       sidebar.style.display = 'none';
       toggleBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>';
     }
-    
+
     toggleBtn.addEventListener('click', function() {
       sidebarHidden = !sidebarHidden;
       sidebar.style.display = sidebarHidden ? 'none' : 'block';
       localStorage.setItem('mayor-sidebar-hidden', sidebarHidden);
-      
-      toggleBtn.innerHTML = sidebarHidden 
+
+      toggleBtn.innerHTML = sidebarHidden
         ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>'
         : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
     });

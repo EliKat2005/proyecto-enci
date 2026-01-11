@@ -133,6 +133,11 @@ USE_TZ = True
 
 # --- ARCHIVOS ESTÁTICOS (CSS, JavaScript, Imágenes) ---
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# --- ARCHIVOS MEDIA (uploads de usuarios) ---
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # --- CONFIGURACIÓN DE MODELO DE USUARIO ---
 # Más adelante, aquí definiremos nuestro modelo de perfil

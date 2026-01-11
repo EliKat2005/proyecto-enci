@@ -4,113 +4,113 @@
 {% block title %}{{ empresa.nombre }} | ECAE{% endblock %}
 
 {% block content %}
-<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-6">
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
   <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
     {% with current_panel='detalle' %}{% include 'contabilidad/_company_header.html' %}{% endwith %}
 
     <!-- Módulos de la Empresa -->
-    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-2">
-      
+    <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3 mt-2">
+
       <!-- Plan de Cuentas -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
-        <div class="p-5">
+      <div class="group bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="p-5 bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-900">
           <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Plan de Cuentas</h3>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Catálogo completo de cuentas contables</p>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-wide">Plan de Cuentas</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Catálogo completo de cuentas contables</p>
             </div>
           </div>
         </div>
-        <div class="px-5 pb-5">
-          <a href="{% url 'contabilidad:company_plan' empresa.id %}" class="block w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        <div class="px-5 pb-5 pt-3">
+          <a href="{% url 'contabilidad:company_plan' empresa.id %}" class="block w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 hover:from-blue-700 hover:to-blue-800 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white text-center rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Abrir</a>
         </div>
       </div>
 
       <!-- Libro Diario -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
-        <div class="p-5">
+      <div class="group bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="p-5 bg-gradient-to-br from-emerald-50 to-white dark:from-slate-800 dark:to-slate-900">
           <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Libro Diario</h3>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Registro de asientos contables</p>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-wide">Libro Diario</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Registro de asientos contables</p>
             </div>
           </div>
         </div>
-        <div class="px-5 pb-5">
-          <a href="{% url 'contabilidad:company_diario' empresa.id %}" class="block w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        <div class="px-5 pb-5 pt-3">
+          <a href="{% url 'contabilidad:company_diario' empresa.id %}" class="block w-full px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 hover:from-emerald-700 hover:to-emerald-800 dark:hover:from-emerald-600 dark:hover:to-emerald-700 text-white text-center rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Abrir</a>
         </div>
       </div>
 
       <!-- Libro Mayor -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
-        <div class="p-5">
+      <div class="group bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="p-5 bg-gradient-to-br from-purple-50 to-white dark:from-slate-800 dark:to-slate-900">
           <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Libro Mayor</h3>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Movimientos y saldos por cuenta</p>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-wide">Libro Mayor</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Movimientos y saldos por cuenta</p>
             </div>
           </div>
         </div>
-        <div class="px-5 pb-5">
-          <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="block w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        <div class="px-5 pb-5 pt-3">
+          <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="block w-full px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 hover:from-purple-700 hover:to-purple-800 dark:hover:from-purple-600 dark:hover:to-purple-700 text-white text-center rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Abrir</a>
         </div>
       </div>
 
       <!-- Balance de Comprobación -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
-        <div class="p-5">
+      <div class="group bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="p-5 bg-gradient-to-br from-amber-50 to-white dark:from-slate-800 dark:to-slate-900">
           <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-amber-600 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-amber-600 to-amber-700 dark:from-amber-700 dark:to-amber-800 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Balance Comprobación</h3>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Verificación de saldos y movimientos</p>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-wide">Balance Comprobación</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Verificación de saldos y movimientos</p>
             </div>
           </div>
         </div>
-        <div class="px-5 pb-5">
-          <a href="{% url 'contabilidad:company_balance_comprobacion' empresa.id %}" class="block w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        <div class="px-5 pb-5 pt-3">
+          <a href="{% url 'contabilidad:company_balance_comprobacion' empresa.id %}" class="block w-full px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 dark:from-amber-700 dark:to-amber-800 hover:from-amber-700 hover:to-amber-800 dark:hover:from-amber-600 dark:hover:to-amber-700 text-white text-center rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Abrir</a>
         </div>
       </div>
 
       <!-- Estados Financieros -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-150">
-        <div class="p-5">
+      <div class="group bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="p-5 bg-gradient-to-br from-rose-50 to-white dark:from-slate-800 dark:to-slate-900">
           <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-rose-600 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-rose-600 to-rose-700 dark:from-rose-700 dark:to-rose-800 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Estados Financieros</h3>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">Balance General y Estado de Resultados</p>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-wide">Estados Financieros</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Balance General y Estado de Resultados</p>
             </div>
           </div>
         </div>
-        <div class="px-5 pb-5">
-          <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="block w-full px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-center rounded-lg text-sm font-semibold shadow-sm transition-colors">Abrir</a>
+        <div class="px-5 pb-5 pt-3">
+          <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="block w-full px-4 py-2.5 bg-gradient-to-r from-rose-600 to-rose-700 dark:from-rose-700 dark:to-rose-800 hover:from-rose-700 hover:to-rose-800 dark:hover:from-rose-600 dark:hover:to-rose-700 text-white text-center rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Abrir</a>
         </div>
       </div>
-      
+
     </div>
   </div>
 </div>

@@ -120,7 +120,6 @@ class BalanceAPITests(TestCase):
             descripcion="Caja",
             naturaleza="Deudora",
             tipo="Activo",
-            estado_situacion=True,
             es_auxiliar=True,
         )
 
@@ -130,7 +129,6 @@ class BalanceAPITests(TestCase):
             descripcion="Cuentas por Pagar",
             naturaleza="Acreedora",
             tipo="Pasivo",
-            estado_situacion=True,
             es_auxiliar=True,
         )
 
@@ -263,7 +261,6 @@ class LibroMayorAPITests(TestCase):
             descripcion="Caja",
             naturaleza="Deudora",
             tipo="Activo",
-            estado_situacion=True,
             es_auxiliar=True,
         )
 

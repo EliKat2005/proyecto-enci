@@ -4,13 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Plataforma ECAE - Universidad{% endblock %}</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0f172a',
+                            surface: '#1e293b',
+                            border: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Script para aplicar modo oscuro INMEDIATAMENTE sin flash -->
+    <script>
+        // Este script se ejecuta ANTES de que el body se renderice
+        (function() {
+            var darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
     <style>
         /* === ESTILOS GLOBALES === */
         body {
@@ -30,73 +57,90 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+<body class="bg-gray-50 dark:bg-black text-gray-800 dark:text-gray-100 flex flex-col min-h-screen transition-colors duration-200">
 
     {% load notification_tags %}
 
-    <nav class="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+    <nav class="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-black dark:via-slate-950 dark:to-black border-b-2 border-slate-700 dark:border-slate-900 shadow-xl">
         <div class="max-w-[1600px] mx-auto px-4 lg:px-6">
-            <div class="flex justify-between items-center h-14">
-                
+            <div class="flex justify-between items-center h-16">
+
                 <!-- Logo compacto -->
-                <a href="{% url 'home' %}" class="flex items-center gap-2.5 group">
-                    <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:bg-blue-700 transition-colors">
+                <a href="{% url 'home' %}" class="flex items-center gap-3 group">
+                    <div class="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg group-hover:shadow-blue-500/50 transition-all duration-200 group-hover:scale-105">
                         EC
                     </div>
                     <div class="hidden sm:block">
-                        <div class="text-base font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-none">ECAE</div>
-                        <div class="text-[10px] font-medium text-slate-500 uppercase tracking-wider mt-0.5">Plataforma</div>
+                        <div class="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors leading-none">ECAE</div>
+                        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">Plataforma Contable</div>
                     </div>
                 </a>
 
                 <!-- Acciones y usuario -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     {% if user.is_authenticated %}
                         <!-- Botón Ultra compacto -->
-                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 transition-colors shadow-sm" title="Modo Ultra Compacto">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-slate-700 to-slate-600 text-white hover:from-slate-600 hover:to-slate-500 transition-all duration-200 shadow-lg hover:shadow-xl" title="Modo Ultra Compacto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                             <span class="hidden xl:inline">Ultra</span>
                         </button>
-                        
+
+                        <!-- Toggle Modo Oscuro -->
+                        <button id="dark-mode-toggle" type="button" class="relative w-16 h-8 bg-slate-700 dark:bg-slate-600 rounded-full transition-all duration-300 hover:bg-slate-600 dark:hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900" title="Cambiar modo">
+                            <span class="absolute inset-0 flex items-center justify-between px-2">
+                                <!-- Sol: visible en modo claro, oculto en oscuro -->
+                                <svg class="w-4 h-4 text-yellow-400 transition-opacity duration-300 opacity-100 dark:opacity-30" id="sun-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                                </svg>
+                                <!-- Luna: oculta en modo claro, visible en oscuro -->
+                                <svg class="w-4 h-4 text-slate-300 transition-opacity duration-300 opacity-30 dark:opacity-100" id="moon-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                                </svg>
+                            </span>
+                            <!-- Círculo: posición inicial left-1, se mueve con dark: -->
+                            <span class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out dark:translate-x-8" id="toggle-circle"></span>
+                        </button>
+
                         <!-- Notificaciones -->
-                        <a href="{% url 'notifications' %}" class="relative p-2 text-slate-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50" title="Notificaciones">
+                        <a href="{% url 'notifications' %}" class="relative p-2.5 text-slate-300 hover:text-blue-400 transition-all duration-200 rounded-lg hover:bg-slate-700/50" title="Notificaciones">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                             {% unread_count user as unread_count %}
                             {% if unread_count > 0 %}
-                                <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-600 rounded-full ring-2 ring-white">{{ unread_count }}</span>
+                                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full ring-2 ring-slate-900 shadow-lg">{{ unread_count }}</span>
                             {% endif %}
                         </a>
 
                         <!-- Usuario y logout -->
-                        <div class="flex items-center gap-2 pl-3 border-l border-slate-200">
+                        <div class="flex items-center gap-3 pl-4 border-l-2 border-slate-700">
                             <div class="text-right hidden lg:block">
-                                <div class="text-xs font-semibold text-slate-800 leading-tight">{{ user.get_full_name|default:user.username }}</div>
-                                <div class="text-[10px] text-slate-500 flex items-center justify-end gap-1 mt-0.5">
-                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                <div class="text-sm font-bold text-white leading-tight">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="text-[10px] text-slate-400 flex items-center justify-end gap-1.5 mt-1">
+                                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></span>
                                     En línea
                                 </div>
                             </div>
-                            
+
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
-                                <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Cerrar Sesión">
+                                <button type="submit" class="p-2.5 text-slate-300 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 border border-transparent hover:border-red-500/30" title="Cerrar Sesión">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 </button>
                             </form>
                         </div>
                     {% else %}
                         <!-- Usuario no autenticado -->
-                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-white hover:bg-slate-900 transition-colors shadow-sm" title="Modo Ultra Compacto">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-slate-700 to-slate-600 text-white hover:from-slate-600 hover:to-slate-500 transition-all duration-200 shadow-lg hover:shadow-xl" title="Modo Ultra Compacto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                             <span class="hidden xl:inline">Ultra</span>
                         </button>
-                        <div class="hidden sm:flex items-center gap-2 text-xs text-slate-600">
-                            <span class="font-medium">Crear:</span>
-                            <a href="{% url 'registro' %}?role=estudiante" class="text-blue-600 hover:text-blue-800 font-semibold">Estudiante</a>
-                            <span class="text-slate-300">|</span>
-                            <a href="{% url 'registro' %}?role=docente" class="text-blue-600 hover:text-blue-800 font-semibold">Docente</a>
+
+                        <div class="hidden sm:flex items-center gap-3 px-4 py-2 bg-slate-700/50 dark:bg-slate-950/80 rounded-lg border border-slate-600 dark:border-slate-800">
+                            <span class="text-xs font-bold text-slate-300">Crear cuenta:</span>
+                            <a href="{% url 'registro' %}?role=estudiante" class="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors">Estudiante</a>
+                            <span class="text-slate-600">|</span>
+                            <a href="{% url 'registro' %}?role=docente" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors">Docente</a>
                         </div>
-                        <a href="{% url 'login' %}" class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">
+                        <a href="{% url 'login' %}" class="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
                             Iniciar sesión
                         </a>
                     {% endif %}
@@ -111,10 +155,10 @@
         {% for message in messages %}
             {% with tags=message.tags %}
             <div class="animate-slide flex items-start gap-3 px-5 py-4 rounded-xl shadow-md border
-                {% if 'success' in tags %} bg-green-50 text-green-800 border-green-200
-                {% elif 'error' in tags or 'danger' in tags %} bg-red-50 text-red-800 border-red-200
-                {% elif 'warning' in tags %} bg-yellow-50 text-yellow-800 border-yellow-200
-                {% else %} bg-blue-50 text-blue-800 border-blue-200{% endif %}">
+                {% if 'success' in tags %} bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-900
+                {% elif 'error' in tags or 'danger' in tags %} bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900
+                {% elif 'warning' in tags %} bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-900
+                {% else %} bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900{% endif %}">
                 <div class="shrink-0 mt-0.5">
                     {% if 'success' in tags %}
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -158,9 +202,9 @@
                 </div>
             </div>
         </div>
-    
-    <footer class="bg-slate-50 border-t-2 border-slate-200 py-6 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+
+    <footer class="bg-slate-50 dark:bg-slate-950 border-t-2 border-slate-200 dark:border-slate-800 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 dark:text-slate-400 text-sm">
             <p class="font-medium">&copy; {% now "Y" %} ECAE - Plataforma Académica Universitaria</p>
         </div>
     </footer>
@@ -196,8 +240,150 @@
                 modal.classList.add('hidden');
                 document.body.classList.remove('overflow-hidden');
             }
+
+            // Funciones auxiliares para confirm y prompt personalizados
+            function customConfirm(message, title = '¿Estás seguro?', confirmText = 'Confirmar', cancelText = 'Cancelar') {
+                return new Promise((resolve) => {
+                    var modal = document.getElementById('app-modal');
+                    var icon = document.getElementById('app-modal-icon');
+                    var titleEl = document.getElementById('app-modal-title');
+                    var msgEl = document.getElementById('app-modal-message');
+                    var actionsDiv = document.getElementById('app-modal-actions');
+
+                    titleEl.textContent = title;
+                    msgEl.textContent = message;
+
+                    // Estilo de advertencia
+                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg bg-amber-100 text-amber-600';
+                    icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+                    // Botones personalizados
+                    actionsDiv.innerHTML = `
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors" id="modal-cancel-btn">${cancelText}</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors" id="modal-confirm-btn">${confirmText}</button>
+                    `;
+
+                    document.getElementById('modal-cancel-btn').onclick = function() {
+                        closeModal();
+                        resolve(false);
+                    };
+
+                    document.getElementById('modal-confirm-btn').onclick = function() {
+                        closeModal();
+                        resolve(true);
+                    };
+
+                    modal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                });
+            }
+
+            function customPrompt(message, defaultValue = '', title = 'Editar') {
+                return new Promise((resolve) => {
+                    var modal = document.getElementById('app-modal');
+                    var icon = document.getElementById('app-modal-icon');
+                    var titleEl = document.getElementById('app-modal-title');
+                    var bodyDiv = document.getElementById('app-modal-body');
+                    var actionsDiv = document.getElementById('app-modal-actions');
+
+                    titleEl.textContent = title;
+
+                    // Estilo de edición
+                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600';
+                    icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>';
+
+                    // Input personalizado
+                    bodyDiv.innerHTML = `
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">${message}</label>
+                        <input type="text" id="modal-prompt-input" value="${defaultValue}" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-sm" autofocus />
+                    `;
+
+                    // Botones personalizados
+                    actionsDiv.innerHTML = `
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors" id="modal-cancel-btn">Cancelar</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors" id="modal-save-btn">Guardar</button>
+                    `;
+
+                    document.getElementById('modal-cancel-btn').onclick = function() {
+                        closeModal();
+                        resolve(null);
+                    };
+
+                    document.getElementById('modal-save-btn').onclick = function() {
+                        const value = document.getElementById('modal-prompt-input').value;
+                        closeModal();
+                        resolve(value);
+                    };
+
+                    // Enter para guardar
+                    document.getElementById('modal-prompt-input').addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            const value = this.value;
+                            closeModal();
+                            resolve(value);
+                        }
+                    });
+
+                    modal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+
+                    // Focus en el input
+                    setTimeout(() => {
+                        document.getElementById('modal-prompt-input').focus();
+                        document.getElementById('modal-prompt-input').select();
+                    }, 100);
+                });
+            }
+
+            function customAlert(message, title = 'Información', type = 'info') {
+                return new Promise((resolve) => {
+                    var modal = document.getElementById('app-modal');
+                    var icon = document.getElementById('app-modal-icon');
+                    var titleEl = document.getElementById('app-modal-title');
+                    var msgEl = document.getElementById('app-modal-message');
+                    var actionsDiv = document.getElementById('app-modal-actions');
+
+                    titleEl.textContent = title;
+                    msgEl.textContent = message;
+
+                    // Estilos según el tipo
+                    var styleClass = 'bg-blue-100 text-blue-600';
+                    var iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+                    if (type === 'success') {
+                        styleClass = 'bg-emerald-100 text-emerald-600';
+                        iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                    } else if (type === 'warning') {
+                        styleClass = 'bg-amber-100 text-amber-600';
+                        iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                    } else if (type === 'error') {
+                        styleClass = 'bg-red-100 text-red-600';
+                        iconSvg = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                    }
+
+                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg ' + styleClass;
+                    icon.innerHTML = iconSvg;
+
+                    // Solo botón de OK
+                    actionsDiv.innerHTML = `
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors" id="modal-ok-btn">Aceptar</button>
+                    `;
+
+                    document.getElementById('modal-ok-btn').onclick = function() {
+                        closeModal();
+                        resolve(true);
+                    };
+
+                    modal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                });
+            }
+
             window.openModal = openModal;
             window.closeModal = closeModal;
+            window.customConfirm = customConfirm;
+            window.customPrompt = customPrompt;
+            window.customAlert = customAlert;
         </script>
         <script>
             // Auto-ocultar mensajes Django después de unos segundos
@@ -221,6 +407,15 @@
                         var active = root.classList.toggle('layout-ultra');
                         localStorage.setItem('layoutUltra', active ? '1':'0');
                         ultraBtn.classList.toggle('bg-slate-900', active);
+                    });
+                }
+
+                // Dark mode toggle - Solo manejar click, CSS maneja el estado visual
+                var darkModeToggle = document.getElementById('dark-mode-toggle');
+                if (darkModeToggle) {
+                    darkModeToggle.addEventListener('click', function() {
+                        var isDark = document.documentElement.classList.toggle('dark');
+                        localStorage.setItem('darkMode', isDark);
                     });
                 }
             });

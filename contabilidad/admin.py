@@ -43,7 +43,7 @@ class EmpresaPlanCuentaAdmin(admin.ModelAdmin):
         "activa",
     )
     search_fields = ("codigo", "descripcion", "empresa__nombre")
-    list_filter = ("tipo", "naturaleza", "es_auxiliar", "estado_situacion", "activa")
+    list_filter = ("tipo", "naturaleza", "es_auxiliar", "activa")
     raw_id_fields = ("empresa", "padre")
 
 
@@ -105,7 +105,7 @@ class EmpresaCommentAdmin(admin.ModelAdmin):
 @admin.register(PlanDeCuentas)
 class PlanDeCuentasAdmin(admin.ModelAdmin):
     list_display = ("codigo", "descripcion", "tipo", "naturaleza", "es_auxiliar", "padre")
-    list_filter = ("tipo", "naturaleza", "es_auxiliar", "estado_situacion")
+    list_filter = ("tipo", "naturaleza", "es_auxiliar")
     search_fields = ("codigo", "descripcion")
     raw_id_fields = ("padre",)
 
