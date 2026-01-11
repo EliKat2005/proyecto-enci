@@ -9,25 +9,20 @@
     .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(15, 23, 42, 0.12); }
 </style>
 
-<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-10">
-    <div class="max-w-7xl mx-auto px-4">
-        
-        <!-- Header Principal -->
-        <div class="professional-gradient rounded-xl p-8 mb-8 shadow-xl text-white border-b-4 border-blue-400">
-            <style>
-                .professional-gradient {
-                    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
-                }
-            </style>
-            <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+    <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
+
+        <!-- Header Principal - Compact & Professional -->
+        <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-xl px-5 py-3.5 mb-6 shadow-lg border border-slate-200 dark:border-slate-800 inline-flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl flex items-center justify-center shadow-md">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Panel Docente</h1>
-                    <p class="mt-1 text-blue-100 text-base font-medium">Gestión de Grupos, Estudiantes y Códigos de Invitación</p>
+                    <h1 class="text-base font-bold text-slate-900 dark:text-slate-100">Panel Docente</h1>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">Gestión de Grupos, Estudiantes y Códigos de Invitación</p>
                 </div>
             </div>
         </div>
@@ -35,27 +30,27 @@
         {# Mensajes se muestran globalmente en base.html #}
 
         <!-- Contenedor de tabs -->
-        <div class="bg-white shadow-md rounded-lg border border-slate-200">
+        <div class="bg-white dark:bg-slate-900 shadow-md rounded-lg border border-slate-200 dark:border-slate-800">
             <!-- Tabs de navegación -->
-            <div class="border-b border-slate-200 flex space-x-2 px-6 pt-6">
-                <button onclick="showTab('grupos')" id="tab-grupos" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-white text-blue-600 border-b-2 border-blue-600">
+            <div class="border-b border-slate-200 dark:border-slate-800 flex space-x-2 px-6 pt-6">
+                <button onclick="showTab('grupos')" id="tab-grupos" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                     </svg>
                     Mis Grupos
                 </button>
-                <button onclick="showTab('invitaciones')" id="tab-invitaciones" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
+                <button onclick="showTab('invitaciones')" id="tab-invitaciones" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                     </svg>
                     Códigos de Invitación
                 </button>
-                <button onclick="showTab('empresas')" id="tab-empresas" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
+                <button onclick="showTab('empresas')" id="tab-empresas" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                     Empresas Supervisadas
-                    <span class="ml-2 px-2 py-0.5 bg-green-600 text-white rounded-full text-xs font-bold">{{ empresas_supervisadas.count }}</span>
+                    <span class="ml-2 px-2 py-0.5 bg-green-600 dark:bg-green-700 text-white rounded-full text-xs font-bold">{{ empresas_supervisadas.count }}</span>
                 </button>
             </div>
 
@@ -63,26 +58,26 @@
             <div class="p-8">
                 <!-- Panel Grupos -->
                 <div id="panel-grupos" class="tab-panel">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 bg-blue-600 dark:bg-blue-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                             </svg>
                         </div>
-                        <h2 class="text-2xl font-bold text-slate-800">Mis Grupos</h2>
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Mis Grupos</h2>
                     </div>
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2.5">
                         <!-- Buscador de grupos -->
                         <div class="relative">
-                            <input type="text" id="search-grupos" placeholder="Buscar grupo..." class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-sm w-64">
-                            <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <input type="text" id="search-grupos" placeholder="Buscar grupo..." class="pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all text-sm w-56">
+                            <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
                         <!-- Botón nuevo grupo -->
-                        <button onclick="toggleGrupoForm()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150 flex items-center space-x-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button onclick="toggleGrupoForm()" class="px-4 py-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150 flex items-center space-x-1.5 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
                             <span>Nuevo Grupo</span>
@@ -91,25 +86,25 @@
                 </div>
 
                 <!-- Formulario Crear Grupo (oculto por defecto) -->
-                    <div id="grupo-form" class="hidden bg-gradient-to-br from-blue-50 to-slate-100 rounded-lg p-6 mb-6 border-l-4 border-blue-600">
-                    <h3 class="text-base font-bold text-slate-800 mb-4 uppercase tracking-wide">Crear Nuevo Grupo</h3>
+                    <div id="grupo-form" class="hidden bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 rounded-lg p-4 mb-4 border-l-4 border-blue-600 dark:border-blue-500">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-3 uppercase tracking-wide">Crear Nuevo Grupo</h3>
                     <form method="post" class="space-y-4">
                         {% csrf_token %}
                         <input type="hidden" name="operation" value="create_grupo">
                         <input type="hidden" name="active" value="on">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Nombre del Grupo</label>
-                            <input type="text" name="nombre" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Ej: Grupo A">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Nombre del Grupo</label>
+                            <input type="text" name="nombre" required class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all" placeholder="Ej: Grupo A">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Descripción (opcional)</label>
-                            <textarea name="descripcion" rows="3" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Descripción del grupo"></textarea>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Descripción (opcional)</label>
+                            <textarea name="descripcion" rows="3" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all" placeholder="Descripción del grupo"></textarea>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150">
+                            <button type="submit" class="px-6 py-2.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150">
                                 Crear Grupo
                             </button>
-                            <button type="button" onclick="toggleGrupoForm()" class="px-6 py-2.5 bg-slate-300 hover:bg-slate-400 text-slate-700 rounded-lg font-semibold transition-all duration-150">
+                            <button type="button" onclick="toggleGrupoForm()" class="px-6 py-2.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-semibold transition-all duration-150">
                                 Cancelar
                             </button>
                         </div>
@@ -119,82 +114,82 @@
                 <!-- Lista de Grupos con diseño compacto -->
                 <div id="grupos-container" class="space-y-3">
                     {% for grupo in grupos %}
-                    <div class="grupo-card bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-blue-400 transition-all" data-grupo-nombre="{{ grupo.nombre|lower }}">
+                    <div class="grupo-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-blue-400 dark:hover:border-blue-600 transition-all" data-grupo-nombre="{{ grupo.nombre|lower }}">
                         <!-- Header compacto del grupo -->
-                        <div class="grupo-header flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50" onclick="toggleGrupoDetails({{ grupo.id }})">
-                        <div class="flex items-center space-x-4 flex-1">
-                                <button type="button" class="toggle-icon text-slate-400 hover:text-blue-600 transition-colors">
-                                    <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="grupo-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800" onclick="toggleGrupoDetails({{ grupo.id }})">
+                        <div class="flex items-center space-x-3 flex-1">
+                                <button type="button" class="toggle-icon text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                    <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                     </svg>
                                 </button>
                                 <div class="flex-1">
-                                    <div class="flex items-center space-x-3">
-                                        <h3 class="text-lg font-bold text-slate-800">{{ grupo.nombre }}</h3>
-                                        <span class="grupo-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {% if grupo.active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    <div class="flex items-center space-x-2.5">
+                                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">{{ grupo.nombre }}</h3>
+                                        <span class="grupo-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {% if grupo.active %}bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400{% else %}bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-400{% endif %}">
                                             {% if grupo.active %}Activo{% else %}Inactivo{% endif %}
                                         </span>
                                     </div>
                                     {% if grupo.descripcion %}
-                                    <p class="text-sm text-slate-500 mt-1 truncate">{{ grupo.descripcion|truncatewords:10 }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ grupo.descripcion|truncatewords:10 }}</p>
                                     {% endif %}
                                 </div>
-                                <div class="flex items-center space-x-6 text-center">
+                                <div class="flex items-center space-x-5 text-center">
                                     <div>
-                                        <p class="text-xs text-slate-500">Estudiantes</p>
-                                        <p class="text-xl font-bold text-blue-600"><span id="grupo-{{ grupo.id }}-students-count">{{ grupo.get_students_count }}</span></p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">Estudiantes</p>
+                                        <p class="text-lg font-bold text-blue-600 dark:text-blue-400"><span id="grupo-{{ grupo.id }}-students-count">{{ grupo.get_students_count }}</span></p>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-slate-500">Activos</p>
-                                        <p class="text-xl font-bold text-green-600"><span id="grupo-{{ grupo.id }}-active-count">{{ grupo.get_active_students_count }}</span></p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">Activos</p>
+                                        <p class="text-lg font-bold text-green-600 dark:text-green-400"><span id="grupo-{{ grupo.id }}-active-count">{{ grupo.get_active_students_count }}</span></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Contenido expandible -->
-                        <div id="grupo-details-{{ grupo.id }}" class="grupo-details hidden border-t border-slate-200">
+                        <div id="grupo-details-{{ grupo.id }}" class="grupo-details hidden border-t border-slate-200 dark:border-slate-800">
                             <!-- Descripción completa si existe -->
                             {% if grupo.descripcion %}
-                            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-                                <p class="text-sm text-slate-700"><span class="font-semibold">Descripción:</span> {{ grupo.descripcion }}</p>
+                            <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
+                                <p class="text-sm text-slate-700 dark:text-slate-300"><span class="font-semibold">Descripción:</span> {{ grupo.descripcion }}</p>
                             </div>
                             {% endif %}
-                            
+
                             <!-- Lista de Estudiantes -->
-                            <div class="p-4">
-                                <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="p-3">
+                                <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2.5 flex items-center">
+                                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                     </svg>
                                     Estudiantes del Grupo
                                 </h4>
                                 {% with estudiantes=grupo.referrals.all %}
                                 {% if estudiantes %}
-                                <div class="space-y-2">
+                                <div class="space-y-1.5">
                                     {% for r in estudiantes %}
-                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                                    <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors">
                                         <div class="flex-1">
                                             <div class="flex items-center space-x-2">
-                                                <a href="{% url 'student_profile' r.student.id grupo.id %}" class="font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                                                <a href="{% url 'student_profile' r.student.id grupo.id %}" class="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline">
                                                     {{ r.student.get_full_name|default:r.student.username }}
                                                 </a>
                                                 {% if r.activated %}
-                                                        <span class="ref-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                                        <span class="ref-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400">
                                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                                     </svg>
                                                     Activo
                                                 </span>
                                                 {% else %}
-                                                        <span class="ref-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">Pendiente</span>
+                                                        <span class="ref-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-400">Pendiente</span>
                                                 {% endif %}
                                             </div>
-                                            <p class="text-xs text-slate-500 mt-0.5">{{ r.student.email }} • Registrado: {{ r.created_at|date:"d M Y" }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ r.student.email }} • Registrado: {{ r.created_at|date:"d M Y" }}</p>
                                         </div>
                                         <div class="flex items-center space-x-2">
-                                            <a href="{% url 'student_profile' r.student.id grupo.id %}" 
-                                               class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors inline-flex items-center"
+                                            <a href="{% url 'student_profile' r.student.id grupo.id %}"
+                                               class="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-xs font-semibold transition-colors inline-flex items-center"
                                                title="Ver perfil y empresas">
                                                 <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -222,7 +217,7 @@
                                                 <input type="hidden" name="referral_id" value="{{ r.pk }}">
                                                 <input type="hidden" name="action" value="eliminar">
                                                 <button type="button"
-                                                        class="open-delete-modal px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold transition-colors"
+                                                        class="open-delete-modal px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-300 rounded-lg text-xs font-semibold transition-colors"
                                                         data-student="{{ r.student.get_full_name|default:r.student.username }}"
                                                         data-grupo="{{ grupo.nombre }}" data-referral-id="{{ r.pk }}" data-grupo-id="{{ grupo.id }}">
                                                     Eliminar
@@ -235,17 +230,17 @@
                                 </div>
                                 {% else %}
                                 <div class="text-center py-6">
-                                    <svg class="w-10 h-10 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
-                                    <p class="text-slate-500 text-sm">No hay estudiantes en este grupo aún</p>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">No hay estudiantes en este grupo aún</p>
                                 </div>
                                 {% endif %}
                                 {% endwith %}
                             </div>
-                            
+
                             <!-- Acciones del Grupo -->
-                            <div class="bg-slate-50 px-4 py-3 border-t border-slate-200 flex items-center gap-2">
+                            <div class="bg-slate-50 dark:bg-slate-800 px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2">
                                 {% if grupo.active %}
                                 <form method="post" class="flex-1 grupo-action-form" data-ajax="true">
                                     {% csrf_token %}
@@ -289,13 +284,13 @@
                     {% empty %}
                     <div class="col-span-full">
                         <div class="flex flex-col items-center py-12">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                <svg class="w-8 h-8 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                 </svg>
                             </div>
-                            <p class="text-gray-600 font-medium">No tienes grupos creados aún</p>
-                            <p class="text-gray-500 text-sm mt-1">Haz clic en "Nuevo Grupo" para crear tu primer grupo</p>
+                            <p class="text-gray-600 dark:text-gray-400 font-medium">No tienes grupos creados aún</p>
+                            <p class="text-gray-500 dark:text-gray-500 text-sm mt-1">Haz clic en "Nuevo Grupo" para crear tu primer grupo</p>
                         </div>
                     </div>
                     {% endfor %}
@@ -304,19 +299,19 @@
 
                 <!-- Panel Invitaciones -->
                 <div id="panel-invitaciones" class="tab-panel hidden">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center space-x-2.5 mb-4">
+                        <div class="w-8 h-8 bg-blue-600 dark:bg-blue-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                             </svg>
                         </div>
-                        <h2 class="text-2xl font-bold text-slate-800">Códigos de Invitación</h2>
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Códigos de Invitación</h2>
                     </div>
 
                     <!-- Crear nuevo código -->
-                    <div class="bg-gradient-to-br from-blue-50 to-slate-100 rounded-lg p-6 mb-6 border-l-4 border-blue-600">
-                        <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center uppercase tracking-wide">
-                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 rounded-lg p-4 mb-4 border-l-4 border-blue-600 dark:border-blue-500">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center uppercase tracking-wide">
+                            <svg class="w-4 h-4 mr-1.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
                             Generar Nuevo Código
@@ -326,8 +321,8 @@
                             <input type="hidden" name="operation" value="create_invitation">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Grupo *</label>
-                                    <select name="grupo" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Grupo *</label>
+                                    <select name="grupo" required class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all">
                                         <option value="">Seleccionar grupo</option>
                                         {% for grupo in grupos %}
                                         <option value="{{ grupo.pk }}">{{ grupo.nombre }}</option>
@@ -335,15 +330,15 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Máximo de usos</label>
-                                    <input type="number" name="max_uses" min="1" value="1" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Máximo de usos</label>
+                                    <input type="number" name="max_uses" min="1" value="1" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Fecha de expiración (opcional)</label>
-                                    <input type="datetime-local" name="expires_at" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Fecha de expiración (opcional)</label>
+                                    <input type="datetime-local" name="expires_at" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all">
                                 </div>
                             </div>
-                            <button class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150 flex items-center space-x-2">
+                            <button class="px-6 py-2.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all duration-150 flex items-center space-x-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                 </svg>
@@ -356,39 +351,39 @@
                     <div class="overflow-x-auto">
                         <table class="w-full table-fixed">
             <thead>
-                <tr class="border-b-2 border-gray-200">
-                    <th class="px-4 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Código</th>
-                    <th class="px-4 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Grupo</th>
-                    <th class="px-4 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Usos</th>
-                    <th class="px-4 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Expira</th>
-                    <th class="px-4 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Activo</th>
-                    <th class="px-4 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
+                <tr class="border-b-2 border-gray-200 dark:border-slate-700">
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Código</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Grupo</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Usos</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Expira</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Activo</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
                 {% for inv in invitations %}
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-4">
-                        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-mono font-semibold bg-gray-100 text-gray-800">
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                    <td class="px-3 py-2.5">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-mono font-semibold bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-300">
                             {{ inv.code }}
                         </span>
                     </td>
-                    <td class="px-4 py-4">
+                    <td class="px-3 py-2.5">
                         {% if inv.grupo %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400">
                                 {{ inv.grupo.nombre }}
                             </span>
                         {% else %}
-                            <span class="text-gray-400">-</span>
+                            <span class="text-gray-400 dark:text-slate-500">-</span>
                         {% endif %}
                     </td>
-                    <td class="px-4 py-4 text-gray-600"><span class="font-semibold">{{ inv.uses_count }}</span> / {{ inv.max_uses }}</td>
-                    <td class="px-4 py-4 text-gray-600">{% if inv.expires_at %}{{ inv.expires_at|date:"d M Y" }}{% else %}-{% endif %}</td>
-                    <td class="px-4 py-4">
+                    <td class="px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400"><span class="font-semibold">{{ inv.uses_count }}</span> / {{ inv.max_uses }}</td>
+                    <td class="px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400">{% if inv.expires_at %}{{ inv.expires_at|date:"d M Y" }}{% else %}-{% endif %}</td>
+                    <td class="px-3 py-2.5">
                         {% if inv.active %}
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Sí</span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400">Sí</span>
                         {% else %}
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">No</span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-400">No</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-4">
@@ -416,12 +411,12 @@
                 <tr>
                     <td colspan="5" class="px-4 py-12 text-center">
                         <div class="flex flex-col items-center">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                <svg class="w-8 h-8 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                                 </svg>
                             </div>
-                            <p class="text-gray-600 font-medium">No hay códigos generados aún</p>
+                            <p class="text-gray-600 dark:text-gray-400 font-medium">No hay códigos generados aún</p>
                         </div>
                     </td>
                 </tr>
@@ -433,39 +428,39 @@
 
                 <!-- Panel Empresas Supervisadas -->
                 <div id="panel-empresas" class="tab-panel hidden">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 bg-green-600 dark:bg-green-700 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                 </svg>
                             </div>
                             <div>
-                                <h2 class="text-2xl font-bold text-slate-800">Empresas Compartidas</h2>
-                                <p class="text-sm text-slate-500 mt-1">Empresas visibles compartidas por tus estudiantes</p>
+                                <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Empresas Compartidas</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Empresas visibles compartidas por tus estudiantes</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <span class="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-sm">{{ empresas_supervisadas.count }} empresa{{ empresas_supervisadas.count|pluralize }}</span>
+                        <div class="flex items-center space-x-2.5">
+                            <span class="px-3 py-1.5 bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400 rounded-lg font-semibold text-sm">{{ empresas_supervisadas.count }} empresa{{ empresas_supervisadas.count|pluralize }}</span>
                         </div>
                     </div>
 
                     {% if empresas_supervisadas %}
                         <!-- Barra de búsqueda y filtros -->
-                        <div class="mb-6 flex items-center justify-between gap-4 p-4 bg-slate-50 rounded-lg">
+                        <div class="mb-4 flex items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                             <div class="flex-1 relative">
-                                <input 
-                                    type="text" 
-                                    id="search-empresas" 
-                                    placeholder="Buscar por nombre de empresa o estudiante..." 
-                                    class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
+                                <input
+                                    type="text"
+                                    id="search-empresas"
+                                    placeholder="Buscar por nombre de empresa o estudiante..."
+                                    class="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 rounded-lg focus:border-green-500 dark:focus:border-green-400 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900 transition-all text-sm"
                                 >
-                                <svg class="w-5 h-5 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select id="filter-grupo" class="px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-200">
+                                <select id="filter-grupo" class="px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 dark:text-gray-100 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium transition-colors focus:border-green-500 dark:focus:border-green-400 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900">
                                     <option value="">Todos los grupos</option>
                                     {% for grupo in grupos %}
                                     <option value="{{ grupo.nombre|lower }}">{{ grupo.nombre }}</option>
@@ -473,14 +468,14 @@
                                 </select>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <button onclick="sortEmpresas('nombre')" class="px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-sm font-medium transition-colors flex items-center space-x-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button onclick="sortEmpresas('nombre')" class="px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 dark:text-gray-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium transition-colors flex items-center space-x-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
                                     </svg>
                                     <span>A-Z</span>
                                 </button>
-                                <button onclick="sortEmpresas('fecha')" class="px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-sm font-medium transition-colors flex items-center space-x-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button onclick="sortEmpresas('fecha')" class="px-2.5 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 dark:text-gray-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium transition-colors flex items-center space-x-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <span>Recientes</span>
@@ -492,70 +487,70 @@
                         <div class="overflow-x-auto">
                             <table class="w-full" id="tabla-empresas">
                             <thead>
-                                <tr class="border-b-2 border-slate-200 bg-slate-50">
-                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Empresa</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Estudiante</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Grupo</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Última Actualización</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">Acciones</th>
+                                <tr class="border-b-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Empresa</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Estudiante</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Grupo</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Última Actualización</th>
+                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-200">
+                            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
                                 {% for empresa in empresas_supervisadas %}
                                 {% with referral=empresa.owner.referrals.first %}
-                                <tr class="empresa-row hover:bg-slate-50 transition-colors" 
-                                    data-nombre="{{ empresa.nombre|lower }}" 
+                                <tr class="empresa-row hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                    data-nombre="{{ empresa.nombre|lower }}"
                                     data-estudiante="{{ empresa.owner.get_full_name|default:empresa.owner.username|lower }}"
                                     data-grupo="{% if referral and referral.grupo %}{{ referral.grupo.nombre|lower }}{% endif %}"
                                     data-fecha="{{ empresa.updated_at|date:'Y-m-d H:i' }}">
-                                    <td class="px-4 py-4">
+                                    <td class="px-3 py-3">
                                         <div>
                                             <div class="flex items-center space-x-2">
-                                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm">
                                                     {{ empresa.nombre.0|upper }}
                                                 </div>
                                                 <div>
-                                                    <p class="font-semibold text-slate-800">{{ empresa.nombre }}</p>
+                                                    <p class="font-semibold text-sm text-slate-800 dark:text-slate-100">{{ empresa.nombre }}</p>
                                                     {% if empresa.descripcion %}
-                                                        <p class="text-xs text-slate-500 truncate max-w-xs">{{ empresa.descripcion|truncatewords:8 }}</p>
+                                                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">{{ empresa.descripcion|truncatewords:8 }}</p>
                                                     {% else %}
-                                                        <p class="text-xs text-slate-400 italic">Sin descripción</p>
+                                                        <p class="text-xs text-slate-400 dark:text-slate-500 italic">Sin descripción</p>
                                                     {% endif %}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-4">
+                                    <td class="px-3 py-3">
                                         <div class="flex items-center space-x-2">
-                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <span class="text-blue-600 font-bold text-sm">{{ empresa.owner.first_name.0|default:empresa.owner.username.0|upper }}</span>
+                                            <div class="w-7 h-7 bg-blue-100 dark:bg-blue-950 rounded-full flex items-center justify-center">
+                                                <span class="text-blue-600 dark:text-blue-400 font-bold text-xs">{{ empresa.owner.first_name.0|default:empresa.owner.username.0|upper }}</span>
                                             </div>
                                             <div>
-                                                <p class="font-medium text-slate-800">{{ empresa.owner.get_full_name|default:empresa.owner.username }}</p>
-                                                <p class="text-xs text-slate-500">{{ empresa.owner.email }}</p>
+                                                <p class="font-medium text-sm text-slate-800 dark:text-slate-100">{{ empresa.owner.get_full_name|default:empresa.owner.username }}</p>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ empresa.owner.email }}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-4">
+                                    <td class="px-3 py-3">
                                         {% with referral=empresa.owner.referrals.first %}
                                             {% if referral and referral.grupo %}
-                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                                <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400 rounded text-xs font-semibold">
                                                     {{ referral.grupo.nombre }}
                                                 </span>
                                             {% else %}
-                                                <span class="text-xs text-slate-400 italic">Sin grupo</span>
+                                                <span class="text-xs text-slate-400 dark:text-slate-500 italic">Sin grupo</span>
                                             {% endif %}
                                         {% endwith %}
                                     </td>
-                                    <td class="px-4 py-4">
+                                    <td class="px-3 py-3">
                                         <div class="text-sm">
-                                            <p class="text-slate-800 font-medium">{{ empresa.updated_at|date:"d/m/Y" }}</p>
-                                            <p class="text-xs text-slate-500">{{ empresa.updated_at|date:"H:i" }}</p>
+                                            <p class="text-slate-800 dark:text-slate-100 font-medium text-xs">{{ empresa.updated_at|date:"d/m/Y" }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ empresa.updated_at|date:"H:i" }}</p>
                                         </div>
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="flex items-center justify-center space-x-2">
-                                            <a href="{% url 'contabilidad:company_detail' empresa.pk %}" 
+                                            <a href="{% url 'contabilidad:company_detail' empresa.pk %}"
                                                class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1"
                                                title="Ver empresa">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,8 +561,8 @@
                                             </a>
                                             {% with referral=empresa.owner.referrals.first %}
                                                 {% if referral and referral.grupo %}
-                                                    <a href="{% url 'student_profile' empresa.owner.id referral.grupo.id %}" 
-                                                       class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1"
+                                                    <a href="{% url 'student_profile' empresa.owner.id referral.grupo.id %}"
+                                                       class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1"
                                                        title="Ver perfil del estudiante">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -587,22 +582,22 @@
 
                         <!-- Mensaje cuando no hay resultados de búsqueda -->
                         <div id="no-results-empresas" class="hidden text-center py-12">
-                            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
                             </div>
-                            <p class="text-slate-600 font-medium">No se encontraron empresas</p>
-                            <p class="text-slate-500 text-sm">Intenta con otro término de búsqueda</p>
+                            <p class="text-slate-600 dark:text-slate-400 font-medium">No se encontraron empresas</p>
+                            <p class="text-slate-500 dark:text-slate-500 text-sm">Intenta con otro término de búsqueda</p>
                         </div>
                     {% else %}
                         <div class="text-center py-16">
-                            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-10 h-10 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-bold text-slate-700 mb-2">No hay empresas compartidas</h3>
+                            <h3 class="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">No hay empresas compartidas</h3>
                             <p class="text-slate-500 max-w-md mx-auto">Tus estudiantes aún no han compartido ninguna empresa contigo. Cuando activen la opción "Visible para docente" en sus empresas, aparecerán aquí.</p>
                         </div>
                     {% endif %}
@@ -618,24 +613,24 @@ function showTab(tabName) {
     document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.classList.add('hidden');
     });
-    
+
     // Remover clases active de todos los botones
     document.querySelectorAll('[id^="tab-"]').forEach(btn => {
         btn.classList.remove('bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600');
         btn.classList.add('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
     });
-    
+
     // Mostrar el panel seleccionado
     document.getElementById('panel-' + tabName).classList.remove('hidden');
-    
+
     // Activar el botón seleccionado
     const activeBtn = document.getElementById('tab-' + tabName);
     activeBtn.classList.remove('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
     activeBtn.classList.add('bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600');
-    
+
     // Actualizar URL hash sin recargar
     window.location.hash = tabName;
-    
+
     // Guardar preferencia en localStorage
     localStorage.setItem('docente_active_tab', tabName);
 }
@@ -643,7 +638,7 @@ function showTab(tabName) {
 // Inicializar tab desde URL hash o localStorage al cargar
 document.addEventListener('DOMContentLoaded', function() {
     let activeTab = 'grupos'; // Default
-    
+
     // Prioridad 1: URL hash
     if (window.location.hash) {
         const hashTab = window.location.hash.substring(1);
@@ -655,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
     else if (localStorage.getItem('docente_active_tab')) {
         activeTab = localStorage.getItem('docente_active_tab');
     }
-    
+
     showTab(activeTab);
 });
 
@@ -688,13 +683,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const nombre = row.getAttribute('data-nombre');
             const estudiante = row.getAttribute('data-estudiante');
             const grupo = row.getAttribute('data-grupo') || '';
-            
+
             // Verificar si coincide con la búsqueda de texto
             const matchSearch = !searchTerm || nombre.includes(searchTerm) || estudiante.includes(searchTerm);
-            
+
             // Verificar si coincide con el filtro de grupo
             const matchGrupo = !selectedGrupo || grupo === selectedGrupo;
-            
+
             // Mostrar solo si coincide con ambos filtros
             if (matchSearch && matchGrupo) {
                 row.style.display = '';
@@ -716,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Búsqueda en tiempo real
     searchInput.addEventListener('input', applyFilters);
-    
+
     // Filtro por grupo
     if (filterGrupo) {
         filterGrupo.addEventListener('change', applyFilters);
@@ -727,9 +722,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function sortEmpresas(tipo) {
     const tbody = document.querySelector('#tabla-empresas tbody');
     if (!tbody) return;
-    
+
     const rows = Array.from(tbody.querySelectorAll('.empresa-row'));
-    
+
     rows.sort((a, b) => {
         if (tipo === 'nombre') {
             const nombreA = a.getAttribute('data-nombre');
@@ -742,10 +737,10 @@ function sortEmpresas(tipo) {
         }
         return 0;
     });
-    
+
     // Reordenar las filas en el DOM
     rows.forEach(row => tbody.appendChild(row));
-    
+
     // Feedback visual
     const btn = event.target.closest('button');
     if (btn) {
@@ -765,7 +760,7 @@ function toggleGrupoDetails(grupoId) {
     const details = document.getElementById('grupo-details-' + grupoId);
     const card = details.closest('.grupo-card');
     const icon = card.querySelector('.toggle-icon svg');
-    
+
     if (details.classList.contains('hidden')) {
         details.classList.remove('hidden');
         icon.style.transform = 'rotate(90deg)';
@@ -782,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase().trim();
             const grupoCards = document.querySelectorAll('.grupo-card');
-            
+
             grupoCards.forEach(card => {
                 const grupoNombre = card.getAttribute('data-grupo-nombre');
                 if (grupoNombre.includes(searchTerm)) {
@@ -1140,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Buscar si el click fue en un botón de eliminar grupo
             let target = e.target;
             let btn = null;
-            
+
             // Buscar hasta 5 niveles arriba por si clickearon en el SVG o texto
             for (let i = 0; i < 5 && target; i++) {
                 if (target.classList && target.classList.contains('open-group-delete-modal')) {
@@ -1149,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 target = target.parentElement;
             }
-            
+
             if (btn){
                 e.preventDefault();
                 e.stopPropagation();

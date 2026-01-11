@@ -45,9 +45,6 @@ class PlanDeCuentas(models.Model):
     naturaleza = models.CharField(max_length=9, choices=NaturalezaCuenta.choices)
 
     # inspectdb los vio como Integer, los corregimos a BooleanField
-    estado_situacion = models.BooleanField(
-        db_comment="True si es cuenta de Balance, False si es de Resultado"
-    )
     es_auxiliar = models.BooleanField(
         default=False,
         db_comment="True si es una cuenta hoja (auxiliar) que puede recibir transacciones",
@@ -63,7 +60,7 @@ class PlanDeCuentas(models.Model):
     )
 
     class Meta:
-        managed = True  # Django ahora gestiona el schema
+        managed = False  # Tabla legacy no utilizada (se usa EmpresaPlanCuenta)
         db_table = "contabilidad_plandecuentas"
         verbose_name = "Plan de Cuenta"
         verbose_name_plural = "Planes de Cuentas"
@@ -84,6 +81,8 @@ class Empresa(models.Model):
 
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
+    logo = models.ImageField(upload_to="empresas/logos/", blank=True, null=True)
+    eslogan = models.CharField(max_length=255, blank=True)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="empresas"
     )
@@ -129,6 +128,8 @@ class Empresa(models.Model):
             new_emp = Empresa.objects.create(
                 nombre=self.nombre,
                 descripcion=self.descripcion,
+                logo=self.logo,
+                eslogan=self.eslogan,
                 owner=new_owner,
                 is_template=False,
                 original=self,
@@ -144,7 +145,6 @@ class Empresa(models.Model):
                     descripcion=acc.descripcion,
                     tipo=acc.tipo,
                     naturaleza=acc.naturaleza,
-                    estado_situacion=acc.estado_situacion,
                     es_auxiliar=acc.es_auxiliar,
                     activa=acc.activa,
                     padre=None,
@@ -218,9 +218,6 @@ class EmpresaPlanCuenta(models.Model):
     descripcion = models.CharField(max_length=255)
     tipo = models.CharField(max_length=10, choices=TipoCuenta.choices, db_index=True)
     naturaleza = models.CharField(max_length=9, choices=NaturalezaCuenta.choices)
-    estado_situacion = models.BooleanField(
-        help_text="True si es cuenta de Balance, False si es de Resultado"
-    )
     es_auxiliar = models.BooleanField(
         default=False,
         help_text="True si es una cuenta hoja (auxiliar) que puede recibir transacciones",
@@ -345,15 +342,6 @@ class EmpresaPlanCuenta(models.Model):
         if lvl == 3:
             return "Cuenta"
         return "Subcuenta"
-
-    @property
-    def estado_label(self):
-        """Etiqueta legible para el campo booleano `estado_situacion`.
-
-        True => 'Balance' (Estado de Situación Financiera)
-        False => 'Resultado'
-        """
-        return "Balance" if bool(self.estado_situacion) else "Resultado"
 
 
 class EmpresaTercero(models.Model):
@@ -822,7 +810,8 @@ class EmpresaComment(models.Model):
         ("PL", "Plan de Cuentas"),
         ("DI", "Libro Diario"),
         ("MA", "Libro Mayor"),
-        ("RP", "Reportes"),
+        ("BC", "Balance de Comprobación"),
+        ("EF", "Estados Financieros"),
     ]
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="comments")
@@ -835,6 +824,7 @@ class EmpresaComment(models.Model):
         db_table = "contabilidad_empresa_comment"
         verbose_name = "Comentario (Empresa)"
         verbose_name_plural = "Comentarios (Empresas)"
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"Comentario {self.id} en {self.empresa.nombre} - {self.get_section_display()}"

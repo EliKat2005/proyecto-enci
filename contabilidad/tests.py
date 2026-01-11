@@ -40,7 +40,6 @@ class ContabilidadSmokeTests(TestCase):
             "descripcion": "ACTIVOS",
             "tipo": "Activo",
             "naturaleza": "Deudora",
-            "estado_situacion": "1",
         }
         resp = self.client.post(url, data)
         # redirect back to plan
@@ -77,7 +76,6 @@ class CierrePeriodoTests(TestCase):
             tipo=TipoCuenta.ACTIVO,
             naturaleza=NaturalezaCuenta.DEUDORA,
             es_auxiliar=False,
-            estado_situacion=True,
         )
         pasivo = EmpresaPlanCuenta.objects.create(
             empresa=self.empresa,
@@ -86,7 +84,6 @@ class CierrePeriodoTests(TestCase):
             tipo=TipoCuenta.PASIVO,
             naturaleza=NaturalezaCuenta.ACREEDORA,
             es_auxiliar=False,
-            estado_situacion=True,
         )
         patrimonio = EmpresaPlanCuenta.objects.create(
             empresa=self.empresa,
@@ -95,7 +92,6 @@ class CierrePeriodoTests(TestCase):
             tipo=TipoCuenta.PATRIMONIO,
             naturaleza=NaturalezaCuenta.ACREEDORA,
             es_auxiliar=False,
-            estado_situacion=True,
         )
         self.caja = EmpresaPlanCuenta.objects.create(
             empresa=self.empresa,
@@ -104,7 +100,6 @@ class CierrePeriodoTests(TestCase):
             tipo=TipoCuenta.ACTIVO,
             naturaleza=NaturalezaCuenta.DEUDORA,
             es_auxiliar=True,
-            estado_situacion=True,
             padre=activo,
             activa=True,
         )

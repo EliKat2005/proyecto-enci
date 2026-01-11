@@ -150,7 +150,7 @@ def registro_view(request):
             # Informamos al usuario y redirigimos al login
             messages.success(
                 request,
-                "Registro completado. Tu cuenta está pendiente de activación por un docente o administrador.",
+                "Registro completado. Tu cuenta está pendiente de activación.",
             )
             return redirect("login")
     else:

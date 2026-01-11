@@ -48,6 +48,8 @@ def create_company(request):
     if request.method == "POST":
         nombre = request.POST.get("nombre")
         descripcion = request.POST.get("descripcion", "")
+        eslogan = request.POST.get("eslogan", "")
+        logo = request.FILES.get("logo")
         # Solo permitir marcar como plantilla si es docente o superuser
         requested_template = request.POST.get("is_template") == "1"
         is_template = requested_template and (is_docente or request.user.is_superuser)
@@ -59,6 +61,8 @@ def create_company(request):
         emp = Empresa.objects.create(
             nombre=nombre,
             descripcion=descripcion,
+            eslogan=eslogan,
+            logo=logo,
             owner=request.user,
             is_template=is_template,
             visible_to_supervisor=visible_default,
@@ -166,6 +170,8 @@ def edit_company(request, empresa_id):
     if request.method == "POST":
         nombre = request.POST.get("nombre", "").strip()
         descripcion = request.POST.get("descripcion", "").strip()
+        eslogan = request.POST.get("eslogan", "").strip()
+        logo = request.FILES.get("logo")
 
         if not nombre:
             messages.error(request, "El nombre es obligatorio.")
@@ -173,7 +179,10 @@ def edit_company(request, empresa_id):
 
         empresa.nombre = nombre
         empresa.descripcion = descripcion
-        empresa.save(update_fields=["nombre", "descripcion"])
+        empresa.eslogan = eslogan
+        if logo:
+            empresa.logo = logo
+        empresa.save(update_fields=["nombre", "descripcion", "eslogan", "logo"])
 
         messages.success(request, f'Empresa "{empresa.nombre}" actualizada correctamente.')
         return redirect("contabilidad:company_detail", empresa_id=empresa.id)
@@ -318,7 +327,7 @@ def add_account(request, empresa_id):
     """Crear una cuenta dentro del Plan de Cuentas de la empresa.
 
     Solo el owner de la empresa o superuser puede crear cuentas.
-    Campos esperados: codigo, descripcion, tipo, naturaleza, estado_situacion (on), es_auxiliar (on), padre_id (opcional).
+    Campos esperados: codigo, descripcion, tipo, naturaleza, es_auxiliar (on), padre_id (opcional).
     """
     empresa = get_object_or_404(Empresa, pk=empresa_id)
     if not ((request.user == empresa.owner) or request.user.is_superuser):
@@ -328,7 +337,6 @@ def add_account(request, empresa_id):
     descripcion = request.POST.get("descripcion", "").strip()
     tipo = request.POST.get("tipo")
     naturaleza = request.POST.get("naturaleza")
-    estado_situacion = request.POST.get("estado_situacion") == "1"
     es_auxiliar = request.POST.get("es_auxiliar") == "1"
     padre_id = request.POST.get("padre") or None
 
@@ -366,7 +374,6 @@ def add_account(request, empresa_id):
             descripcion=descripcion,
             tipo=tipo or EmpresaPlanCuenta._meta.get_field("tipo").choices[0][0],
             naturaleza=naturaleza or EmpresaPlanCuenta._meta.get_field("naturaleza").choices[0][0],
-            estado_situacion=bool(estado_situacion),
             es_auxiliar=bool(es_auxiliar),
             padre=padre,
         )
@@ -374,6 +381,100 @@ def add_account(request, empresa_id):
     except Exception as e:
         messages.error(request, f"Error al crear la cuenta: {e}")
 
+    return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def toggle_account_status(request, empresa_id, cuenta_id):
+    """Activar/desactivar una cuenta del plan.
+
+    Esto es más seguro que eliminar ya que preserva la integridad histórica.
+    """
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not ((request.user == empresa.owner) or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    cuenta = get_object_or_404(EmpresaPlanCuenta, pk=cuenta_id, empresa=empresa)
+    cuenta.activa = not cuenta.activa
+    cuenta.save()
+
+    estado = "activada" if cuenta.activa else "desactivada"
+    messages.success(request, f"Cuenta {cuenta.codigo} {estado} correctamente.")
+    return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def edit_account_description(request, empresa_id, cuenta_id):
+    """Editar la descripción de una cuenta.
+
+    Solo permite editar si la cuenta no tiene transacciones asociadas.
+    """
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not ((request.user == empresa.owner) or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    cuenta = get_object_or_404(EmpresaPlanCuenta, pk=cuenta_id, empresa=empresa)
+
+    # Verificar si tiene transacciones
+    tiene_transacciones = EmpresaTransaccion.objects.filter(cuenta=cuenta).exists()
+    if tiene_transacciones:
+        messages.error(
+            request,
+            f"No se puede editar la cuenta {cuenta.codigo} porque tiene transacciones asociadas.",
+        )
+        return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+    nueva_descripcion = request.POST.get("descripcion", "").strip()
+    if not nueva_descripcion:
+        messages.error(request, "La descripción no puede estar vacía.")
+        return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+    cuenta.descripcion = nueva_descripcion
+    cuenta.save()
+
+    messages.success(request, f"Descripción de cuenta {cuenta.codigo} actualizada correctamente.")
+    return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def delete_account(request, empresa_id, cuenta_id):
+    """Eliminar una cuenta del plan.
+
+    Solo permite eliminar si:
+    - No tiene transacciones asociadas
+    - No tiene cuentas hijas
+    """
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not ((request.user == empresa.owner) or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    cuenta = get_object_or_404(EmpresaPlanCuenta, pk=cuenta_id, empresa=empresa)
+
+    # Verificar si tiene transacciones
+    tiene_transacciones = EmpresaTransaccion.objects.filter(cuenta=cuenta).exists()
+    if tiene_transacciones:
+        messages.error(
+            request,
+            f"No se puede eliminar la cuenta {cuenta.codigo} porque tiene transacciones asociadas. Considera desactivarla en su lugar.",
+        )
+        return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+    # Verificar si tiene cuentas hijas
+    tiene_hijas = EmpresaPlanCuenta.objects.filter(empresa=empresa, padre=cuenta).exists()
+    if tiene_hijas:
+        messages.error(
+            request,
+            f"No se puede eliminar la cuenta {cuenta.codigo} porque tiene subcuentas. Elimina primero las subcuentas.",
+        )
+        return redirect("contabilidad:company_plan", empresa_id=empresa.id)
+
+    codigo_eliminado = cuenta.codigo
+    cuenta.delete()
+
+    messages.success(request, f"Cuenta {codigo_eliminado} eliminada correctamente.")
     return redirect("contabilidad:company_plan", empresa_id=empresa.id)
 
 
@@ -398,8 +499,14 @@ def company_diario(request, empresa_id):
         empresa.comments.filter(section="DI").select_related("author").order_by("-created_at")
     )
     can_edit = (request.user == empresa.owner) or request.user.is_superuser
-    cuentas_aux = EmpresaPlanCuenta.objects.filter(empresa=empresa, es_auxiliar=True).order_by(
-        "codigo"
+    # Obtener cuentas hojas (sin hijos) y activas para usar en asientos
+    from django.db.models import Exists, OuterRef
+
+    cuentas_aux = (
+        EmpresaPlanCuenta.objects.filter(empresa=empresa, activa=True)
+        .annotate(_tiene_hijos=Exists(EmpresaPlanCuenta.objects.filter(padre=OuterRef("pk"))))
+        .exclude(_tiene_hijos=True)
+        .order_by("codigo")
     )
 
     # Determinar si el usuario es docente
@@ -600,17 +707,27 @@ def add_comment(request, empresa_id, section):
     )
 
     # Crear notificación para el dueño de la empresa (estudiante)
-    section_names = {"PL": "Plan de Cuentas", "DI": "Libro Diario", "RP": "Reportes"}
+    section_names = {
+        "PL": "Plan de Cuentas",
+        "DI": "Libro Diario",
+        "MA": "Libro Mayor",
+        "BC": "Balance de Comprobación",
+        "EF": "Estados Financieros",
+    }
 
     # Solo notificar si el autor no es el dueño (evitar auto-notificaciones)
     if request.user != empresa.owner:
         # Determinar la URL según la sección
-        if section == "PL":
-            url = reverse("contabilidad:company_plan", args=[empresa.id])
-        elif section == "DI":
-            url = reverse("contabilidad:company_diario", args=[empresa.id])
-        else:
-            url = reverse("contabilidad:company_detail", args=[empresa.id])
+        section_urls = {
+            "PL": reverse("contabilidad:company_plan", args=[empresa.id]) + "#comments-section",
+            "DI": reverse("contabilidad:company_diario", args=[empresa.id]) + "#comments-section",
+            "MA": reverse("contabilidad:company_mayor", args=[empresa.id]) + "#comments-section",
+            "BC": reverse("contabilidad:company_balance_comprobacion", args=[empresa.id])
+            + "#comments-section",
+            "EF": reverse("contabilidad:company_estados_financieros", args=[empresa.id])
+            + "#comments-section",
+        }
+        url = section_urls.get(section, reverse("contabilidad:company_detail", args=[empresa.id]))
 
         Notification.objects.create(
             recipient=empresa.owner,
@@ -719,6 +836,15 @@ def company_balance_comprobacion(request, empresa_id):
     cuadra_final = abs(total_saldo_final["deudor"] - total_saldo_final["acreedor"]) < 0.01
     cuadra_todo = cuadra_inicial and cuadra_movimientos and cuadra_final
 
+    # Obtener comentarios para esta sección
+    comments = (
+        empresa.comments.filter(section="BC").select_related("author").order_by("-created_at")
+    )
+
+    # Verificar si es docente y supervisor
+    is_docente = request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+
     context = {
         "empresa": empresa,
         "cuentas": cuentas_con_movimientos,
@@ -732,6 +858,9 @@ def company_balance_comprobacion(request, empresa_id):
         "cuadra_final": cuadra_final,
         "cuadra_todo": cuadra_todo,
         "active_section": "balance",
+        "comments": comments,
+        "is_supervisor": is_supervisor,
+        "is_docente": is_docente,
     }
 
     return render(request, "contabilidad/company_balance_comprobacion.html", context)
@@ -793,6 +922,15 @@ def company_estados_financieros(request, empresa_id):
             empresa, fecha_inicio, fecha_fin
         )
 
+    # Obtener comentarios para esta sección
+    comments = (
+        empresa.comments.filter(section="EF").select_related("author").order_by("-created_at")
+    )
+
+    # Verificar si es docente y supervisor
+    is_docente = request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+
     context = {
         "empresa": empresa,
         "reporte": reporte,
@@ -802,6 +940,9 @@ def company_estados_financieros(request, empresa_id):
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
         "active_section": "estados",
+        "comments": comments,
+        "is_supervisor": is_supervisor,
+        "is_docente": is_docente,
     }
 
     return render(request, "contabilidad/company_estados_financieros.html", context)

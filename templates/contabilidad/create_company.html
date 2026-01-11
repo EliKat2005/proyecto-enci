@@ -2,39 +2,75 @@
 {% block title %}Crear Empresa | ECAE{% endblock %}
 {% block content %}
 
-<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8">
-  <div class="max-w-3xl mx-auto px-4 xl:px-8">
-    <div class="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm">
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Crear Nueva Empresa</h1>
-        <p class="text-sm text-slate-500">Complete los datos básicos. Bordes y ruido visual reducidos.</p>
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+  <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
+    <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-slate-200/60 dark:border-slate-800 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 dark:from-blue-500/10 dark:via-transparent dark:to-purple-500/10 pointer-events-none"></div>
+
+      <div class="mb-5 relative z-10">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-900 dark:text-gray-100">Crear Nueva Empresa</h1>
+            <p class="text-sm text-slate-600 dark:text-slate-400">Complete los datos básicos de la empresa</p>
+          </div>
+        </div>
       </div>
-      <form method="post" class="space-y-6">
+      <form method="post" enctype="multipart/form-data" class="space-y-5 relative z-10">
         {% csrf_token %}
-        
+
         <div>
-          <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Nombre de la Empresa *</label>
-          <input name="nombre" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Ej: Distribuidora ABC S.A.">
-        </div>
-        
-        <div>
-          <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Descripción</label>
-          <textarea name="descripcion" rows="4" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" placeholder="Descripción detallada de la empresa..."></textarea>
-        </div>
-        
-        {% if is_docente or user.is_superuser %}
-        <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
-          <label class="flex items-center cursor-pointer">
-            <input type="checkbox" name="is_template" value="1" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
-            <span class="ml-3 text-sm font-semibold text-slate-700">Marcar como plantilla (solo docentes)</span>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide flex items-center gap-2">
+            <span>Nombre de la Empresa</span>
+            <span class="text-red-500">*</span>
           </label>
-          <p class="ml-7 text-xs text-slate-600 mt-1">Las plantillas pueden ser importadas por estudiantes mediante códigos de acceso</p>
+          <input name="nombre" required class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600" placeholder="Ej: Distribuidora ABC S.A.">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Descripción</label>
+          <textarea name="descripcion" rows="3" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 resize-none" placeholder="Descripción detallada de la empresa..."></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Eslogan</label>
+          <input name="eslogan" maxlength="255" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600" placeholder="Ej: Tu aliado en negocios">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Logo de la Empresa</label>
+          <input type="file" name="logo" accept="image/*" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900">
+          <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Formatos: JPG, PNG, GIF. Tamaño recomendado: 200x200px
+          </p>
+        </div>
+
+        {% if is_docente or user.is_superuser %}
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-2 border-blue-200 dark:border-blue-900 p-4 rounded-xl">
+          <label class="flex items-start cursor-pointer group">
+            <input type="checkbox" name="is_template" value="1" class="w-5 h-5 text-blue-600 border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:ring-2 mt-0.5">
+            <div class="ml-3 flex-1">
+              <span class="text-sm font-bold text-slate-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">Marcar como plantilla reutilizable</span>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Los estudiantes podrán importar esta empresa como base para sus ejercicios mediante un código de acceso</p>
+            </div>
+          </label>
         </div>
         {% endif %}
-        
-        <div class="flex items-center gap-3 pt-2">
-          <button type="submit" class="flex-1 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-sm transition-colors">Crear Empresa</button>
-          <a href="{% url 'contabilidad:my_companies' %}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-colors">Cancelar</a>
+
+        <div class="flex items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <button type="submit" class="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 hover:from-blue-700 hover:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Crear Empresa
+          </button>
+          <a href="{% url 'contabilidad:my_companies' %}" class="px-5 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            Cancelar
+          </a>
         </div>
       </form>
     </div>
