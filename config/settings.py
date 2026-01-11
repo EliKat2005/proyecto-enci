@@ -207,9 +207,45 @@ REST_FRAMEWORK = {
 
 # --- CONFIGURACIÓN DE SWAGGER/OPENAPI ---
 SPECTACULAR_SETTINGS = {
-    "TITLE": "ENCI - Sistema de Gestión Contable API",
-    "DESCRIPTION": "API REST para gestión de contabilidad empresarial. Documentación completa de endpoints, serializers y autenticación.",
-    "VERSION": "1.0.0",
+    "TITLE": "ENCI - Sistema de Gestión Contable con ML/AI API",
+    "DESCRIPTION": """API REST para gestión de contabilidad empresarial con capacidades de Machine Learning e Inteligencia Artificial.
+
+    ## Módulos Disponibles
+
+    ### Contabilidad Tradicional
+    - Gestión de empresas y planes de cuentas
+    - Libro diario y libro mayor
+    - Balance de comprobación y estados financieros
+
+    ### Analytics & Business Intelligence
+    - Métricas financieras en tiempo real (liquidez, rentabilidad, endeudamiento)
+    - Análisis de tendencias de ingresos y gastos
+    - Ranking de cuentas más activas
+    - Composición patrimonial
+    - Análisis jerárquico de cuentas
+
+    ### Machine Learning - Embeddings
+    - Generación de embeddings vectoriales (384 dimensiones)
+    - Búsqueda semántica de cuentas contables
+    - Clustering automático con K-means
+    - Recomendaciones inteligentes de cuentas
+
+    ### Machine Learning - Predicciones
+    - Forecasting con Prophet (Ingresos, Gastos, Flujo de Caja, Utilidades)
+    - Análisis de tendencias (creciente, decreciente, estable)
+    - Métricas de error (MAE, RMSE, MAPE)
+    - Predicciones a corto y largo plazo
+
+    ### Machine Learning - Anomalías
+    - Detección de anomalías con Isolation Forest
+    - Análisis de montos atípicos
+    - Detección de patrones de frecuencia inusuales
+    - Identificación de transacciones temporales sospechosas
+    - Detección de patrones contables irregulares
+    - Sistema de revisión y clasificación de falsos positivos
+
+    Documentación completa de endpoints, serializers y autenticación.""",
+    "VERSION": "2.0.0",
     "CONTACT": {
         "name": "Proyecto ENCI",
         "email": "admin@enci.local",
@@ -221,6 +257,13 @@ SPECTACULAR_SETTINGS = {
     "SERVERS": [
         {"url": "http://localhost:8000", "description": "Desarrollo (oficial)"},
         {"url": "http://localhost:9000", "description": "Mantenimiento (alterno)"},
+    ],
+    "TAGS": [
+        {"name": "Contabilidad", "description": "Gestión de empresas y contabilidad tradicional"},
+        {"name": "Analytics", "description": "Análisis financiero y business intelligence"},
+        {"name": "ML - Predictions", "description": "Predicciones financieras con Prophet"},
+        {"name": "ML - Embeddings", "description": "Búsqueda semántica y recomendaciones"},
+        {"name": "ML - Anomalies", "description": "Detección de anomalías con ML"},
     ],
 }
 

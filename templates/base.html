@@ -190,19 +190,26 @@
                         </div>
                     {% else %}
                         <!-- Usuario no autenticado -->
-                        <button id="btn-ultra-toggle" type="button" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-slate-700 to-slate-600 text-white hover:from-slate-600 hover:to-slate-500 transition-all duration-200 shadow-lg hover:shadow-xl" title="Modo Ultra Compacto">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-                            <span class="hidden xl:inline">Ultra</span>
+                        <!-- Toggle Modo Oscuro -->
+                        <button id="dark-mode-toggle" type="button" class="relative w-14 h-7 bg-slate-700 dark:bg-slate-600 rounded-full transition-all duration-300 hover:bg-slate-600 dark:hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900" title="Cambiar modo">
+                            <span class="absolute inset-0 flex items-center justify-between px-1.5">
+                                <svg class="w-3.5 h-3.5 text-yellow-400 transition-opacity duration-300 opacity-100 dark:opacity-30" id="sun-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                                </svg>
+                                <svg class="w-3.5 h-3.5 text-slate-300 transition-opacity duration-300 opacity-30 dark:opacity-100" id="moon-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                                </svg>
+                            </span>
+                            <span class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out dark:translate-x-7" id="toggle-circle"></span>
                         </button>
 
-                        <div class="hidden sm:flex items-center gap-3 px-4 py-2 bg-slate-700/50 dark:bg-slate-950/80 rounded-lg border border-slate-600 dark:border-slate-800">
-                            <span class="text-xs font-bold text-slate-300">Crear cuenta:</span>
-                            <a href="{% url 'registro' %}?role=estudiante" class="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors">Estudiante</a>
-                            <span class="text-slate-600">|</span>
-                            <a href="{% url 'registro' %}?role=docente" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors">Docente</a>
-                        </div>
-                        <a href="{% url 'login' %}" class="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
-                            Iniciar sesión
+                        <div class="h-8 w-px bg-slate-700 dark:bg-slate-800"></div>
+
+                        <a href="{% url 'login' %}" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                            </svg>
+                            <span>Iniciar sesión</span>
                         </a>
                     {% endif %}
                 </div>
@@ -504,6 +511,9 @@
             .layout-ultra .gap-4 { gap:0.75rem!important; }
             .layout-ultra table th, .layout-ultra table td { padding-top:0.35rem!important; padding-bottom:0.35rem!important; }
         </style>
+
+        <!-- Bloque para JavaScript adicional de páginas específicas -->
+        {% block extra_js %}{% endblock %}
 
 </body>
 </html>

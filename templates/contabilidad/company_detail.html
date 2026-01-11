@@ -111,6 +111,26 @@
         </div>
       </div>
 
+      <!-- Dashboard ML/AI (NUEVO) -->
+      <div class="group bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="p-5 bg-gradient-to-br from-cyan-50 to-white dark:from-slate-800 dark:to-slate-900">
+          <div class="flex items-start space-x-4">
+            <div class="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-cyan-600 to-cyan-700 dark:from-cyan-700 dark:to-cyan-800 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 tracking-wide">🤖 Dashboard ML/AI</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Análisis inteligente y predicciones</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pb-5 pt-3">
+          <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}" class="block w-full px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-700 dark:from-cyan-700 dark:to-cyan-800 hover:from-cyan-700 hover:to-cyan-800 dark:hover:from-cyan-600 dark:hover:to-cyan-700 text-white text-center rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200">Abrir ✨</a>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

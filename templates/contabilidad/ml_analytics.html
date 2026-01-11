@@ -1,0 +1,611 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics Financiero - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                        📈 Analytics Financiero
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Análisis de tendencias para <span class="font-semibold">{{ empresa.nombre }}</span>
+                    </p>
+                </div>
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                    ← Dashboard ML
+                </a>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <div class="mb-8">
+            <nav class="flex space-x-4 overflow-x-auto">
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    📊 Dashboard
+                </a>
+                <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    📈 Analytics
+                </a>
+                <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🔮 Predicciones
+                </a>
+                <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🚨 Anomalías
+                </a>
+                <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🧠 Búsqueda Semántica
+                </a>
+            </nav>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow p-6 mb-8 border border-gray-200 dark:border-dark-border">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Período de Análisis
+                        </label>
+                        <select id="periodo-select" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            <option value="6">Últimos 6 meses</option>
+                            <option value="12" selected>Últimos 12 meses</option>
+                            <option value="24">Últimos 24 meses</option>
+                        </select>
+                    </div>
+                    <div class="pt-7">
+                        <button onclick="actualizarTendencias()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="pt-7">
+                    <button onclick="exportarDatosCSV()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Exportar CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading/Error States -->
+        <div id="loading-tendencias" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">Cargando tendencias...</p>
+        </div>
+
+        <div id="error-tendencias" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+            <p class="text-red-800 dark:text-red-300 text-sm"></p>
+        </div>
+
+        <!-- Resumen -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Ingresos</p>
+                    <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-2">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p id="total-ingresos" class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">$0</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">En el período seleccionado</p>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Gastos</p>
+                    <div class="bg-red-100 dark:bg-red-900/30 rounded-full p-2">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p id="total-gastos" class="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">$0</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">En el período seleccionado</p>
+            </div>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Resultado Neto</p>
+                    <div id="margen-icon" class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p id="margen-promedio" class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">$0</p>
+                <p id="margen-porcentaje" class="text-xs text-gray-500 dark:text-gray-400">0% de margen</p>
+            </div>
+        </div>
+
+        <!-- Gráfico de Tendencias -->
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Evolución Temporal de Ingresos y Gastos
+            </h3>
+            <div class="h-96 mb-4">
+                <canvas id="tendenciasChart"></canvas>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Interpretación:</strong> La línea verde muestra ingresos, la roja gastos y la azul el resultado neto. Las tendencias ascendentes son positivas.
+                    </p>
+                </div>
+                <div id="trend-analysis" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400">
+                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>Análisis:</strong> <span id="trend-text">Cargando análisis...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Cuentas -->
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    📊 Resumen del Período
+                </h3>
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                    Actualizado en tiempo real
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Indicadores Clave -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Indicadores Clave</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Promedio Mensual Ingresos</span>
+                            <span id="promedio-ingresos" class="text-sm font-bold text-green-600 dark:text-green-400">$0</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Promedio Mensual Gastos</span>
+                            <span id="promedio-gastos" class="text-sm font-bold text-red-600 dark:text-red-400">$0</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Mejor Mes</span>
+                            <span id="mejor-mes" class="text-sm font-bold text-blue-600 dark:text-blue-400">-</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Volatilidad</span>
+                            <span id="volatilidad" class="text-sm font-bold text-purple-600 dark:text-purple-400">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">💡 Recomendaciones</h4>
+                    <div id="recomendaciones" class="space-y-2">
+                        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
+                            <p class="text-xs text-gray-700 dark:text-gray-300">Analizando datos...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+
+    // Función para obtener el CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const empresaId = {{ empresa.id }};
+    let tendenciasChart = null;
+    let ultimosDatos = null; // Para exportar
+
+    // Cargar datos al inicio
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarTendencias(empresaId, 12);
+    });
+
+    // Función para actualizar tendencias con el período seleccionado
+    function actualizarTendencias() {
+        const meses = document.getElementById('periodo-select').value;
+        cargarTendencias(empresaId, parseInt(meses));
+    }
+
+    // Función para exportar datos a CSV
+    function exportarDatosCSV() {
+        if (!ultimosDatos) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        const meses = ultimosDatos.labels;
+        const ingresos = ultimosDatos.ingresos;
+        const gastos = ultimosDatos.gastos;
+        const neto = ultimosDatos.neto;
+
+        // Crear CSV
+        let csv = 'Período,Ingresos,Gastos,Resultado Neto\n';
+        for (let i = 0; i < meses.length; i++) {
+            csv += `${meses[i]},${ingresos[i]},${gastos[i]},${neto[i]}\n`;
+        }
+
+        // Descargar
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `analytics_empresa_${empresaId}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    }
+
+    async function cargarTendencias(empresaId, meses) {
+
+        try {
+            const url = `/contabilidad/api/ml/analytics/${empresaId}/?meses=${meses}`;
+
+            const csrftoken = getCookie('csrftoken');
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken,
+                },
+                credentials: 'same-origin',
+            });
+
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Error ${response.status}: ${errorText.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+
+            // Guardar datos para exportar
+            if (data.series && data.series.length > 0) {
+                ultimosDatos = {
+                    labels: data.series.map(s => s.periodo),
+                    ingresos: data.series.map(s => s.ingresos),
+                    gastos: data.series.map(s => s.gastos),
+                    neto: data.series.map(s => s.neto)
+                };
+            }
+
+            // Destruir gráfico anterior si existe
+            if (tendenciasChart) {
+                tendenciasChart.destroy();
+            }
+
+            // Crear nuevo gráfico
+            const ctx = document.getElementById('tendenciasChart');
+            if (ctx && data.series && data.series.length > 0) {
+
+                tendenciasChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.series.map(s => s.periodo),
+                        datasets: [
+                            {
+                                label: 'Ingresos',
+                                data: data.series.map(s => s.ingresos),
+                                borderColor: 'rgb(34, 197, 94)',
+                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: 'rgb(34, 197, 94)',
+                            },
+                            {
+                                label: 'Gastos',
+                                data: data.series.map(s => s.gastos),
+                                borderColor: 'rgb(239, 68, 68)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: 'rgb(239, 68, 68)',
+                            },
+                            {
+                                label: 'Resultado Neto',
+                                data: data.series.map(s => s.utilidad),
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 3,
+                                borderDash: [5, 5],
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: 'rgb(59, 130, 246)',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#4b5563',
+                                    font: { size: 12, weight: '500' },
+                                    padding: 15,
+                                    usePointStyle: true,
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += new Intl.NumberFormat('es-CO', {
+                                            style: 'currency',
+                                            currency: 'COP',
+                                            minimumFractionDigits: 0
+                                        }).format(context.parsed.y);
+                                        return label;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        if (tooltipItems.length === 3) {
+                                            const utilidad = tooltipItems[2].parsed.y;
+                                            const ingresos = tooltipItems[0].parsed.y;
+                                            if (ingresos > 0) {
+                                                const margen = ((utilidad / ingresos) * 100).toFixed(1);
+                                                return `Margen: ${margen}%`;
+                                            }
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: document.documentElement.classList.contains('dark') ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280',
+                                    font: { size: 11 },
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('es-CO', {
+                                            style: 'currency',
+                                            currency: 'COP',
+                                            minimumFractionDigits: 0,
+                                            notation: 'compact',
+                                            compactDisplay: 'short'
+                                        }).format(value);
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#4b5563',
+                                    font: { size: 11 }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Actualizar métricas resumen
+                if (data.series && data.series.length > 0) {
+                    const totalIngresos = data.series.reduce((sum, s) => sum + s.ingresos, 0);
+                    const totalGastos = data.series.reduce((sum, s) => sum + s.gastos, 0);
+                    const resultadoNeto = totalIngresos - totalGastos;
+                    const margenPromedio = totalIngresos > 0 ? ((resultadoNeto / totalIngresos) * 100) : 0;
+
+                    document.getElementById('total-ingresos').textContent =
+                        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalIngresos);
+                    document.getElementById('total-gastos').textContent =
+                        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalGastos);
+                    document.getElementById('margen-promedio').textContent =
+                        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(resultadoNeto);
+                    document.getElementById('margen-porcentaje').textContent = `${margenPromedio.toFixed(1)}% de margen`;
+
+                    // Color dinámico según resultado
+                    const margenEl = document.getElementById('margen-promedio');
+                    const iconEl = document.getElementById('margen-icon');
+                    if (resultadoNeto > 0) {
+                        margenEl.className = 'text-2xl font-bold text-green-600 dark:text-green-400 mb-1';
+                        iconEl.className = 'bg-green-100 dark:bg-green-900/30 rounded-full p-2';
+                        iconEl.querySelector('svg').classList.remove('text-blue-600', 'dark:text-blue-400', 'text-red-600', 'dark:text-red-400');
+                        iconEl.querySelector('svg').classList.add('text-green-600', 'dark:text-green-400');
+                    } else if (resultadoNeto < 0) {
+                        margenEl.className = 'text-2xl font-bold text-red-600 dark:text-red-400 mb-1';
+                        iconEl.className = 'bg-red-100 dark:bg-red-900/30 rounded-full p-2';
+                        iconEl.querySelector('svg').classList.remove('text-blue-600', 'dark:text-blue-400', 'text-green-600', 'dark:text-green-400');
+                        iconEl.querySelector('svg').classList.add('text-red-600', 'dark:text-red-400');
+                    }
+
+                    // Análisis de tendencia
+                    const mitad = Math.floor(data.series.length / 2);
+                    const primeraUtilidad = data.series.slice(0, mitad).reduce((sum, s) => sum + s.utilidad, 0) / mitad;
+                    const segundaUtilidad = data.series.slice(mitad).reduce((sum, s) => sum + s.utilidad, 0) / (data.series.length - mitad);
+
+                    let trendText = '';
+                    const trendAnalysisEl = document.getElementById('trend-analysis');
+                    if (segundaUtilidad > primeraUtilidad * 1.1) {
+                        trendText = '📈 Tendencia positiva: Los resultados mejoran en la segunda mitad del período.';
+                        trendAnalysisEl.className = 'bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border-l-4 border-green-500';
+                    } else if (segundaUtilidad < primeraUtilidad * 0.9) {
+                        trendText = '📉 Tendencia descendente: Los resultados disminuyen en la segunda mitad del período.';
+                        trendAnalysisEl.className = 'bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border-l-4 border-red-500';
+                    } else {
+                        trendText = '📊 Tendencia estable: Los resultados se mantienen relativamente constantes.';
+                        trendAnalysisEl.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400';
+                    }
+                    document.getElementById('trend-text').textContent = trendText;
+                }
+
+                // Actualizar métricas adicionales
+                actualizarMetricasAdicionales(data.series);
+
+            } else {
+            }
+
+        } catch (error) {
+            alert('Error al cargar tendencias: ' + error.message);
+        }
+    }
+
+    async function cargarTopCuentas(empresaId, limit) {
+        // Esta función ahora calcula métricas adicionales basadas en los datos de tendencias
+        // Se actualiza automáticamente cuando se cargan las tendencias
+    }
+
+    function actualizarMetricasAdicionales(series) {
+        if (!series || series.length === 0) return;
+
+        // Promedios mensuales
+        const promedioIngresos = series.reduce((sum, s) => sum + s.ingresos, 0) / series.length;
+        const promedioGastos = series.reduce((sum, s) => sum + s.gastos, 0) / series.length;
+
+        document.getElementById('promedio-ingresos').textContent =
+            new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(promedioIngresos);
+        document.getElementById('promedio-gastos').textContent =
+            new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(promedioGastos);
+
+        // Mejor mes (mayor utilidad)
+        let mejorMes = series[0];
+        series.forEach(s => {
+            if (s.utilidad > mejorMes.utilidad) mejorMes = s;
+        });
+        document.getElementById('mejor-mes').textContent = mejorMes.periodo;
+
+        // Volatilidad (desviación estándar de utilidad)
+        const utilidades = series.map(s => s.utilidad);
+        const mediaUtilidad = utilidades.reduce((sum, u) => sum + u, 0) / utilidades.length;
+        const varianza = utilidades.reduce((sum, u) => sum + Math.pow(u - mediaUtilidad, 2), 0) / utilidades.length;
+        const desviacion = Math.sqrt(varianza);
+        const coefVariacion = mediaUtilidad !== 0 ? (desviacion / Math.abs(mediaUtilidad)) * 100 : 0;
+
+        let volatilidad = '';
+        if (coefVariacion < 20) volatilidad = '🟢 Baja';
+        else if (coefVariacion < 40) volatilidad = '🟡 Media';
+        else volatilidad = '🔴 Alta';
+        document.getElementById('volatilidad').textContent = volatilidad;
+
+        // Generar recomendaciones
+        const recomendacionesEl = document.getElementById('recomendaciones');
+        let recomendaciones = [];
+
+        const totalIngresos = series.reduce((sum, s) => sum + s.ingresos, 0);
+        const totalGastos = series.reduce((sum, s) => sum + s.gastos, 0);
+        const margen = totalIngresos > 0 ? ((totalIngresos - totalGastos) / totalIngresos) * 100 : 0;
+
+        if (margen < 0) {
+            recomendaciones.push({
+                tipo: 'red',
+                texto: 'Margen negativo: Se recomienda revisar gastos operacionales y buscar eficiencias.'
+            });
+        } else if (margen < 10) {
+            recomendaciones.push({
+                tipo: 'yellow',
+                texto: 'Margen bajo: Considere optimizar costos o incrementar precios de venta.'
+            });
+        } else {
+            recomendaciones.push({
+                tipo: 'green',
+                texto: 'Margen saludable: Mantenga el control de gastos actual.'
+            });
+        }
+
+        if (coefVariacion > 40) {
+            recomendaciones.push({
+                tipo: 'yellow',
+                texto: 'Alta volatilidad: Los resultados varían significativamente. Busque estabilidad en ingresos.'
+            });
+        }
+
+        const mitad = Math.floor(series.length / 2);
+        const primeraUtilidad = series.slice(0, mitad).reduce((sum, s) => sum + s.utilidad, 0);
+        const segundaUtilidad = series.slice(mitad).reduce((sum, s) => sum + s.utilidad, 0);
+
+        if (segundaUtilidad > primeraUtilidad * 1.2) {
+            recomendaciones.push({
+                tipo: 'green',
+                texto: 'Tendencia positiva: Sus resultados mejoran consistentemente. ¡Excelente trabajo!'
+            });
+        } else if (segundaUtilidad < primeraUtilidad * 0.8) {
+            recomendaciones.push({
+                tipo: 'red',
+                texto: 'Tendencia descendente: Revise estrategias para recuperar rentabilidad.'
+            });
+        }
+
+        const promedioUtilidad = series.reduce((sum, s) => sum + s.utilidad, 0) / series.length;
+        if (promedioGastos > promedioIngresos * 0.9) {
+            recomendaciones.push({
+                tipo: 'yellow',
+                texto: 'Gastos elevados: Los gastos representan más del 90% de los ingresos. Busque optimizaciones.'
+            });
+        }
+
+        // Renderizar recomendaciones
+        recomendacionesEl.innerHTML = recomendaciones.map(r => {
+            const colores = {
+                green: 'bg-green-50 dark:bg-green-900/20 border-green-500',
+                yellow: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500',
+                red: 'bg-red-50 dark:bg-red-900/20 border-red-500'
+            };
+            return `
+                <div class="p-3 ${colores[r.tipo]} rounded-lg border-l-4">
+                    <p class="text-xs text-gray-700 dark:text-gray-300">${r.texto}</p>
+                </div>
+            `;
+        }).join('');
+    }
+</script>
+{% endblock %}

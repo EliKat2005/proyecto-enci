@@ -1,10 +1,12 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
 app_name = "contabilidad"
 
 urlpatterns = [
+    # Machine Learning & Analytics APIs
+    path("api/ml/", include("contabilidad.urls_api_ml", namespace="api_ml")),
     path("my/", views.my_companies, name="my_companies"),
     path("<int:empresa_id>/", views.company_detail, name="company_detail"),
     path("create/", views.create_company, name="create_company"),
@@ -66,4 +68,32 @@ urlpatterns = [
         "<int:empresa_id>/estados/export/csv/", views.export_estados_csv, name="export_estados_csv"
     ),
     path("<int:empresa_id>/comment/<str:section>/", views.add_comment, name="add_comment"),
+    # Machine Learning & AI Dashboard Views
+    path("<int:empresa_id>/ml-dashboard/", views.ml_dashboard, name="ml_dashboard"),
+    path("<int:empresa_id>/ml-analytics/", views.ml_analytics, name="ml_analytics"),
+    path("<int:empresa_id>/ml-predictions/", views.ml_predictions, name="ml_predictions"),
+    path("<int:empresa_id>/ml-anomalies/", views.ml_anomalies, name="ml_anomalies"),
+    path("<int:empresa_id>/ml-embeddings/", views.ml_embeddings, name="ml_embeddings"),
+    # ML/AI API Endpoints
+    path(
+        "api/ml/dashboard/<int:empresa_id>/",
+        views.ml_api_dashboard_metrics,
+        name="ml_api_dashboard",
+    ),
+    path("api/ml/analytics/<int:empresa_id>/", views.ml_api_analytics, name="ml_api_analytics"),
+    path(
+        "api/ml/predictions/<int:empresa_id>/generar/",
+        views.ml_api_predictions,
+        name="ml_api_predictions",
+    ),
+    path(
+        "api/ml/anomalies/<int:empresa_id>/detectar/",
+        views.ml_api_anomalies,
+        name="ml_api_anomalies",
+    ),
+    path(
+        "api/ml/embeddings/<int:empresa_id>/buscar/",
+        views.ml_api_embeddings,
+        name="ml_api_embeddings",
+    ),
 ]

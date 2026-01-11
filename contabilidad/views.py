@@ -11,10 +11,11 @@ from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
 from core.models import Notification, UserProfile
 
+from .ml_services import MLAnalyticsService
 from .models import (
     Empresa,
     EmpresaAsiento,
@@ -1391,3 +1392,355 @@ def company_libro_mayor(request, empresa_id):
             pass
 
     return render(request, "contabilidad/company_libro_mayor.html", context)
+
+
+# ============================================================================
+# VISTAS DE MACHINE LEARNING / INTELIGENCIA ARTIFICIAL
+# ============================================================================
+
+
+@login_required
+def ml_dashboard(request, empresa_id):
+    """Dashboard principal de ML/AI con métricas y visualizaciones."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos: owner, superuser, or supervisor with visible flag
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_dashboard",
+        "titulo_pagina": "Dashboard ML/AI",
+    }
+    return render(request, "contabilidad/ml_dashboard.html", context)
+
+
+@login_required
+def ml_analytics(request, empresa_id):
+    """Vista de analytics y métricas financieras."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_analytics",
+        "titulo_pagina": "Analytics Financiero",
+    }
+    return render(request, "contabilidad/ml_analytics.html", context)
+
+
+@login_required
+def ml_predictions(request, empresa_id):
+    """Vista de predicciones financieras con Prophet."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_predictions",
+        "titulo_pagina": "Predicciones Financieras",
+    }
+    return render(request, "contabilidad/ml_predictions.html", context)
+
+
+@login_required
+def ml_anomalies(request, empresa_id):
+    """Vista de detección y gestión de anomalías."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_anomalies",
+        "titulo_pagina": "Detección de Anomalías",
+    }
+    return render(request, "contabilidad/ml_anomalies.html", context)
+
+
+@login_required
+def ml_embeddings(request, empresa_id):
+    """Vista de búsqueda semántica con embeddings."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    # Generar sugerencias inteligentes basadas en las cuentas más utilizadas
+
+    from django.db.models import Count
+
+    sugerencias = []
+
+    # Obtener cuentas más utilizadas por tipo (para tener variedad)
+    tipo_emoji_map = {
+        "ACTIVO": "💰",
+        "PASIVO": "🏦",
+        "PATRIMONIO": "📊",
+        "INGRESO": "📈",
+        "GASTO": "📉",
+    }
+
+    # Palabras a eliminar (stop words contables comunes)
+    stop_words = {"de", "del", "la", "el", "los", "las", "por", "para", "en", "y", "a"}
+
+    def limpiar_descripcion(desc: str) -> str:
+        """Extrae palabras clave significativas de la descripción."""
+        palabras = desc.lower().split()
+        # Filtrar stop words y mantener solo palabras significativas
+        palabras_clave = [
+            p.capitalize() for p in palabras if p.lower() not in stop_words and len(p) > 2
+        ]
+        # Limitar a 3 palabras y máximo 30 caracteres
+        texto = " ".join(palabras_clave[:3])
+        if len(texto) > 30:
+            texto = texto[:27] + "..."
+        return texto
+
+    # Obtener 2 cuentas más usadas de cada tipo
+    for tipo, emoji in tipo_emoji_map.items():
+        cuentas = (
+            EmpresaPlanCuenta.objects.filter(empresa=empresa, activa=True, tipo=tipo)
+            .annotate(num_transacciones=Count("empresatransaccion"))
+            .filter(num_transacciones__gt=0)
+            .order_by("-num_transacciones")[:2]
+        )
+
+        for cuenta in cuentas:
+            texto_sugerencia = limpiar_descripcion(cuenta.descripcion)
+            if texto_sugerencia:  # Solo agregar si hay texto válido
+                sugerencias.append(
+                    {
+                        "texto": texto_sugerencia,
+                        "texto_completo": cuenta.descripcion,
+                        "emoji": emoji,
+                        "tipo": tipo.lower(),
+                        "codigo": cuenta.codigo,
+                    }
+                )
+
+    # Si no hay suficientes sugerencias (menos de 4), agregar cuentas auxiliares populares
+    if len(sugerencias) < 4:
+        codigos_usados = [s["codigo"] for s in sugerencias]
+        cuentas_adicionales = (
+            EmpresaPlanCuenta.objects.filter(empresa=empresa, activa=True, es_auxiliar=True)
+            .exclude(codigo__in=codigos_usados)
+            .order_by("codigo")[:6]
+        )
+
+        for cuenta in cuentas_adicionales:
+            if len(sugerencias) >= 10:
+                break
+            emoji = tipo_emoji_map.get(cuenta.tipo, "📋")
+            texto_sugerencia = limpiar_descripcion(cuenta.descripcion)
+            if texto_sugerencia:
+                sugerencias.append(
+                    {
+                        "texto": texto_sugerencia,
+                        "texto_completo": cuenta.descripcion,
+                        "emoji": emoji,
+                        "tipo": cuenta.tipo.lower(),
+                        "codigo": cuenta.codigo,
+                    }
+                )
+
+    # Limitar a 8 sugerencias máximo
+    sugerencias = sugerencias[:8]
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_embeddings",
+        "titulo_pagina": "Búsqueda Semántica",
+        "sugerencias": sugerencias,
+    }
+    return render(request, "contabilidad/ml_embeddings.html", context)
+
+
+# ==================== ML/AI API ENDPOINTS ====================
+
+
+@login_required
+@require_http_methods(["GET"])
+def ml_api_dashboard_metrics(request, empresa_id):
+    """API: Obtener métricas del dashboard ML."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return JsonResponse({"error": "No tienes permiso"}, status=403)
+
+    try:
+        ml_service = MLAnalyticsService(empresa)
+        metrics = ml_service.get_dashboard_metrics()
+        return JsonResponse(metrics)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def ml_api_analytics(request, empresa_id):
+    """API: Obtener datos de analytics con series de tiempo."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return JsonResponse({"error": "No tienes permiso"}, status=403)
+
+    try:
+        meses = int(request.GET.get("meses", 12))
+        ml_service = MLAnalyticsService(empresa)
+        data = ml_service.get_analytics_time_series(meses)
+        return JsonResponse(data)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ml_api_predictions(request, empresa_id):
+    """API: Generar predicciones financieras."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return JsonResponse({"error": "No tienes permiso"}, status=403)
+
+    try:
+        body = json.loads(request.body)
+        tipo = body.get("tipo", "ingresos")
+        periodos = int(body.get("periodos", 6))
+
+        # Mapear valores del frontend a tipos de cuenta
+        tipo_map = {
+            "ingresos": "INGRESO",
+            "gastos": "GASTO",
+            "flujo": "FLUJO",  # Para flujo, combinaremos ingresos - gastos
+        }
+
+        tipo_cuenta = tipo_map.get(tipo, "INGRESO")
+
+        ml_service = MLAnalyticsService(empresa)
+        predictions = ml_service.generate_predictions(tipo_cuenta, periodos)
+        return JsonResponse(predictions)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def ml_api_anomalies(request, empresa_id):
+    """API: Detectar anomalías en transacciones."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return JsonResponse({"error": "No tienes permiso"}, status=403)
+
+    try:
+        meses = int(request.GET.get("meses", 12))
+        umbral = float(request.GET.get("umbral", 2.0))
+
+        ml_service = MLAnalyticsService(empresa)
+        anomalies = ml_service.detect_anomalies(meses, umbral)
+
+        return JsonResponse(
+            {
+                "anomalies": anomalies,
+                "total": len(anomalies),
+            }
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ml_api_embeddings(request, empresa_id):
+    """API: Búsqueda semántica de cuentas."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return JsonResponse({"error": "No tienes permiso"}, status=403)
+
+    try:
+        body = json.loads(request.body)
+        query = body.get("query", "")
+        limit = int(body.get("limit", 10))
+
+        if not query:
+            return JsonResponse({"error": "Query es requerido"}, status=400)
+
+        ml_service = MLAnalyticsService(empresa)
+        results = ml_service.semantic_search(query, limit)
+
+        return JsonResponse(
+            {
+                "results": results,
+                "total": len(results),
+                "query": query,
+            }
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

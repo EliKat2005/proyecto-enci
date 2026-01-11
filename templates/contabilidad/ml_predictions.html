@@ -1,0 +1,735 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Predicciones - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                        🔮 Predicciones Financieras
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Forecasting con Prophet - <span class="font-semibold">{{ empresa.nombre }}</span>
+                    </p>
+                </div>
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                    ← Dashboard ML
+                </a>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <div class="mb-8">
+            <nav class="flex space-x-4 overflow-x-auto">
+                <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    📊 Dashboard
+                </a>
+                <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    📈 Analytics
+                </a>
+                <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    🔮 Predicciones
+                </a>
+                <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🚨 Anomalías
+                </a>
+                <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
+                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                    🧠 Búsqueda Semántica
+                </a>
+            </nav>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow p-6 mb-8 border border-gray-200 dark:border-dark-border">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tipo de Predicción
+                    </label>
+                    <select id="tipo-prediccion" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="ingresos">Ingresos Totales</option>
+                        <option value="gastos">Gastos Totales</option>
+                        <option value="flujo">Flujo de Caja</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Períodos Futuros
+                    </label>
+                    <select id="periodos-futuro" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="3">3 meses</option>
+                        <option value="6" selected>6 meses</option>
+                        <option value="12">12 meses</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="generarPredicciones()"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Generar Predicción
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-predictions" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">Generando predicciones con Prophet...</p>
+        </div>
+
+        <!-- Results Container -->
+        <div id="predictions-results" class="hidden">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Próximo Período</p>
+                        <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p id="next-value" class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">-</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Valor predicho</p>
+                </div>
+                <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Tendencia</p>
+                        <div id="trend-icon" class="bg-gray-100 dark:bg-gray-800 rounded-full p-2">
+                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p id="trend-value" class="text-2xl font-bold text-gray-900 dark:text-white mb-1">-</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Dirección del patrón</p>
+                </div>
+                <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Confianza</p>
+                        <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-2">
+                            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p id="confidence-value" class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">-</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Certeza del modelo</p>
+                </div>
+                <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Rango</p>
+                        <div class="bg-orange-100 dark:bg-orange-900/30 rounded-full p-2">
+                            <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p id="accuracy-value" class="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">-</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Variación esperada</p>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Predicción con Intervalos de Confianza</h3>
+                    <span id="prediction-type-badge" class="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                        Tipo no especificado
+                    </span>
+                </div>
+                <div class="h-96 mb-4">
+                    <canvas id="predictionsChart"></canvas>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
+                        <p class="text-xs text-gray-700 dark:text-gray-300">
+                            <strong>Interpretación:</strong> Los puntos verdes muestran datos históricos reales. La línea azul es la predicción esperada. Las líneas verde (optimista +10%) y roja (pesimista -10%) muestran escenarios alternativos. El área sombreada es el intervalo de confianza (90%).
+                        </p>
+                    </div>
+                    <div id="prediction-analysis" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400">
+                        <p class="text-xs text-gray-700 dark:text-gray-300">
+                            <strong>Análisis:</strong> <span id="prediction-text">Genera una predicción para ver el análisis.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Analysis -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">⚠️ Análisis de Riesgo y Escenarios</h3>
+                    <span class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full font-medium">
+                        Optimista +10% | Pesimista -10%
+                    </span>
+                </div>
+                <div id="risk-analysis" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <div class="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Nivel de Riesgo</p>
+                        </div>
+                        <p id="risk-level" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <div class="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Variabilidad</p>
+                        </div>
+                        <p id="variability" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Recomendación</p>
+                        </div>
+                        <p id="recommendation" class="text-sm text-gray-700 dark:text-gray-300">-</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                        <strong>💡 Sobre los escenarios:</strong> El escenario optimista (+10%) representa condiciones favorables, mientras el pesimista (-10%) representa adversidades. Use el rango para planificar reservas de contingencia y evaluar el impacto de variaciones en sus proyecciones.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Predictions Table -->
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Valores Predichos y Escenarios</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-dark-bg">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Período</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wider">
+                                    <div class="flex items-center justify-end">
+                                        <span class="mr-1">↑</span>
+                                        Optimista
+                                    </div>
+                                </th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                    <div class="flex items-center justify-end">
+                                        <span class="mr-1">•</span>
+                                        Esperado
+                                    </div>
+                                </th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">
+                                    <div class="flex items-center justify-end">
+                                        <span class="mr-1">↓</span>
+                                        Pesimista
+                                    </div>
+                                </th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rango</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Confianza</th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictions-table-body" class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span class="font-semibold">Nota:</span> Optimista (+10%), Esperado (base), Pesimista (-10%). La confianza se basa en la estrechez del intervalo de predicción.
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-12 bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-gray-200 dark:border-dark-border">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Sin predicciones</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Selecciona los parámetros y genera tu primera predicción</p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const empresaId = {{ empresa.id }};
+let predictionsChart = null;
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function actualizarTituloPorTipo(tipo) {
+    const badge = document.getElementById('prediction-type-badge');
+    const tipoTextos = {
+        'INGRESO': { texto: '📈 Ingresos', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+        'GASTO': { texto: '📉 Gastos', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
+        'FLUJO': { texto: '💰 Flujo de Caja', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' }
+    };
+
+    const info = tipoTextos[tipo] || { texto: tipo, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' };
+    badge.textContent = info.texto;
+    badge.className = `px-3 py-1 text-xs font-medium rounded-full ${info.color}`;
+
+}
+
+async function generarPredicciones() {
+    const tipo = document.getElementById('tipo-prediccion').value;
+    const periodos = document.getElementById('periodos-futuro').value;
+
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('predictions-results').classList.add('hidden');
+    document.getElementById('loading-predictions').classList.remove('hidden');
+
+    try {
+        const body = {
+            tipo: tipo,
+            periodos: parseInt(periodos)
+        };
+
+        const response = await fetch(`/contabilidad/api/ml/predictions/${empresaId}/generar/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(body)
+        });
+
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        // Actualizar título según tipo
+        actualizarTituloPorTipo(data.tipo_cuenta);
+
+        mostrarPredicciones(data);
+
+    } catch (error) {
+        alert('Error al generar predicciones: ' + error.message);
+        document.getElementById('loading-predictions').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+    }
+}
+
+function mostrarPredicciones(data) {
+
+    document.getElementById('loading-predictions').classList.add('hidden');
+    document.getElementById('predictions-results').classList.remove('hidden');
+
+    // El backend devuelve 'predictions' con formato: {periodo, valor, lower, upper}
+    const predicciones = data.predictions || [];
+
+    if (predicciones.length > 0) {
+        const first = predicciones[0];
+        const last = predicciones[predicciones.length - 1];
+
+
+        // Próximo período
+        document.getElementById('next-value').textContent =
+            new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(first.valor);
+
+        // Tendencia con iconos dinámicos
+        const tendenciaValor = last.valor - first.valor;
+        const tendencia = tendenciaValor > 0 ? '📈 Creciente' : tendenciaValor < 0 ? '📉 Decreciente' : '➡️ Estable';
+        const tendenciaColor = tendenciaValor > 0 ? 'text-green-600 dark:text-green-400' :
+                               tendenciaValor < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400';
+        const trendElement = document.getElementById('trend-value');
+        trendElement.textContent = tendencia;
+        trendElement.className = `text-2xl font-bold mb-1 ${tendenciaColor}`;
+
+        // Icono de tendencia
+        const trendIcon = document.getElementById('trend-icon');
+        if (tendenciaValor > 0) {
+            trendIcon.className = 'bg-green-100 dark:bg-green-900/30 rounded-full p-2';
+            trendIcon.querySelector('svg').classList.add('text-green-600', 'dark:text-green-400');
+        } else if (tendenciaValor < 0) {
+            trendIcon.className = 'bg-red-100 dark:bg-red-900/30 rounded-full p-2';
+            trendIcon.querySelector('svg').classList.add('text-red-600', 'dark:text-red-400');
+        }
+
+        // Confianza promedio
+        const confianzaPromedio = predicciones.reduce((sum, p) => {
+            const rango = p.upper - p.lower;
+            return sum + Math.max(0, 100 - (rango / Math.abs(p.valor) * 100));
+        }, 0) / predicciones.length;
+        document.getElementById('confidence-value').textContent = `${confianzaPromedio.toFixed(1)}%`;
+
+        // Rango de variación
+        const rangoPromedio = predicciones.reduce((sum, p) =>
+            sum + (p.upper - p.lower), 0) / predicciones.length;
+        document.getElementById('accuracy-value').textContent =
+            '±' + new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(rangoPromedio / 2);
+
+        // Análisis de predicción con escenarios
+        const cambio = ((last.valor - first.valor) / Math.abs(first.valor)) * 100;
+        const optimistaValor = last.valor * 1.1;
+        const pesimistaValor = last.valor * 0.9;
+
+        let analisisTexto = '';
+        if (Math.abs(cambio) < 5) {
+            analisisTexto = `📊 Se espera estabilidad con cambios menores al 5%. Escenario optimista: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(optimistaValor)}, pesimista: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(pesimistaValor)}.`;
+        } else if (cambio > 0) {
+            analisisTexto = `📈 Crecimiento proyectado del ${cambio.toFixed(1)}%. En escenario optimista alcanzaría ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(optimistaValor)}.`;
+        } else {
+            analisisTexto = `📉 Disminución anticipada del ${Math.abs(cambio).toFixed(1)}%. En escenario pesimista podría llegar a ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(pesimistaValor)}.`;
+        }
+        document.getElementById('prediction-text').textContent = analisisTexto;
+
+        const analysisEl = document.getElementById('prediction-analysis');
+        if (cambio > 10) {
+            analysisEl.className = 'bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border-l-4 border-green-500';
+        } else if (cambio < -10) {
+            analysisEl.className = 'bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border-l-4 border-red-500';
+        } else {
+            analysisEl.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400';
+        }
+
+        // Análisis de riesgo
+        actualizarAnalisisRiesgo(predicciones, confianzaPromedio);
+    }
+
+    crearGraficoPredicciones(data);
+
+    const tbody = document.getElementById('predictions-table-body');
+    tbody.innerHTML = '';
+
+    predicciones.forEach((pred, index) => {
+        const row = tbody.insertRow();
+
+        // Cálculo de confianza: inverso de la amplitud del intervalo respecto al valor
+        const amplitud = pred.upper - pred.lower;
+        const confianzaWidth = Math.max(0, Math.min(100, 100 - (amplitud / Math.abs(pred.valor) * 50)));
+
+        // Determinar color de confianza
+        let confianzaColor = 'bg-green-600';
+        if (confianzaWidth < 70) confianzaColor = 'bg-yellow-600';
+        if (confianzaWidth < 50) confianzaColor = 'bg-red-600';
+
+        // Escenarios
+        const optimista = pred.valor * 1.1;
+        const pesimista = pred.valor * 0.9;
+        const rango = optimista - pesimista;
+
+        row.innerHTML = `
+            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">${pred.periodo}</td>
+            <td class="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400 font-semibold">
+                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(optimista)}
+            </td>
+            <td class="px-4 py-3 text-sm text-right text-blue-600 dark:text-blue-400 font-bold">
+                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(pred.valor)}
+            </td>
+            <td class="px-4 py-3 text-sm text-right text-red-600 dark:text-red-400 font-semibold">
+                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(pesimista)}
+            </td>
+            <td class="px-4 py-3 text-xs text-center text-gray-600 dark:text-gray-400">
+                ±${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(rango / 2)}
+            </td>
+            <td class="px-4 py-3 text-sm">
+                <div class="flex items-center justify-center">
+                    <div class="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mr-2">
+                        <div class="${confianzaColor} h-2.5 rounded-full transition-all" style="width: ${confianzaWidth}%"></div>
+                    </div>
+                    <span class="text-xs font-medium ${
+                        confianzaWidth >= 70 ? 'text-green-600 dark:text-green-400' :
+                        confianzaWidth >= 50 ? 'text-yellow-600 dark:text-yellow-400' :
+                        'text-red-600 dark:text-red-400'
+                    }">${confianzaWidth.toFixed(0)}%</span>
+                </div>
+            </td>
+        `;
+    });
+}
+
+function actualizarAnalisisRiesgo(predicciones, confianzaPromedio) {
+    // Calcular variabilidad
+    const valores = predicciones.map(p => p.valor);
+    const promedio = valores.reduce((sum, v) => sum + v, 0) / valores.length;
+    const varianza = valores.reduce((sum, v) => sum + Math.pow(v - promedio, 2), 0) / valores.length;
+    const desviacion = Math.sqrt(varianza);
+    const coefVariacion = (desviacion / Math.abs(promedio)) * 100;
+
+    // Nivel de riesgo
+    let nivelRiesgo = '';
+    let riesgoColor = '';
+    if (confianzaPromedio > 80 && coefVariacion < 15) {
+        nivelRiesgo = '🟢 Bajo';
+        riesgoColor = 'text-green-600 dark:text-green-400';
+    } else if (confianzaPromedio > 60 && coefVariacion < 30) {
+        nivelRiesgo = '🟡 Medio';
+        riesgoColor = 'text-yellow-600 dark:text-yellow-400';
+    } else {
+        nivelRiesgo = '🔴 Alto';
+        riesgoColor = 'text-red-600 dark:text-red-400';
+    }
+
+    const riskEl = document.getElementById('risk-level');
+    riskEl.textContent = nivelRiesgo;
+    riskEl.className = `text-xl font-bold ${riesgoColor}`;
+
+    // Variabilidad
+    let variabilidadTexto = '';
+    if (coefVariacion < 15) {
+        variabilidadTexto = 'Baja (< 15%)';
+    } else if (coefVariacion < 30) {
+        variabilidadTexto = 'Media (15-30%)';
+    } else {
+        variabilidadTexto = 'Alta (> 30%)';
+    }
+    document.getElementById('variability').textContent = variabilidadTexto;
+
+    // Recomendación con escenarios
+    const ultimaPred = predicciones[predicciones.length - 1];
+    const escOptimista = ultimaPred.valor * 1.1;
+    const escPesimista = ultimaPred.valor * 0.9;
+    const diferencia = escOptimista - escPesimista;
+
+    let recomendacion = '';
+    if (confianzaPromedio > 80) {
+        recomendacion = `Predicción confiable para planificación. Considere reserva de ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(diferencia)} para cubrir el rango entre escenarios.`;
+    } else if (confianzaPromedio > 60) {
+        recomendacion = `Predicción moderada. Planifique con el escenario pesimista (${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(escPesimista)}) como base segura.`;
+    } else {
+        recomendacion = `Alta incertidumbre. Prepare contingencias para el rango completo: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(escPesimista)} - ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(escOptimista)}.`;
+    }
+    document.getElementById('recommendation').textContent = recomendacion;
+}
+
+function crearGraficoPredicciones(data) {
+    const ctx = document.getElementById('predictionsChart');
+
+    if (predictionsChart) {
+        predictionsChart.destroy();
+    }
+
+    const historico = data.historical || [];
+    const predicciones = data.predictions || [];
+    const isDark = document.documentElement.classList.contains('dark');
+
+    // Combinar labels: últimos 6 históricos + predicciones
+    const historicoReciente = historico.slice(-6);
+    const allLabels = [...historicoReciente.map(h => h.periodo), ...predicciones.map(p => p.periodo)];
+
+    // Datos históricos (solo para los primeros períodos)
+    const historicoData = [...historicoReciente.map(h => h.valor), ...Array(predicciones.length).fill(null)];
+
+    // Datos de predicción (null para históricos, valores para predicciones)
+    const prediccionData = [...Array(historicoReciente.length).fill(null), ...predicciones.map(p => p.valor)];
+    const optimistaData = [...Array(historicoReciente.length).fill(null), ...predicciones.map(p => p.valor * 1.1)];
+    const pesimistaData = [...Array(historicoReciente.length).fill(null), ...predicciones.map(p => p.valor * 0.9)];
+    const upperData = [...Array(historicoReciente.length).fill(null), ...predicciones.map(p => p.upper)];
+    const lowerData = [...Array(historicoReciente.length).fill(null), ...predicciones.map(p => p.lower)];
+
+
+    predictionsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: allLabels,
+            datasets: [
+                {
+                    label: 'Datos Históricos',
+                    data: historicoData,
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgb(34, 197, 94)',
+                    borderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgb(34, 197, 94)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    tension: 0.4,
+                    order: 0
+                },
+                {
+                    label: 'Límite Superior (90%)',
+                    data: upperData,
+                    borderColor: 'rgba(59, 130, 246, 0.3)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    fill: '+1',
+                    tension: 0.4,
+                    order: 5
+                },
+                {
+                    label: 'Límite Inferior (90%)',
+                    data: lowerData,
+                    borderColor: 'rgba(59, 130, 246, 0.3)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    tension: 0.4,
+                    order: 6
+                },
+                {
+                    label: 'Predicción Esperada',
+                    data: prediccionData,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgb(59, 130, 246)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    tension: 0.4,
+                    order: 2
+                },
+                {
+                    label: 'Escenario Optimista (+10%)',
+                    data: optimistaData,
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: 'rgb(34, 197, 94)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1,
+                    tension: 0.4,
+                    order: 3
+                },
+                {
+                    label: 'Escenario Pesimista (-10%)',
+                    data: pesimistaData,
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: 'rgb(239, 68, 68)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1,
+                    tension: 0.4,
+                    order: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: isDark ? '#d1d5db' : '#4b5563',
+                        font: { size: 12, weight: '500' },
+                        padding: 15,
+                        usePointStyle: true,
+                        filter: function(item) {
+                            // Ocultar límite inferior en leyenda
+                            return !item.text.includes('Límite Inferior');
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label;
+                            if (context.parsed.y === null) return null;
+                            const value = new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                minimumFractionDigits: 0
+                            }).format(context.parsed.y);
+                            return label + ': ' + value;
+                        },
+                        footer: function(tooltipItems) {
+                            // Buscar predicción esperada
+                            const esperado = tooltipItems.find(item => item.dataset.label === 'Predicción Esperada');
+                            if (esperado && esperado.parsed.y) {
+                                const optimista = esperado.parsed.y * 1.1;
+                                const pesimista = esperado.parsed.y * 0.9;
+                                const rango = optimista - pesimista;
+                                return 'Rango escenarios: ' + new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    minimumFractionDigits: 0,
+                                    notation: 'compact'
+                                }).format(rango);
+                            }
+                            return '';
+                        }
+                    }
+                },
+                filler: {
+                    propagate: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: isDark ? '#9ca3af' : '#6b7280',
+                        font: { size: 11 },
+                        callback: function(value) {
+                            return new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                minimumFractionDigits: 0,
+                                notation: 'compact',
+                                compactDisplay: 'short'
+                            }).format(value);
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: isDark ? '#d1d5db' : '#4b5563',
+                        font: { size: 11 }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
