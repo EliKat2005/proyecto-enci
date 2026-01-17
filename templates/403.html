@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - Acceso Denegado | ENCI Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-black min-h-screen flex items-center justify-center px-4">
+
+    <div class="max-w-2xl w-full text-center">
+        <!-- Ilustración animada -->
+        <div class="mb-8">
+            <svg class="w-64 h-64 mx-auto text-amber-500 dark:text-amber-400 shake" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </div>
+
+        <!-- Código de error -->
+        <h1 class="text-8xl font-bold text-slate-900 dark:text-slate-50 mb-4">
+            403
+        </h1>
+
+        <!-- Título -->
+        <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+            Acceso Denegado
+        </h2>
+
+        <!-- Descripción -->
+        <p class="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-lg mx-auto">
+            No tienes permisos para acceder a esta página.
+            Si crees que deberías tener acceso, contacta con el administrador del sistema.
+        </p>
+
+        <!-- Alert de permisos -->
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-6 mb-8">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-amber-600 dark:text-amber-400 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div class="text-left">
+                    <h3 class="font-semibold text-amber-800 dark:text-amber-200 mb-2">
+                        Permisos Insuficientes
+                    </h3>
+                    <p class="text-sm text-amber-700 dark:text-amber-300">
+                        Tu cuenta no tiene los permisos necesarios para ver este contenido.
+                        Esto puede deberse a:
+                    </p>
+                    <ul class="mt-2 text-sm text-amber-700 dark:text-amber-300 space-y-1">
+                        <li>• No ser propietario de la empresa o recurso</li>
+                        <li>• No tener rol de supervisor asignado</li>
+                        <li>• Intentar acceder a datos de otra empresa</li>
+                        <li>• La sesión puede haber expirado</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sugerencias -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6 mb-8 text-left">
+            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+                🔑 ¿Qué puedes hacer?
+            </h3>
+            <ul class="space-y-2 text-slate-600 dark:text-slate-300">
+                <li class="flex items-start">
+                    <span class="mr-2">•</span>
+                    <span>Verifica que hayas iniciado sesión con la cuenta correcta</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-2">•</span>
+                    <span>Solicita permisos al propietario de la empresa</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-2">•</span>
+                    <span>Contacta al administrador del sistema para verificar tu rol</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-2">•</span>
+                    <span>Si el problema persiste, cierra sesión y vuelve a iniciarla</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/" class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Ir a Inicio
+            </a>
+
+            <button onclick="window.history.back()" class="inline-flex items-center justify-center px-6 py-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-semibold rounded-lg transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Página Anterior
+            </button>
+
+            {% if user.is_authenticated %}
+            <a href="/logout/" class="inline-flex items-center justify-center px-6 py-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-semibold rounded-lg transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Cerrar Sesión
+            </a>
+            {% else %}
+            <a href="/login/?next={{ request.path }}" class="inline-flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Iniciar Sesión
+            </a>
+            {% endif %}
+
+            <a href="mailto:admin@enci.edu.co?subject=Solicitud%20de%20Acceso" class="inline-flex items-center justify-center px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Solicitar Acceso
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+                © 2026 ENCI Platform - Sistema de Gestión Contable
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

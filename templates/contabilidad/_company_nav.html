@@ -2,15 +2,15 @@
   <div class="flex flex-wrap gap-2">
     <a href="{% url 'contabilidad:company_plan' empresa.id %}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 border
       {% if current_panel == 'plan' %}bg-blue-600 text-white border-blue-600 shadow-sm
-      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 border-slate-300 dark:border-slate-700{% endif %}">Plan de Cuentas</a>
+      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/50 border-slate-300 dark:border-slate-700{% endif %}">Plan de Cuentas</a>
     <a href="{% url 'contabilidad:company_diario' empresa.id %}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 border
       {% if current_panel == 'diario' %}bg-emerald-600 text-white border-emerald-600 shadow-sm
-      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 border-slate-300 dark:border-slate-700{% endif %}">Libro Diario</a>
+      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 border-slate-300 dark:border-slate-700{% endif %}">Libro Diario</a>
     <a href="{% url 'contabilidad:company_libro_mayor' empresa.id %}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 border
       {% if current_panel == 'mayor' %}bg-orange-600 text-white border-orange-600 shadow-sm
-      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-950/50 border-slate-300 dark:border-slate-700{% endif %}">Libro Mayor</a>
+      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-orange-50 dark:hover:bg-orange-950/50 border-slate-300 dark:border-slate-700{% endif %}">Libro Mayor</a>
     <a href="{% url 'contabilidad:company_detail' empresa.id %}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 border
       {% if current_panel == 'detalle' %}bg-indigo-600 text-white border-indigo-600 shadow-sm
-      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border-slate-300 dark:border-slate-700{% endif %}">Resumen Empresa</a>
+      {% else %}bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border-slate-300 dark:border-slate-700{% endif %}">Resumen Empresa</a>
   </div>
 </nav>

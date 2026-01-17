@@ -166,12 +166,17 @@ class AsientoService:
         for linea_data in lineas_norm:
             cuenta = cuentas_by_id[linea_data["cuenta_id"]]
 
-            # Permitir cuentas que sean hojas (sin hijos) y estén activas
+            # Validar que sea cuenta transaccional, activa y sin hijos
             tiene_hijos = bool(getattr(cuenta, "_has_children", False))
-            puede_recibir = bool(cuenta.activa) and not tiene_hijos
+            puede_recibir = bool(cuenta.es_auxiliar) and bool(cuenta.activa) and not tiene_hijos
 
             if not puede_recibir:
-                if tiene_hijos:
+                if not cuenta.es_auxiliar:
+                    raise ValidationError(
+                        f"La cuenta {cuenta.codigo} - {cuenta.descripcion} no es transaccional. "
+                        f"Solo las cuentas marcadas como transaccionales pueden recibir movimientos."
+                    )
+                elif tiene_hijos:
                     raise ValidationError(
                         f"La cuenta {cuenta.codigo} - {cuenta.descripcion} no puede recibir transacciones "
                         f"porque tiene subcuentas. Use una cuenta hoja (sin subcuentas)."
@@ -212,20 +217,29 @@ class AsientoService:
         """
         Valida que el periodo contable esté abierto para la fecha del asiento.
 
-        Raises:
-            ValidationError: Si el periodo está cerrado o bloqueado
-        """
-        from .models import PeriodoContable
+        Verifica si existe un cierre de periodo para el año del asiento.
+        Si el periodo está cerrado y bloqueado, no se permiten nuevos asientos.
 
-        # Buscar periodo para el mes/año del asiento
-        periodo = PeriodoContable.objects.filter(
-            empresa=empresa, anio=fecha.year, mes=fecha.month
+        Args:
+            empresa: Empresa a validar
+            fecha: Fecha del asiento a crear
+
+        Raises:
+            ValidationError: Si el periodo está cerrado y bloqueado
+        """
+        from .models import EmpresaCierrePeriodo
+
+        # Buscar si existe un cierre para el año del asiento
+        cierre = EmpresaCierrePeriodo.objects.filter(
+            empresa=empresa, periodo=fecha.year, bloqueado=True
         ).first()
 
-        if periodo and periodo.estado != PeriodoContable.EstadoPeriodo.ABIERTO:
+        if cierre:
             raise ValidationError(
-                f"El periodo {fecha.month}/{fecha.year} está {periodo.estado}. "
-                f"No se pueden crear asientos en periodos cerrados."
+                f"⛔ El periodo fiscal {fecha.year} está CERRADO. "
+                f"No se pueden crear o modificar asientos en periodos cerrados. "
+                f"Fecha de cierre: {cierre.fecha_cierre.strftime('%d/%m/%Y')}. "
+                f"Cerrado por: {cierre.cerrado_por.get_full_name() if cierre.cerrado_por else 'Sistema'}."
             )
 
     @classmethod
@@ -389,7 +403,7 @@ class LibroMayorService:
         Args:
             empresa: Empresa a analizar
             fecha: Fecha de corte (None = hoy)
-            solo_auxiliares: Si solo muestra cuentas auxiliares (con movimiento)
+            solo_auxiliares: Si solo muestra cuentas transaccionales (con movimiento)
 
         Returns:
             Lista de diccionarios con saldos por cuenta
@@ -543,7 +557,19 @@ class EstadosFinancierosService:
                 patrimonio_detalle.append({"cuenta": cuenta, "saldo": saldos["saldo_final"]})
                 total_patrimonio += saldos["saldo_final"]
 
-        balanceado = abs(total_activos - (total_pasivos + total_patrimonio)) < Decimal("0.01")
+        # Calcular diferencia y validación de ecuación contable
+        diferencia = total_activos - (total_pasivos + total_patrimonio)
+        balanceado = abs(diferencia) < Decimal("0.01")
+
+        # Mensaje de advertencia si no cuadra
+        mensaje_balance = None
+        if not balanceado:
+            mensaje_balance = (
+                f"⚠️ ADVERTENCIA: El Balance General NO cuadra. "
+                f"Diferencia: {diferencia:,.2f} "
+                f"(Activos: {total_activos:,.2f} ≠ Pasivos + Patrimonio: {total_pasivos + total_patrimonio:,.2f}). "
+                f"Revise los asientos contables y corrija los errores."
+            )
 
         return {
             "activos": total_activos,
@@ -554,7 +580,8 @@ class EstadosFinancierosService:
             "detalle_patrimonio": patrimonio_detalle,
             "balanceado": balanceado,
             "fecha_corte": fecha_corte.strftime("%d/%m/%Y"),
-            "diferencia": total_activos - (total_pasivos + total_patrimonio),
+            "diferencia": diferencia,
+            "mensaje_balance": mensaje_balance,
         }
 
     @classmethod

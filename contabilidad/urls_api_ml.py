@@ -11,12 +11,14 @@ from contabilidad.api_ml import (
     EmbeddingsViewSet,
     PredictionsViewSet,
 )
+from contabilidad.api_ml_advanced import AdvancedMLViewSet
 
 # Crear router para ViewSets
 router = DefaultRouter()
 router.register(r"predictions", PredictionsViewSet, basename="predictions")
 router.register(r"embeddings", EmbeddingsViewSet, basename="embeddings")
 router.register(r"anomalies", AnomaliesViewSet, basename="anomalies")
+router.register(r"advanced", AdvancedMLViewSet, basename="advanced")
 
 # URLs personalizadas para AnalyticsViewSet (usa actions en lugar de ModelViewSet)
 analytics_patterns = [

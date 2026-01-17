@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kardex - {{ producto.nombre }} - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+  <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
+
+  {# Header #}
+  {% include 'contabilidad/_company_header_minimal.html' with current_panel='kardex' %}
+
+  {# Main Content #}
+  <div class="mt-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
+
+    {# Product Header #}
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 flex items-center justify-center font-bold text-2xl">
+            📦
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-50">{{ producto.nombre }}</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">
+              <span class="font-mono font-semibold text-purple-600 dark:text-purple-400">SKU: {{ producto.sku }}</span>
+              {% if producto.categoria %}
+              <span class="ml-3">Categoría: {{ producto.categoria }}</span>
+              {% endif %}
+            </p>
+            <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+              Método de Valoración:
+              <span class="font-semibold">
+                {% if producto.metodo_valoracion == 'PEPS' %}
+                  PEPS (Primeras en Entrar, Primeras en Salir)
+                {% elif producto.metodo_valoracion == 'UEPS' %}
+                  UEPS (Últimas en Entrar, Primeras en Salir)
+                {% else %}
+                  Promedio Ponderado
+                {% endif %}
+              </span>
+            </p>
+          </div>
+        </div>
+        <a href="{% url 'contabilidad:kardex_lista_productos' empresa.id %}"
+           class="px-4 py-2 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+          ← Volver a Lista
+        </a>
+      </div>
+    </div>
+
+    {# Current Status Cards #}
+    <div class="p-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
+        <p class="text-xs text-blue-700 dark:text-blue-400 mb-1 font-semibold">Stock Actual</p>
+        <p class="text-2xl font-bold text-blue-900 dark:text-blue-300">
+          {{ kardex_data.saldo_final.cantidad|floatformat:3 }}
+        </p>
+        <p class="text-xs text-blue-600 dark:text-blue-500 mt-1">{{ producto.unidad_medida }}</p>
+      </div>
+
+      <div class="bg-purple-50 dark:bg-purple-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-900">
+        <p class="text-xs text-purple-700 dark:text-purple-400 mb-1 font-semibold">Costo Promedio</p>
+        <p class="text-2xl font-bold text-purple-900 dark:text-purple-300">
+          ${{ kardex_data.saldo_final.costo_promedio|floatformat:2 }}
+        </p>
+        <p class="text-xs text-purple-600 dark:text-purple-500 mt-1">Por unidad</p>
+      </div>
+
+      <div class="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-900">
+        <p class="text-xs text-green-700 dark:text-green-400 mb-1 font-semibold">Total Entradas</p>
+        <p class="text-2xl font-bold text-green-900 dark:text-green-300">
+          {{ kardex_data.total_entradas|floatformat:2 }}
+        </p>
+        <p class="text-xs text-green-600 dark:text-green-500 mt-1">{{ producto.unidad_medida }}</p>
+      </div>
+
+      <div class="bg-red-50 dark:bg-red-950/30 p-4 rounded-lg border border-red-200 dark:border-red-900">
+        <p class="text-xs text-red-700 dark:text-red-400 mb-1 font-semibold">Total Salidas</p>
+        <p class="text-2xl font-bold text-red-900 dark:text-red-300">
+          {{ kardex_data.total_salidas|floatformat:2 }}
+        </p>
+        <p class="text-xs text-red-600 dark:text-red-500 mt-1">{{ producto.unidad_medida }}</p>
+      </div>
+
+      <div class="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-900">
+        <p class="text-xs text-amber-700 dark:text-amber-400 mb-1 font-semibold">Valor Total</p>
+        <p class="text-2xl font-bold text-amber-900 dark:text-amber-300">
+          ${{ kardex_data.saldo_final.valor_total|floatformat:2 }}
+        </p>
+        <p class="text-xs text-amber-600 dark:text-amber-500 mt-1">Inventario</p>
+      </div>
+    </div>
+
+    {# Filters #}
+    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
+      <form method="get" class="flex flex-col md:flex-row gap-3 items-end">
+        <div class="flex-1">
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1 block">Fecha Inicio</label>
+          <input type="date" name="fecha_inicio" value="{{ request.GET.fecha_inicio }}"
+                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 rounded-lg text-sm">
+        </div>
+        <div class="flex-1">
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1 block">Fecha Fin</label>
+          <input type="date" name="fecha_fin" value="{{ request.GET.fecha_fin }}"
+                 class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 rounded-lg text-sm">
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+            🔍 Filtrar
+          </button>
+          <a href="{% url 'contabilidad:kardex_producto_detalle' empresa.id producto.id %}"
+             class="px-4 py-2 text-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+            🗑️ Limpiar
+          </a>
+        </div>
+      </form>
+    </div>
+
+    {# Kardex Table #}
+    <div class="p-4">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">
+          📋 Movimientos de Inventario
+        </h3>
+        <button onclick="window.print()" class="px-3 py-2 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+          🖨️ Imprimir
+        </button>
+      </div>
+
+      {# Saldo Inicial Row #}
+      {% if kardex_data.saldo_inicial %}
+      <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+        <p class="text-sm font-bold text-blue-900 dark:text-blue-300">
+          📌 Saldo Inicial:
+          <span class="font-mono">{{ kardex_data.saldo_inicial.cantidad|floatformat:3 }} {{ producto.unidad_medida }}</span>
+          @ ${{ kardex_data.saldo_inicial.costo_promedio|floatformat:2 }}
+          = <span class="text-blue-700 dark:text-blue-400">${{ kardex_data.saldo_inicial.valor_total|floatformat:2 }}</span>
+        </p>
+      </div>
+      {% endif %}
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs kardex-table">
+          <thead>
+            <tr class="border-b-2 border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
+              <th class="text-left p-2 font-bold text-slate-700 dark:text-slate-200">Fecha</th>
+              <th class="text-left p-2 font-bold text-slate-700 dark:text-slate-200">Tipo</th>
+              <th class="text-left p-2 font-bold text-slate-700 dark:text-slate-200">Documento</th>
+              <th class="text-left p-2 font-bold text-slate-700 dark:text-slate-200">Tercero</th>
+              <th class="text-right p-2 font-bold text-green-700 dark:text-green-400" colspan="3">ENTRADAS</th>
+              <th class="text-right p-2 font-bold text-red-700 dark:text-red-400" colspan="3">SALIDAS</th>
+              <th class="text-right p-2 font-bold text-purple-700 dark:text-purple-400" colspan="3">SALDO</th>
+            </tr>
+            <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-[10px]">
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">Cant.</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">C. Unit.</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">Valor</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">Cant.</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">C. Unit.</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">Valor</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">Cant.</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">C. Prom.</th>
+              <th class="text-right p-2 text-slate-600 dark:text-slate-300">Valor</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            {% for mov in kardex_data.movimientos %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+              <td class="p-2 text-slate-700 dark:text-slate-300">
+                {{ mov.fecha|date:"Y-m-d" }}
+              </td>
+              <td class="p-2">
+                {% if mov.tipo == 'ENTRADA' %}
+                  <span class="px-2 py-0.5 text-[10px] bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 rounded font-semibold">
+                    ⬇️ Entrada
+                  </span>
+                {% elif mov.tipo == 'SALIDA' %}
+                  <span class="px-2 py-0.5 text-[10px] bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 rounded font-semibold">
+                    ⬆️ Salida
+                  </span>
+                {% else %}
+                  <span class="px-2 py-0.5 text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 rounded font-semibold">
+                    ⚙️ Ajuste
+                  </span>
+                {% endif %}
+              </td>
+              <td class="p-2 text-slate-700 dark:text-slate-300">
+                {% if mov.asiento %}
+                  <a href="{% url 'contabilidad:company_asientos' empresa.id %}?asiento={{ mov.asiento.numero_asiento }}"
+                     class="font-mono text-purple-600 dark:text-purple-400 hover:underline">
+                    ASI-{{ mov.asiento.numero_asiento }}
+                  </a>
+                {% else %}
+                  <span class="text-slate-400">-</span>
+                {% endif %}
+              </td>
+              <td class="p-2 text-slate-700 dark:text-slate-300">
+                {% if mov.tercero %}
+                  {{ mov.tercero.nombre|truncatewords:3 }}
+                {% else %}
+                  <span class="text-slate-400">-</span>
+                {% endif %}
+              </td>
+
+              {# ENTRADAS #}
+              {% if mov.tipo == 'ENTRADA' or 'ENTRADA' in mov.tipo %}
+                <td class="p-2 text-right font-mono text-green-700 dark:text-green-400">{{ mov.cantidad|floatformat:3 }}</td>
+                <td class="p-2 text-right font-mono text-green-700 dark:text-green-400">${{ mov.costo_unitario|floatformat:2 }}</td>
+                <td class="p-2 text-right font-mono font-semibold text-green-700 dark:text-green-400">
+                  ${{ mov.valor_movimiento|floatformat:2 }}
+                </td>
+              {% else %}
+                <td class="p-2 text-right text-slate-300 dark:text-slate-700">-</td>
+                <td class="p-2 text-right text-slate-300 dark:text-slate-700">-</td>
+                <td class="p-2 text-right text-slate-300 dark:text-slate-700">-</td>
+              {% endif %}
+
+              {# SALIDAS #}
+              {% if mov.tipo == 'SALIDA' or 'SALIDA' in mov.tipo %}
+                <td class="p-2 text-right font-mono text-red-700 dark:text-red-400">{{ mov.cantidad|floatformat:3 }}</td>
+                <td class="p-2 text-right font-mono text-red-700 dark:text-red-400">${{ mov.costo_unitario|floatformat:2 }}</td>
+                <td class="p-2 text-right font-mono font-semibold text-red-700 dark:text-red-400">
+                  ${{ mov.valor_movimiento|floatformat:2 }}
+                </td>
+              {% else %}
+                <td class="p-2 text-right text-slate-300 dark:text-slate-700">-</td>
+                <td class="p-2 text-right text-slate-300 dark:text-slate-700">-</td>
+                <td class="p-2 text-right text-slate-300 dark:text-slate-700">-</td>
+              {% endif %}
+
+              {# SALDO #}
+              <td class="p-2 text-right font-mono bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400">
+                {{ mov.cantidad_saldo|floatformat:3 }}
+              </td>
+              <td class="p-2 text-right font-mono bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400">
+                ${{ mov.costo_promedio|floatformat:2 }}
+              </td>
+              <td class="p-2 text-right font-mono font-semibold bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400">
+                ${{ mov.valor_total_saldo|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="13" class="p-8 text-center">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="text-6xl">📊</div>
+                  <p class="text-slate-600 dark:text-slate-400 font-semibold">No hay movimientos registrados</p>
+                  <p class="text-sm text-slate-500 dark:text-slate-500">Este producto aún no tiene entradas ni salidas de inventario</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+
+          {# TOTALS ROW #}
+          {% if kardex_data.movimientos %}
+          <tfoot>
+            <tr class="border-t-2 border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-bold">
+              <td colspan="4" class="p-2 text-right text-slate-700 dark:text-slate-200">TOTALES:</td>
+              <td class="p-2 text-right font-mono text-green-700 dark:text-green-400">{{ kardex_data.total_entradas|floatformat:3 }}</td>
+              <td class="p-2"></td>
+              <td class="p-2"></td>
+              <td class="p-2 text-right font-mono text-red-700 dark:text-red-400">{{ kardex_data.total_salidas|floatformat:3 }}</td>
+              <td class="p-2"></td>
+              <td class="p-2"></td>
+              <td class="p-2 text-right font-mono bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                {{ kardex_data.saldo_final.cantidad|floatformat:3 }}
+              </td>
+              <td class="p-2 text-right font-mono bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                ${{ kardex_data.saldo_final.costo_promedio|floatformat:2 }}
+              </td>
+              <td class="p-2 text-right font-mono bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                ${{ kardex_data.saldo_final.valor_total|floatformat:2 }}
+              </td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  </div>
+</div>
+
+<style>
+@media print {
+  body {
+    background: white !important;
+  }
+  .kardex-table {
+    font-size: 9px;
+  }
+  button, nav, header {
+    display: none !important;
+  }
+}
+</style>
+{% endblock %}

@@ -4,22 +4,22 @@
 {% block title %}Analytics Financiero - {{ empresa.nombre }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+    <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
 
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-50">
                         📈 Analytics Financiero
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         Análisis de tendencias para <span class="font-semibold">{{ empresa.nombre }}</span>
                     </p>
                 </div>
                 <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                   class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-dark-surface hover:bg-slate-100 dark:hover:bg-slate-700">
                     ← Dashboard ML
                 </a>
             </div>
@@ -29,7 +29,7 @@
         <div class="mb-8">
             <nav class="flex space-x-4 overflow-x-auto">
                 <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     📊 Dashboard
                 </a>
                 <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
@@ -37,15 +37,15 @@
                     📈 Analytics
                 </a>
                 <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🔮 Predicciones
                 </a>
                 <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🚨 Anomalías
                 </a>
                 <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🧠 Búsqueda Semántica
                 </a>
             </nav>
@@ -56,10 +56,10 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                             Período de Análisis
                         </label>
-                        <select id="periodo-select" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <select id="periodo-select" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="6">Últimos 6 meses</option>
                             <option value="12" selected>Últimos 12 meses</option>
                             <option value="24">Últimos 24 meses</option>
@@ -71,21 +71,13 @@
                         </button>
                     </div>
                 </div>
-                <div class="pt-7">
-                    <button onclick="exportarDatosCSV()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Exportar CSV
-                    </button>
-                </div>
             </div>
         </div>
 
         <!-- Loading/Error States -->
         <div id="loading-tendencias" class="hidden text-center py-12">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p class="mt-4 text-gray-600 dark:text-gray-400">Cargando tendencias...</p>
+            <p class="mt-4 text-slate-700 dark:text-slate-300">Cargando tendencias...</p>
         </div>
 
         <div id="error-tendencias" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
@@ -94,9 +86,9 @@
 
         <!-- Resumen -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Ingresos</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Total Ingresos</p>
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
@@ -104,11 +96,11 @@
                     </div>
                 </div>
                 <p id="total-ingresos" class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">$0</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">En el período seleccionado</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">En el período seleccionado</p>
             </div>
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Gastos</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Total Gastos</p>
                     <div class="bg-red-100 dark:bg-red-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
@@ -116,11 +108,11 @@
                     </div>
                 </div>
                 <p id="total-gastos" class="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">$0</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">En el período seleccionado</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">En el período seleccionado</p>
             </div>
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Resultado Neto</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Resultado Neto</p>
                     <div id="margen-icon" class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -128,13 +120,13 @@
                     </div>
                 </div>
                 <p id="margen-promedio" class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">$0</p>
-                <p id="margen-porcentaje" class="text-xs text-gray-500 dark:text-gray-400">0% de margen</p>
+                <p id="margen-porcentaje" class="text-xs text-slate-500 dark:text-slate-400">0% de margen</p>
             </div>
         </div>
 
         <!-- Gráfico de Tendencias -->
-        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
                 Evolución Temporal de Ingresos y Gastos
             </h3>
             <div class="h-96 mb-4">
@@ -142,12 +134,12 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>Interpretación:</strong> La línea verde muestra ingresos, la roja gastos y la azul el resultado neto. Las tendencias ascendentes son positivas.
                     </p>
                 </div>
-                <div id="trend-analysis" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                <div id="trend-analysis" class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border-l-4 border-slate-400 dark:border-slate-500">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>Análisis:</strong> <span id="trend-text">Cargando análisis...</span>
                     </p>
                 </div>
@@ -155,12 +147,12 @@
         </div>
 
         <!-- Top Cuentas -->
-        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
                     📊 Resumen del Período
                 </h3>
-                <span class="text-xs text-gray-500 dark:text-gray-400">
+                <span class="text-xs text-slate-500 dark:text-slate-400">
                     Actualizado en tiempo real
                 </span>
             </div>
@@ -168,22 +160,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Indicadores Clave -->
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Indicadores Clave</h4>
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Indicadores Clave</h4>
                     <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Promedio Mensual Ingresos</span>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">Promedio Mensual Ingresos</span>
                             <span id="promedio-ingresos" class="text-sm font-bold text-green-600 dark:text-green-400">$0</span>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Promedio Mensual Gastos</span>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">Promedio Mensual Gastos</span>
                             <span id="promedio-gastos" class="text-sm font-bold text-red-600 dark:text-red-400">$0</span>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Mejor Mes</span>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">Mejor Mes</span>
                             <span id="mejor-mes" class="text-sm font-bold text-blue-600 dark:text-blue-400">-</span>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Volatilidad</span>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">Volatilidad</span>
                             <span id="volatilidad" class="text-sm font-bold text-purple-600 dark:text-purple-400">-</span>
                         </div>
                     </div>
@@ -191,10 +183,10 @@
 
                 <!-- Recomendaciones -->
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">💡 Recomendaciones</h4>
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">💡 Recomendaciones</h4>
                     <div id="recomendaciones" class="space-y-2">
                         <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
-                            <p class="text-xs text-gray-700 dark:text-gray-300">Analizando datos...</p>
+                            <p class="text-xs text-slate-700 dark:text-slate-200">Analizando datos...</p>
                         </div>
                     </div>
                 </div>
@@ -252,19 +244,6 @@
         const ingresos = ultimosDatos.ingresos;
         const gastos = ultimosDatos.gastos;
         const neto = ultimosDatos.neto;
-
-        // Crear CSV
-        let csv = 'Período,Ingresos,Gastos,Resultado Neto\n';
-        for (let i = 0; i < meses.length; i++) {
-            csv += `${meses[i]},${ingresos[i]},${gastos[i]},${neto[i]}\n`;
-        }
-
-        // Descargar
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `analytics_empresa_${empresaId}_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
     }
 
     async function cargarTendencias(empresaId, meses) {
@@ -484,7 +463,7 @@
                         trendAnalysisEl.className = 'bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border-l-4 border-red-500';
                     } else {
                         trendText = '📊 Tendencia estable: Los resultados se mantienen relativamente constantes.';
-                        trendAnalysisEl.className = 'bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400';
+                        trendAnalysisEl.className = 'bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border-l-4 border-slate-400 dark:border-slate-500';
                     }
                     document.getElementById('trend-text').textContent = trendText;
                 }
@@ -602,7 +581,7 @@
             };
             return `
                 <div class="p-3 ${colores[r.tipo]} rounded-lg border-l-4">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">${r.texto}</p>
+                    <p class="text-xs text-slate-700 dark:text-slate-200">${r.texto}</p>
                 </div>
             `;
         }).join('');

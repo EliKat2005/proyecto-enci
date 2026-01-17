@@ -220,7 +220,7 @@ class EmpresaPlanCuenta(models.Model):
     naturaleza = models.CharField(max_length=9, choices=NaturalezaCuenta.choices)
     es_auxiliar = models.BooleanField(
         default=False,
-        help_text="True si es una cuenta hoja (auxiliar) que puede recibir transacciones",
+        help_text="True si es una cuenta transaccional (hoja) que puede recibir movimientos",
     )
     activa = models.BooleanField(
         default=True, help_text="True si la cuenta está activa y puede recibir transacciones"
@@ -281,20 +281,20 @@ class EmpresaPlanCuenta(models.Model):
                     )
                 ancestro = ancestro.padre
 
-        # Validar jerarquía: cuentas con hijas no pueden ser auxiliares
+        # Validar jerarquía: cuentas con hijas no pueden ser transaccionales
         # Evitar acceso a relaciones antes de tener PK
         if self.es_auxiliar and self.pk:
             if self.hijas.exists():
                 raise ValidationError(
                     {
-                        "es_auxiliar": "Las cuentas que tienen subcuentas no pueden ser marcadas como auxiliares."
+                        "es_auxiliar": "Las cuentas que tienen subcuentas no pueden ser marcadas como transaccionales."
                     }
                 )
 
-        # No permitir agregar hijas a una cuenta auxiliar
+        # No permitir agregar hijas a una cuenta transaccional
         if self.padre and self.padre.es_auxiliar:
             raise ValidationError(
-                {"padre": "No se puede agregar subcuentas a una cuenta auxiliar."}
+                {"padre": "No se puede agregar subcuentas a una cuenta transaccional."}
             )
 
     def save(self, *args, **kwargs):
@@ -308,7 +308,7 @@ class EmpresaPlanCuenta(models.Model):
 
     @property
     def puede_recibir_transacciones(self):
-        """Solo las cuentas auxiliares (hojas del árbol) activas pueden recibir transacciones."""
+        """Solo las cuentas transaccionales (hojas del árbol) activas pueden recibir movimientos."""
         return self.es_auxiliar and not self.tiene_hijas and self.activa
 
     @property
@@ -812,6 +812,7 @@ class EmpresaComment(models.Model):
         ("MA", "Libro Mayor"),
         ("BC", "Balance de Comprobación"),
         ("EF", "Estados Financieros"),
+        ("KD", "Kardex de Inventario"),
     ]
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="comments")
@@ -828,6 +829,382 @@ class EmpresaComment(models.Model):
 
     def __str__(self):
         return f"Comentario {self.id} en {self.empresa.nombre} - {self.get_section_display()}"
+
+
+class EmpresaCierrePeriodo(models.Model):
+    """Registra los cierres contables de períodos fiscales.
+
+    Un cierre de periodo:
+    - Cancela todas las cuentas de resultado (Ingresos, Costos, Gastos)
+    - Traslada la utilidad/pérdida a Patrimonio (cuenta Resultados del Ejercicio)
+    - Bloquea la edición de asientos en el periodo cerrado
+    """
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="cierres_periodo")
+    periodo = models.IntegerField(help_text="Año fiscal cerrado (ej: 2025, 2026)")
+    fecha_cierre = models.DateField(
+        help_text="Fecha en la que se ejecutó el cierre (último día del ejercicio)"
+    )
+    asiento_cierre = models.ForeignKey(
+        "EmpresaAsiento",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="cierre_generado",
+        help_text="Asiento contable que registra el cierre del periodo",
+    )
+    cerrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text="Usuario que ejecutó el cierre",
+    )
+    fecha_registro = models.DateTimeField(
+        auto_now_add=True, help_text="Timestamp de cuando se registró el cierre en el sistema"
+    )
+
+    # Resumen financiero del periodo
+    utilidad_neta = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        default=0,
+        help_text="Utilidad o pérdida del ejercicio (Ingresos - Costos - Gastos)",
+    )
+    total_ingresos = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    total_costos = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    total_gastos = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    # Control
+    bloqueado = models.BooleanField(
+        default=True, help_text="Si es True, no se permiten crear/editar asientos en este periodo"
+    )
+    notas = models.TextField(blank=True, help_text="Observaciones sobre el cierre (opcional)")
+
+    class Meta:
+        db_table = "contabilidad_empresa_cierre_periodo"
+        verbose_name = "Cierre de Periodo"
+        verbose_name_plural = "Cierres de Periodos"
+        unique_together = ("empresa", "periodo")
+        ordering = ["-periodo"]
+        indexes = [
+            models.Index(fields=["empresa", "-periodo"]),
+            models.Index(fields=["fecha_cierre"]),
+        ]
+
+    def __str__(self):
+        estado = "Bloqueado" if self.bloqueado else "Desbloqueado"
+        return f"Cierre {self.periodo} - {self.empresa.nombre} [{estado}]"
+
+    def clean(self):
+        """Validaciones del modelo."""
+        super().clean()
+
+        # Validar que el periodo sea un año válido
+        if self.periodo and (self.periodo < 2000 or self.periodo > 2100):
+            raise ValidationError({"periodo": "El periodo debe estar entre 2000 y 2100."})
+
+        # Validar que no exista otro cierre para el mismo periodo en la misma empresa
+        if self.pk is None:  # Solo en creación
+            if EmpresaCierrePeriodo.objects.filter(
+                empresa=self.empresa, periodo=self.periodo
+            ).exists():
+                raise ValidationError(
+                    {
+                        "periodo": f"Ya existe un cierre para el periodo {self.periodo} en esta empresa."
+                    }
+                )
+
+
+# -------------------------
+# Modelos de Control de Inventarios (Kardex)
+# -------------------------
+
+
+class MetodoValoracion(models.TextChoices):
+    """Métodos de valoración de inventarios según NIIF."""
+
+    PEPS = "PEPS", "PEPS (Primero en Entrar, Primero en Salir / FIFO)"
+    UEPS = "UEPS", "UEPS (Último en Entrar, Primero en Salir / LIFO)"
+    PROMEDIO = "PROMEDIO", "Promedio Ponderado"
+
+
+class TipoMovimientoKardex(models.TextChoices):
+    """Tipos de movimientos de inventario."""
+
+    ENTRADA = "ENTRADA", "Entrada (Compra)"
+    SALIDA = "SALIDA", "Salida (Venta/Consumo)"
+    AJUSTE_ENTRADA = "AJUSTE_ENTRADA", "Ajuste Positivo (Inventario encontrado)"
+    AJUSTE_SALIDA = "AJUSTE_SALIDA", "Ajuste Negativo (Merma/Robo)"
+    DEVOLUCION_COMPRA = "DEVOLUCION_COMPRA", "Devolución de Compra"
+    DEVOLUCION_VENTA = "DEVOLUCION_VENTA", "Devolución de Venta"
+
+
+class ProductoInventario(models.Model):
+    """Maestro de productos para control de inventarios (Kardex).
+
+    Cada producto tiene su propia tarjeta Kardex donde se registran
+    todas las entradas y salidas con su valoración.
+    """
+
+    empresa = models.ForeignKey(
+        Empresa, on_delete=models.CASCADE, related_name="productos_inventario"
+    )
+    sku = models.CharField(
+        max_length=50, db_index=True, help_text="Código único del producto (SKU)"
+    )
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+
+    # Clasificación
+    categoria = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Categoría del producto (ej: Electrónica, Alimentos, etc.)",
+    )
+
+    # Unidad de medida
+    unidad_medida = models.CharField(
+        max_length=20, help_text="Unidad de medida (unid, kg, litros, cajas, etc.)"
+    )
+
+    # Vinculación contable
+    cuenta_inventario = models.ForeignKey(
+        EmpresaPlanCuenta,
+        on_delete=models.PROTECT,
+        related_name="productos",
+        help_text="Cuenta contable de inventario (debe ser tipo Activo, ej: 1.1.04)",
+    )
+    cuenta_costo_venta = models.ForeignKey(
+        EmpresaPlanCuenta,
+        on_delete=models.PROTECT,
+        related_name="productos_costo",
+        null=True,
+        blank=True,
+        help_text="Cuenta de Costo de Ventas (tipo Costo, ej: 5.1)",
+    )
+
+    # Método de valoración
+    metodo_valoracion = models.CharField(
+        max_length=20,
+        choices=MetodoValoracion.choices,
+        default=MetodoValoracion.PROMEDIO,
+        help_text="Método para calcular el costo de las salidas",
+    )
+
+    # Control de stock
+    stock_minimo = models.DecimalField(
+        max_digits=15,
+        decimal_places=3,
+        default=0,
+        help_text="Stock mínimo (alerta de reabastecimiento)",
+    )
+    stock_maximo = models.DecimalField(
+        max_digits=15, decimal_places=3, null=True, blank=True, help_text="Stock máximo (opcional)"
+    )
+
+    # Estado
+    activo = models.BooleanField(
+        default=True, help_text="Si es False, el producto está descontinuado"
+    )
+
+    # Auditoría
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="productos_creados",
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "contabilidad_producto_inventario"
+        verbose_name = "Producto (Inventario)"
+        verbose_name_plural = "Productos (Inventario)"
+        unique_together = ("empresa", "sku")
+        ordering = ["sku"]
+        indexes = [
+            models.Index(fields=["empresa", "sku"]),
+            models.Index(fields=["empresa", "activo"]),
+            models.Index(fields=["categoria"]),
+        ]
+
+    def __str__(self):
+        return f"{self.sku} - {self.nombre} [{self.empresa.nombre}]"
+
+    def clean(self):
+        """Validaciones del modelo."""
+        super().clean()
+
+        # Validar que la cuenta de inventario sea tipo Activo
+        if self.cuenta_inventario and self.cuenta_inventario.tipo != TipoCuenta.ACTIVO:
+            raise ValidationError(
+                {"cuenta_inventario": "La cuenta de inventario debe ser de tipo Activo."}
+            )
+
+        # Validar que la cuenta de costo sea tipo Costo
+        if self.cuenta_costo_venta and self.cuenta_costo_venta.tipo != TipoCuenta.COSTO:
+            raise ValidationError(
+                {"cuenta_costo_venta": "La cuenta de costo de venta debe ser de tipo Costo."}
+            )
+
+        # Validar stock mínimo/máximo
+        if self.stock_maximo and self.stock_minimo > self.stock_maximo:
+            raise ValidationError(
+                {"stock_minimo": "El stock mínimo no puede ser mayor al stock máximo."}
+            )
+
+    @property
+    def stock_actual(self):
+        """Retorna el stock actual consultando el último movimiento Kardex."""
+        ultimo = self.movimientos.order_by("-fecha", "-id").first()
+        return ultimo.cantidad_saldo if ultimo else Decimal("0.000")
+
+    @property
+    def costo_promedio_actual(self):
+        """Retorna el costo promedio actual del inventario."""
+        ultimo = self.movimientos.order_by("-fecha", "-id").first()
+        return ultimo.costo_promedio if ultimo else Decimal("0.00")
+
+    @property
+    def valor_inventario_actual(self):
+        """Retorna el valor total del inventario (cantidad * costo promedio)."""
+        return self.stock_actual * self.costo_promedio_actual
+
+    @property
+    def requiere_reabastecimiento(self):
+        """True si el stock actual está por debajo del mínimo."""
+        return self.stock_actual < self.stock_minimo
+
+
+class MovimientoKardex(models.Model):
+    """Registro de movimientos de inventario (Kardex).
+
+    Cada movimiento representa una entrada o salida de producto,
+    calculando automáticamente el nuevo saldo y costo promedio
+    según el método de valoración configurado.
+    """
+
+    producto = models.ForeignKey(
+        ProductoInventario, on_delete=models.PROTECT, related_name="movimientos"
+    )
+    fecha = models.DateField(db_index=True)
+    tipo_movimiento = models.CharField(max_length=20, choices=TipoMovimientoKardex.choices)
+
+    # Cantidades del movimiento
+    cantidad = models.DecimalField(
+        max_digits=15,
+        decimal_places=3,
+        help_text="Cantidad de unidades (positivo para entradas, valor absoluto para salidas)",
+    )
+    costo_unitario = models.DecimalField(
+        max_digits=15,
+        decimal_places=6,
+        help_text="Costo unitario del movimiento (para entradas) o costo asignado (para salidas)",
+    )
+    valor_total_movimiento = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        help_text="Valor total del movimiento (cantidad * costo_unitario)",
+    )
+
+    # Saldos después del movimiento (snapshot)
+    cantidad_saldo = models.DecimalField(
+        max_digits=15, decimal_places=3, help_text="Stock resultante después del movimiento"
+    )
+    costo_promedio = models.DecimalField(
+        max_digits=15, decimal_places=6, help_text="Costo promedio ponderado después del movimiento"
+    )
+    valor_total_saldo = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        help_text="Valor total del inventario después del movimiento (cantidad_saldo * costo_promedio)",
+    )
+
+    # Referencia contable
+    asiento = models.ForeignKey(
+        EmpresaAsiento,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movimientos_kardex",
+        help_text="Asiento contable asociado a este movimiento",
+    )
+
+    # Documentos de referencia
+    documento_referencia = models.CharField(
+        max_length=100, blank=True, help_text="Número de factura, orden de compra, etc."
+    )
+    tercero = models.ForeignKey(
+        EmpresaTercero,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Proveedor (entrada) o cliente (salida)",
+    )
+
+    # Observaciones
+    observaciones = models.TextField(blank=True)
+
+    # Auditoría
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "contabilidad_movimiento_kardex"
+        verbose_name = "Movimiento Kardex"
+        verbose_name_plural = "Movimientos Kardex"
+        ordering = ["fecha", "id"]
+        indexes = [
+            models.Index(fields=["producto", "fecha"]),
+            models.Index(fields=["producto", "-fecha", "-id"]),  # Para último movimiento
+            models.Index(fields=["tipo_movimiento"]),
+            models.Index(fields=["fecha"]),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.tipo_movimiento} - {self.producto.sku} - "
+            f"{self.cantidad} {self.producto.unidad_medida} - {self.fecha}"
+        )
+
+    def clean(self):
+        """Validaciones del modelo."""
+        super().clean()
+
+        # Validar cantidad positiva
+        if self.cantidad <= 0:
+            raise ValidationError({"cantidad": "La cantidad debe ser mayor a cero."})
+
+        # Validar costo unitario no negativo
+        if self.costo_unitario < 0:
+            raise ValidationError({"costo_unitario": "El costo unitario no puede ser negativo."})
+
+        # Validar saldo no negativo (excepto para ajustes)
+        if self.cantidad_saldo < 0 and self.tipo_movimiento not in [
+            TipoMovimientoKardex.AJUSTE_SALIDA
+        ]:
+            raise ValidationError(
+                {"cantidad_saldo": "El saldo no puede ser negativo. Stock insuficiente."}
+            )
+
+    @property
+    def es_entrada(self):
+        """True si el movimiento incrementa el inventario."""
+        return self.tipo_movimiento in [
+            TipoMovimientoKardex.ENTRADA,
+            TipoMovimientoKardex.AJUSTE_ENTRADA,
+            TipoMovimientoKardex.DEVOLUCION_VENTA,
+        ]
+
+    @property
+    def es_salida(self):
+        """True si el movimiento reduce el inventario."""
+        return self.tipo_movimiento in [
+            TipoMovimientoKardex.SALIDA,
+            TipoMovimientoKardex.AJUSTE_SALIDA,
+            TipoMovimientoKardex.DEVOLUCION_COMPRA,
+        ]
 
 
 # -------------------------
@@ -1054,3 +1431,32 @@ class AnomaliaDetectada(models.Model):
 
     def __str__(self):
         return f"Anomalía {self.get_tipo_anomalia_display()} - {self.empresa.nombre} ({self.severidad})"
+
+
+# -------------------------
+# Cache de Métricas para Performance
+# -------------------------
+class EmpresaMetricasCache(models.Model):
+    """
+    Cache de métricas pre-calculadas para optimizar el dashboard.
+    Se invalida automáticamente con triggers de MariaDB al modificar asientos.
+    """
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="metricas_cache")
+    periodo = models.DateField(help_text="Primer día del período (YYYY-MM-01)")
+    metricas_json = models.JSONField(help_text="Métricas pre-calculadas en formato JSON")
+    fecha_calculo = models.DateTimeField(auto_now=True, help_text="Última actualización")
+
+    class Meta:
+        db_table = "contabilidad_empresa_metricas_cache"
+        verbose_name = "Cache de Métricas"
+        verbose_name_plural = "Cache de Métricas"
+        unique_together = [("empresa", "periodo")]
+        indexes = [
+            models.Index(fields=["empresa", "-fecha_calculo"]),
+            models.Index(fields=["empresa", "periodo"]),
+        ]
+        ordering = ["-periodo"]
+
+    def __str__(self):
+        return f"Métricas {self.empresa.nombre} - {self.periodo.strftime('%Y-%m')}"

@@ -15,8 +15,8 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-bold text-slate-900 dark:text-gray-100">Crear Nueva Empresa</h1>
-            <p class="text-sm text-slate-600 dark:text-slate-400">Complete los datos básicos de la empresa</p>
+            <h1 class="text-xl font-bold text-slate-900 dark:text-slate-50">Crear Nueva Empresa</h1>
+            <p class="text-sm text-slate-600 dark:text-slate-300">Complete los datos básicos de la empresa</p>
           </div>
         </div>
       </div>
@@ -24,26 +24,26 @@
         {% csrf_token %}
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide flex items-center gap-2">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 uppercase tracking-wide flex items-center gap-2">
             <span>Nombre de la Empresa</span>
             <span class="text-red-500">*</span>
           </label>
-          <input name="nombre" required class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600" placeholder="Ej: Distribuidora ABC S.A.">
+          <input name="nombre" required class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:placeholder-slate-400 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600" placeholder="Ej: Distribuidora ABC S.A.">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Descripción</label>
-          <textarea name="descripcion" rows="3" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 resize-none" placeholder="Descripción detallada de la empresa..."></textarea>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 uppercase tracking-wide">Descripción</label>
+          <textarea name="descripcion" rows="3" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:placeholder-slate-400 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 resize-none" placeholder="Descripción detallada de la empresa..."></textarea>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Eslogan</label>
-          <input name="eslogan" maxlength="255" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600" placeholder="Ej: Tu aliado en negocios">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 uppercase tracking-wide">Eslogan</label>
+          <input name="eslogan" maxlength="255" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:placeholder-slate-400 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600" placeholder="Ej: Tu aliado en negocios">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Logo de la Empresa</label>
-          <input type="file" name="logo" accept="image/*" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 uppercase tracking-wide">Logo de la Empresa</label>
+          <input type="file" name="logo" accept="image/*" class="w-full px-4 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 rounded-xl text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900">
           <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             Formatos: JPG, PNG, GIF. Tamaño recomendado: 200x200px
@@ -55,8 +55,8 @@
           <label class="flex items-start cursor-pointer group">
             <input type="checkbox" name="is_template" value="1" class="w-5 h-5 text-blue-600 border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:ring-2 mt-0.5">
             <div class="ml-3 flex-1">
-              <span class="text-sm font-bold text-slate-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">Marcar como plantilla reutilizable</span>
-              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">Los estudiantes podrán importar esta empresa como base para sus ejercicios mediante un código de acceso</p>
+              <span class="text-sm font-bold text-slate-900 dark:text-slate-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">Marcar como plantilla reutilizable</span>
+              <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">Los estudiantes podrán importar esta empresa como base para sus ejercicios mediante un código de acceso</p>
             </div>
           </label>
         </div>

@@ -38,6 +38,16 @@ urlpatterns = [
     ),
     path("<int:empresa_id>/diario/", views.company_diario, name="company_diario"),
     path("<int:empresa_id>/diario/add/", views.create_journal_entry, name="create_journal_entry"),
+    path(
+        "<int:empresa_id>/diario/<int:asiento_id>/confirmar/",
+        views.confirmar_asiento,
+        name="confirmar_asiento",
+    ),
+    path(
+        "<int:empresa_id>/diario/<int:asiento_id>/anular/",
+        views.anular_asiento,
+        name="anular_asiento",
+    ),
     path("<int:empresa_id>/mayor/", views.company_mayor, name="company_mayor"),
     path("<int:empresa_id>/libro-mayor/", views.company_libro_mayor, name="company_libro_mayor"),
     path(
@@ -50,22 +60,11 @@ urlpatterns = [
         views.company_estados_financieros,
         name="company_estados_financieros",
     ),
-    # Exports
+    # Exports - Consolidado (incluye todas las hojas: Balance, Estados, Métricas, etc.)
     path(
-        "<int:empresa_id>/balance/export/xlsx/",
-        views.export_balance_xlsx,
-        name="export_balance_xlsx",
-    ),
-    path(
-        "<int:empresa_id>/balance/export/csv/", views.export_balance_csv, name="export_balance_csv"
-    ),
-    path(
-        "<int:empresa_id>/estados/export/xlsx/",
-        views.export_estados_xlsx,
-        name="export_estados_xlsx",
-    ),
-    path(
-        "<int:empresa_id>/estados/export/csv/", views.export_estados_csv, name="export_estados_csv"
+        "<int:empresa_id>/export/completo/",
+        views.export_empresa_completo_xlsx,
+        name="export_empresa_completo",
     ),
     path("<int:empresa_id>/comment/<str:section>/", views.add_comment, name="add_comment"),
     # Machine Learning & AI Dashboard Views
@@ -74,6 +73,7 @@ urlpatterns = [
     path("<int:empresa_id>/ml-predictions/", views.ml_predictions, name="ml_predictions"),
     path("<int:empresa_id>/ml-anomalies/", views.ml_anomalies, name="ml_anomalies"),
     path("<int:empresa_id>/ml-embeddings/", views.ml_embeddings, name="ml_embeddings"),
+    path("<int:empresa_id>/ml-health-score/", views.ml_health_score, name="ml_health_score"),
     # ML/AI API Endpoints
     path(
         "api/ml/dashboard/<int:empresa_id>/",
@@ -95,5 +95,28 @@ urlpatterns = [
         "api/ml/embeddings/<int:empresa_id>/buscar/",
         views.ml_api_embeddings,
         name="ml_api_embeddings",
+    ),
+    # Kardex (Control de Inventarios)
+    path(
+        "<int:empresa_id>/kardex/",
+        views.kardex_lista_productos,
+        name="kardex_lista_productos",
+    ),
+    path(
+        "<int:empresa_id>/kardex/<int:producto_id>/",
+        views.kardex_producto_detalle,
+        name="kardex_producto_detalle",
+    ),
+    # Crear producto
+    path(
+        "<int:empresa_id>/kardex/producto/crear/",
+        views.kardex_crear_producto,
+        name="kardex_crear_producto",
+    ),
+    # Registrar movimiento
+    path(
+        "<int:empresa_id>/kardex/<int:producto_id>/movimiento/",
+        views.kardex_registrar_movimiento,
+        name="kardex_registrar_movimiento",
     ),
 ]

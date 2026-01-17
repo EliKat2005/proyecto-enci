@@ -7,6 +7,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+# Quick Wins: Logging profesional y Sentry
+from config.logging_config import get_logging_config, setup_sentry
+
 # Cargar variables de entorno desde .env
 load_dotenv()
 
@@ -54,6 +57,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Quick Wins: Monitoring, Auditoría, Seguridad y Trazabilidad
+    "contabilidad.middleware.RequestIDMiddleware",
+    "contabilidad.middleware.PerformanceMonitoringMiddleware",
+    "contabilidad.middleware.AuditLoggingMiddleware",
+    "contabilidad.middleware.SecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -203,6 +211,19 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # Quick Wins: Rate Limiting
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",
+        "user": "1000/hour",
+        "ml_api": "500/hour",
+        "heavy_ml": "100/hour",
+        "embedding": "200/day",
+        "prediction": "50/day",
+    },
 }
 
 # --- CONFIGURACIÓN DE SWAGGER/OPENAPI ---
@@ -287,3 +308,17 @@ if "pytest" in os.sys.modules or "PYTEST_CURRENT_TEST" in os.environ:
     DATABASES["default"]["HOST"] = os.getenv("DB_TEST_HOST", DATABASES["default"]["HOST"])
     DATABASES["default"]["PORT"] = os.getenv("DB_TEST_PORT", DATABASES["default"]["PORT"])
     LOGGING = {"version": 1, "disable_existing_loggers": False}
+else:
+    # Quick Wins: Logging profesional con rotación y handlers especializados
+    LOGGING = get_logging_config(
+        DEBUG=DEBUG,
+        LOG_DIR=str(BASE_DIR / "logs"),
+    )
+
+# Quick Wins: Sentry para tracking de errores en producción
+if not DEBUG and os.getenv("SENTRY_DSN"):
+    setup_sentry(
+        dsn=os.getenv("SENTRY_DSN"),
+        environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+    )

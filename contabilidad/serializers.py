@@ -291,3 +291,115 @@ class RevisarAnomaliaSerializer(serializers.Serializer):
 
     es_falso_positivo = serializers.BooleanField(default=False)
     notas = serializers.CharField(required=False, allow_blank=True)
+
+
+# ==================== SERIALIZERS PARA SERVICIOS AVANZADOS (FASES 2-4) ====================
+
+
+class BusquedaBooleanSerializer(serializers.Serializer):
+    """Serializer para búsqueda con operadores booleanos."""
+
+    query = serializers.CharField(required=True, help_text='Query con operadores (+, -, *, "")')
+    limit = serializers.IntegerField(default=10, min_value=1, max_value=100)
+    mode = serializers.ChoiceField(
+        choices=["NATURAL", "BOOLEAN", "QUERY_EXPANSION"],
+        default="NATURAL",
+        help_text="Modo de búsqueda FULLTEXT",
+    )
+
+
+class AutocompleteSerializer(serializers.Serializer):
+    """Serializer para autocompletado."""
+
+    partial_query = serializers.CharField(required=True, help_text="Query parcial")
+    limit = serializers.IntegerField(default=10, min_value=1, max_value=50)
+
+
+class AutocompleteResultSerializer(serializers.Serializer):
+    """Serializer para resultado de autocompletado."""
+
+    id = serializers.IntegerField()
+    codigo = serializers.CharField()
+    descripcion = serializers.CharField()
+    tipo = serializers.CharField()
+    es_auxiliar = serializers.BooleanField()
+    label = serializers.CharField()
+    uso_frecuencia = serializers.IntegerField()
+
+
+class VectorMigrationSerializer(serializers.Serializer):
+    """Serializer para migración a VECTOR storage."""
+
+    dry_run = serializers.BooleanField(default=True)
+
+
+class VectorMigrationResultSerializer(serializers.Serializer):
+    """Serializer para resultado de migración."""
+
+    success = serializers.BooleanField()
+    version = serializers.CharField(required=False)
+    mensaje = serializers.CharField()
+    embeddings_migrados = serializers.IntegerField(required=False)
+    embeddings_a_migrar = serializers.IntegerField(required=False)
+    indice_creado = serializers.BooleanField(required=False)
+    pasos_siguientes = serializers.ListField(child=serializers.CharField(), required=False)
+
+
+class FinancialHealthScoreSerializer(serializers.Serializer):
+    """Serializer para score de salud financiera."""
+
+    score_total = serializers.FloatField()
+    clasificacion = serializers.CharField()
+    factores = serializers.DictField()
+    metricas_base = serializers.DictField()
+
+
+class AccountCorrelationSerializer(serializers.Serializer):
+    """Serializer para correlación de cuentas."""
+
+    cuenta_1 = serializers.IntegerField()
+    codigo_1 = serializers.CharField()
+    descripcion_1 = serializers.CharField()
+    tipo_1 = serializers.CharField()
+    cuenta_2 = serializers.IntegerField()
+    codigo_2 = serializers.CharField()
+    descripcion_2 = serializers.CharField()
+    tipo_2 = serializers.CharField()
+    dias_comunes = serializers.IntegerField()
+    coef_correlacion = serializers.FloatField()
+
+
+class EMAForecastRequestSerializer(serializers.Serializer):
+    """Serializer para predicción con EMA."""
+
+    tipo_cuenta = serializers.ChoiceField(choices=["INGRESO", "GASTO", "COSTO"])
+    dias_futuros = serializers.IntegerField(default=30, min_value=1, max_value=365)
+    alpha = serializers.FloatField(default=0.3, min_value=0.1, max_value=0.5)
+
+
+class EMAForecastResultSerializer(serializers.Serializer):
+    """Serializer para resultado de EMA."""
+
+    success = serializers.BooleanField()
+    tipo_cuenta = serializers.CharField()
+    dias_historicos = serializers.IntegerField(required=False)
+    dias_futuros = serializers.IntegerField(required=False)
+    alpha = serializers.FloatField(required=False)
+    ema_actual = serializers.FloatField(required=False)
+    prediccion_diaria = serializers.FloatField(required=False)
+    prediccion_total = serializers.FloatField(required=False)
+    intervalo_confianza = serializers.DictField(required=False)
+    historico = serializers.ListField(required=False)
+    error = serializers.CharField(required=False)
+
+
+class RealtimeDashboardSerializer(serializers.Serializer):
+    """Serializer para dashboard en tiempo real."""
+
+    timestamp = serializers.CharField()
+    has_data = serializers.BooleanField()
+    periodo_dias = serializers.IntegerField(required=False)
+    ultima_actividad = serializers.CharField(required=False, allow_null=True)
+    metricas = serializers.DictField(required=False)
+    actividad = serializers.DictField(required=False)
+    mensaje = serializers.CharField(required=False)

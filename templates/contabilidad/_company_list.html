@@ -21,11 +21,11 @@
               <!-- Header: Nombre y Badge -->
               <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="flex-1 min-w-0">
-                  <a href="{% url 'contabilidad:company_detail' e.id %}" class="text-xl font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block truncate">
+                  <a href="{% url 'contabilidad:company_detail' e.id %}" class="text-xl font-bold text-slate-900 dark:text-slate-50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors block truncate">
                     {{ e.nombre }}
                   </a>
                   {% if e.eslogan %}
-                    <p class="text-sm text-slate-600 dark:text-slate-400 italic mt-1 line-clamp-2">"{{ e.eslogan }}"</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 italic mt-1 line-clamp-2">"{{ e.eslogan }}"</p>
                   {% endif %}
                 </div>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex-shrink-0 {% if e.is_template %}bg-gradient-to-r from-blue-500 to-blue-600 text-white{% else %}bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300{% endif %}">

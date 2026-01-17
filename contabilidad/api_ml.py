@@ -28,6 +28,7 @@ from contabilidad.models import (
     EmpresaCuentaEmbedding,
     PrediccionFinanciera,
 )
+from contabilidad.permissions import IsEmpresaOwnerOrSupervisor
 from contabilidad.serializers import (
     AnalisisJerarquicoSerializer,
     AnomaliaDetectadaSerializer,
@@ -48,6 +49,11 @@ from contabilidad.serializers import (
     TendenciaIngresosGastosSerializer,
     TopCuentasSerializer,
 )
+from contabilidad.throttling import (
+    EmbeddingThrottle,
+    MLAPIThrottle,
+    PredictionThrottle,
+)
 
 
 class AnalyticsViewSet(viewsets.ViewSet):
@@ -55,7 +61,8 @@ class AnalyticsViewSet(viewsets.ViewSet):
     API para análisis financieros y métricas en tiempo real.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEmpresaOwnerOrSupervisor]
+    throttle_classes = [MLAPIThrottle]
 
     @extend_schema(
         summary="Calcular métricas financieras",
@@ -190,7 +197,8 @@ class PredictionsViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = PrediccionFinancieraSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEmpresaOwnerOrSupervisor]
+    throttle_classes = [PredictionThrottle]
 
     def get_queryset(self):
         """Filtra predicciones por empresa del usuario."""
@@ -339,7 +347,8 @@ class EmbeddingsViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = EmpresaCuentaEmbeddingSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEmpresaOwnerOrSupervisor]
+    throttle_classes = [EmbeddingThrottle]
 
     def get_queryset(self):
         """Filtra embeddings por empresa del usuario."""
@@ -462,7 +471,8 @@ class AnomaliesViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = AnomaliaDetectadaSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEmpresaOwnerOrSupervisor]
+    throttle_classes = [MLAPIThrottle]
 
     def get_queryset(self):
         """Filtra anomalías por empresa del usuario."""
