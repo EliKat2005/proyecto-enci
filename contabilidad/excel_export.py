@@ -218,7 +218,7 @@ class ExcelExportService:
             row += 1
 
         # Nota al pie
-        ws[f"B{row+1}"] = "📊 Este reporte fue generado automáticamente por el Sistema ENCI"
+        ws[f"B{row+1}"] = "📊 Este reporte fue generado automáticamente por el Sistema ECAE"
         ws[f"B{row+1}"].font = Font(size=9, italic=True, color="7F7F7F")
         ws.merge_cells(f"B{row+1}:D{row+1}")
 
