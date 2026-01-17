@@ -249,6 +249,13 @@ class ExcelExportService:
         # Obtener cuentas ordenadas jerárquicamente
         cuentas = self.empresa.cuentas.all().select_related("padre").order_by("codigo")
 
+        if not cuentas.exists():
+            ws.append([])
+            ws.append(["No hay cuentas registradas en el plan de cuentas."])
+            ws.cell(row=ws.max_row, column=1).font = Font(italic=True, color="FF0000")
+            self._autoajustar_columnas(ws)
+            return
+
         for cuenta in cuentas:
             # Calcular nivel de indentación
             nivel = cuenta.codigo.count(".")
@@ -580,31 +587,57 @@ class ExcelExportService:
 
         # INGRESOS
         ws.append(["INGRESOS", "", "", ""])
-        ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+        row_ing_header = ws.max_row
+        ws.cell(row=row_ing_header, column=1).font = Font(size=12, bold=True, color="FFFFFF")
+        ws.cell(row=row_ing_header, column=1).fill = PatternFill(
+            start_color="70AD47", end_color="70AD47", fill_type="solid"
+        )
+        ws.merge_cells(f"A{row_ing_header}:D{row_ing_header}")
+        ws.cell(row=row_ing_header, column=1).alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+        ws.row_dimensions[row_ing_header].height = 20
 
         for det in er["detalle_ingresos"]:
             ws.append(
                 ["INGRESOS", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["monto"])]
             )
+            ws.cell(row=ws.max_row, column=1).fill = self.INGRESO_FILL
 
         row_total = ws.max_row + 1
         ws.append(["TOTAL INGRESOS", "", "", float(er["ingresos"])])
         self._aplicar_estilo_total(ws, row_total, 1, 4)
+        ws.cell(row=row_total, column=4).fill = self.SUCCESS_FILL
+        ws.cell(row=row_total, column=4).font = Font(bold=True, size=11, color="375623")
 
         ws.append([])
 
         # COSTOS
         ws.append(["COSTOS", "", "", ""])
-        ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+        row_costo_header = ws.max_row
+        ws.cell(row=row_costo_header, column=1).font = Font(size=12, bold=True, color="FFFFFF")
+        ws.cell(row=row_costo_header, column=1).fill = PatternFill(
+            start_color="FFA500", end_color="FFA500", fill_type="solid"
+        )
+        ws.merge_cells(f"A{row_costo_header}:D{row_costo_header}")
+        ws.cell(row=row_costo_header, column=1).alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+        ws.row_dimensions[row_costo_header].height = 20
 
         for det in er["detalle_costos"]:
             ws.append(
                 ["COSTOS", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["monto"])]
             )
+            ws.cell(row=ws.max_row, column=1).fill = self.EGRESO_FILL
 
         row_total = ws.max_row + 1
         ws.append(["TOTAL COSTOS", "", "", float(er["costos"])])
         self._aplicar_estilo_total(ws, row_total, 1, 4)
+        ws.cell(row=row_total, column=4).fill = PatternFill(
+            start_color="FCE4D6", end_color="FCE4D6", fill_type="solid"
+        )
+        ws.cell(row=row_total, column=4).font = Font(bold=True, size=11, color="C65911")
 
         ws.append([])
 
@@ -618,28 +651,49 @@ class ExcelExportService:
 
         # GASTOS
         ws.append(["GASTOS", "", "", ""])
-        ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+        row_gasto_header = ws.max_row
+        ws.cell(row=row_gasto_header, column=1).font = Font(size=12, bold=True, color="FFFFFF")
+        ws.cell(row=row_gasto_header, column=1).fill = PatternFill(
+            start_color="E74C3C", end_color="E74C3C", fill_type="solid"
+        )
+        ws.merge_cells(f"A{row_gasto_header}:D{row_gasto_header}")
+        ws.cell(row=row_gasto_header, column=1).alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+        ws.row_dimensions[row_gasto_header].height = 20
 
         for det in er["detalle_gastos"]:
             ws.append(
                 ["GASTOS", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["monto"])]
             )
+            ws.cell(row=ws.max_row, column=1).fill = self.EGRESO_FILL
 
         row_total = ws.max_row + 1
         ws.append(["TOTAL GASTOS", "", "", float(er["gastos"])])
         self._aplicar_estilo_total(ws, row_total, 1, 4)
+        ws.cell(row=row_total, column=4).fill = PatternFill(
+            start_color="FCE4D6", end_color="FCE4D6", fill_type="solid"
+        )
+        ws.cell(row=row_total, column=4).font = Font(bold=True, size=11, color="C65911")
 
         ws.append([])
         ws.append([])
 
         # UTILIDAD NETA
         row_util_neta = ws.max_row + 1
-        ws.append(["UTILIDAD NETA", "", "", float(er["utilidad_neta"])])
+        utilidad_neta_valor = float(er["utilidad_neta"])
+        ws.append(["UTILIDAD NETA", "", "", utilidad_neta_valor])
         ws.cell(row=row_util_neta, column=1).font = Font(bold=True, size=12, color="1F4E78")
-        ws.cell(row=row_util_neta, column=4).font = Font(bold=True, size=12, color="1F4E78")
-        ws.cell(row=row_util_neta, column=4).fill = PatternFill(
-            start_color="E7E6E6", end_color="E7E6E6", fill_type="solid"
-        )
+
+        # Color según si es ganancia o pérdida
+        color_utilidad = "00B050" if utilidad_neta_valor >= 0 else "FF0000"
+        fill_utilidad = self.SUCCESS_FILL if utilidad_neta_valor >= 0 else self.ALERT_FILL
+
+        ws.cell(row=row_util_neta, column=4).font = Font(bold=True, size=12, color=color_utilidad)
+        ws.cell(row=row_util_neta, column=4).fill = fill_utilidad
+        ws.merge_cells(f"A{row_util_neta}:C{row_util_neta}")
+        ws.cell(row=row_util_neta, column=1).alignment = Alignment(horizontal="center")
+        ws.row_dimensions[row_util_neta].height = 25
 
         # Formatear números
         for row in ws.iter_rows(min_row=row_header + 1, max_row=ws.max_row, min_col=4, max_col=4):
@@ -694,23 +748,24 @@ class ExcelExportService:
             ws.append(["Concepto", "Monto", "Porcentaje"])
             self._aplicar_estilo_header(ws, 15, 1, 3)
 
-            total_patrimonio = metrics["activos"] + metrics["pasivos"] + metrics["patrimonio"] or 1
+            total_activos_abs = abs(metrics["activos"])
+            total_base = total_activos_abs if total_activos_abs > 0 else 1
 
             composicion = [
                 (
                     "Activos",
                     f"${metrics['activos']:,.2f}",
-                    f"{(metrics['activos'] / total_patrimonio * 100):.2f}%",
+                    f"{(abs(metrics['activos']) / total_base * 100):.2f}%",
                 ),
                 (
                     "Pasivos",
                     f"${metrics['pasivos']:,.2f}",
-                    f"{(metrics['pasivos'] / total_patrimonio * 100):.2f}%",
+                    f"{(abs(metrics['pasivos']) / total_base * 100):.2f}%",
                 ),
                 (
                     "Patrimonio",
                     f"${metrics['patrimonio']:,.2f}",
-                    f"{(metrics['patrimonio'] / total_patrimonio * 100):.2f}%",
+                    f"{(abs(metrics['patrimonio']) / total_base * 100):.2f}%",
                 ),
             ]
 
@@ -931,25 +986,60 @@ class ExcelExportService:
         ws.append(
             ["Ranking", "Código", "Cuenta", "Tipo", "# Transacciones", "Total Debe", "Total Haber"]
         )
-        self._aplicar_estilo_header(ws, 5, 1, 7)
+        row_header = 5
+        self._aplicar_estilo_header(ws, row_header, 1, 7)
 
-        for idx, cuenta in enumerate(cuentas_activas, start=1):
-            ws.append(
-                [
-                    idx,
-                    cuenta["cuenta__codigo"],
-                    cuenta["cuenta__descripcion"],
-                    cuenta["cuenta__tipo"],
-                    cuenta["num_transacciones"],
-                    float(cuenta["total_debe"] or 0),
-                    float(cuenta["total_haber"] or 0),
-                ]
-            )
+        if cuentas_activas:
+            for idx, cuenta in enumerate(cuentas_activas, start=1):
+                ws.append(
+                    [
+                        idx,
+                        cuenta["cuenta__codigo"],
+                        cuenta["cuenta__descripcion"],
+                        cuenta["cuenta__tipo"],
+                        cuenta["num_transacciones"],
+                        float(cuenta["total_debe"] or 0),
+                        float(cuenta["total_haber"] or 0),
+                    ]
+                )
 
-        # Formatear números
-        for row in ws.iter_rows(min_row=6, max_row=ws.max_row, min_col=6, max_col=7):
-            for cell in row:
-                if cell.value and isinstance(cell.value, int | float):
-                    cell.number_format = "#,##0.00"
+                # Destacar el top 3
+                row = ws.max_row
+                if idx <= 3:
+                    ws.cell(row=row, column=1).fill = PatternFill(
+                        start_color="FFD966", end_color="FFD966", fill_type="solid"
+                    )
+                    ws.cell(row=row, column=1).font = Font(bold=True, size=11)
+
+            # Aplicar bordes
+            for row in ws.iter_rows(min_row=row_header, max_row=ws.max_row, min_col=1, max_col=7):
+                for cell in row:
+                    cell.border = self.BORDER_THIN
+
+            # Formatear números
+            for row in ws.iter_rows(
+                min_row=row_header + 1, max_row=ws.max_row, min_col=5, max_col=7
+            ):
+                for cell in row:
+                    if cell.value and isinstance(cell.value, int | float):
+                        if cell.column <= 5:
+                            cell.number_format = "#,##0"
+                        else:
+                            cell.number_format = "#,##0.00"
+                        cell.alignment = Alignment(horizontal="right", vertical="center")
+
+            # Alinear textos
+            for row in ws.iter_rows(
+                min_row=row_header + 1, max_row=ws.max_row, min_col=1, max_col=4
+            ):
+                for cell in row:
+                    if cell.column == 1:  # Ranking centrado
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    else:
+                        cell.alignment = Alignment(horizontal="left", vertical="center")
+        else:
+            ws.append([])
+            ws.append(["No hay transacciones registradas en el periodo seleccionado."])
+            ws.cell(row=ws.max_row, column=1).font = Font(italic=True, color="FF0000")
 
         self._autoajustar_columnas(ws)
