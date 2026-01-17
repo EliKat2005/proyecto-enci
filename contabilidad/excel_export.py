@@ -16,6 +16,7 @@ from .models import (
     EmpresaAsiento,
     EmpresaTransaccion,
     MovimientoKardex,
+    NaturalezaCuenta,
     ProductoInventario,
 )
 from .services import EstadosFinancierosService, LibroMayorService
@@ -335,10 +336,10 @@ class ExcelExportService:
             current_row += 1
 
             # Concepto
-            if asiento.concepto:
+            if asiento.descripcion_general:
                 ws.merge_cells(f"A{current_row}:G{current_row}")
                 concepto_cell = ws[f"A{current_row}"]
-                concepto_cell.value = f"Concepto: {asiento.concepto}"
+                concepto_cell.value = f"Concepto: {asiento.descripcion_general}"
                 concepto_cell.font = Font(italic=True, size=9)
                 current_row += 1
 
@@ -368,12 +369,11 @@ class ExcelExportService:
                     value=trans.tercero.nombre if trans.tercero else "-",
                 )
 
-                if trans.es_debito:
-                    ws.cell(row=current_row, column=5, value=float(trans.monto))
-                    total_debe += trans.monto
-                else:
-                    ws.cell(row=current_row, column=6, value=float(trans.monto))
-                    total_haber += trans.monto
+                # Debe y Haber
+                ws.cell(row=current_row, column=5, value=float(trans.debe))
+                ws.cell(row=current_row, column=6, value=float(trans.haber))
+                total_debe += trans.debe
+                total_haber += trans.haber
 
                 # Formatear montos
                 for col in [5, 6]:
@@ -428,20 +428,30 @@ class ExcelExportService:
         )
 
         # Obtener cuentas con movimientos
-        servicio_mayor = LibroMayorService(
-            empresa=self.empresa, fecha_inicio=self.fecha_inicio, fecha_fin=self.fecha_fin
-        )
-        cuentas_mayorizadas = servicio_mayor.obtener_libro_mayor_completo()
+        cuentas = self.empresa.cuentas.filter(es_auxiliar=True).order_by("codigo")
 
         current_row = 5
+        hay_movimientos = False
 
-        for cuenta_data in cuentas_mayorizadas:
+        for cuenta in cuentas:
+            # Calcular saldos de la cuenta
+            saldos = LibroMayorService.calcular_saldos_cuenta(
+                cuenta=cuenta,
+                fecha_inicio=self.fecha_inicio,
+                fecha_fin=self.fecha_fin,
+                incluir_borradores=False,
+            )
+
+            # Solo mostrar cuentas con movimientos
+            if saldos["debe"] == Decimal("0.00") and saldos["haber"] == Decimal("0.00"):
+                continue
+
+            hay_movimientos = True
+
             # Encabezado de la cuenta
             ws.merge_cells(f"A{current_row}:G{current_row}")
             cuenta_header = ws[f"A{current_row}"]
-            cuenta_header.value = (
-                f"CUENTA: {cuenta_data['cuenta'].codigo} - {cuenta_data['cuenta'].descripcion}"
-            )
+            cuenta_header.value = f"CUENTA: {cuenta.codigo} - {cuenta.descripcion}"
             cuenta_header.fill = PatternFill(
                 start_color="4472C4", end_color="4472C4", fill_type="solid"
             )
@@ -450,9 +460,9 @@ class ExcelExportService:
             current_row += 1
 
             # Información de la cuenta
-            ws[f"A{current_row}"] = f"Tipo: {cuenta_data['cuenta'].get_tipo_display()}"
-            ws[f"C{current_row}"] = f"Naturaleza: {cuenta_data['cuenta'].get_naturaleza_display()}"
-            ws[f"E{current_row}"] = f"Saldo Inicial: {cuenta_data['saldo_inicial']:,.2f}"
+            ws[f"A{current_row}"] = f"Tipo: {cuenta.get_tipo_display()}"
+            ws[f"C{current_row}"] = f"Naturaleza: {cuenta.get_naturaleza_display()}"
+            ws[f"E{current_row}"] = f"Saldo Inicial: {saldos['saldo_inicial']:,.2f}"
             current_row += 1
 
             # Encabezados de movimientos
@@ -468,7 +478,7 @@ class ExcelExportService:
 
             # Saldo inicial
             ws.cell(row=current_row, column=3, value="Saldo Inicial")
-            ws.cell(row=current_row, column=6, value=float(cuenta_data["saldo_inicial"]))
+            ws.cell(row=current_row, column=6, value=float(saldos["saldo_inicial"]))
             ws.cell(row=current_row, column=6).font = Font(bold=True)
             ws.cell(row=current_row, column=6).number_format = "#,##0.00"
             ws.cell(row=current_row, column=6).alignment = Alignment(
@@ -477,17 +487,24 @@ class ExcelExportService:
             current_row += 1
 
             # Movimientos
-            for mov in cuenta_data["movimientos"]:
+            saldo_corriente = saldos["saldo_inicial"]
+            for mov in saldos["movimientos"]:
+                # Calcular saldo después de cada movimiento
+                if cuenta.naturaleza == NaturalezaCuenta.DEUDORA:
+                    saldo_corriente += mov.debe - mov.haber
+                else:
+                    saldo_corriente += mov.haber - mov.debe
+
                 ws.cell(
                     row=current_row,
                     column=1,
-                    value=mov["fecha"].strftime("%d/%m/%Y") if mov["fecha"] else "",
+                    value=mov.asiento.fecha.strftime("%d/%m/%Y"),
                 )
-                ws.cell(row=current_row, column=2, value=mov["numero_asiento"])
-                ws.cell(row=current_row, column=3, value=mov["concepto"])
-                ws.cell(row=current_row, column=4, value=float(mov["debe"]))
-                ws.cell(row=current_row, column=5, value=float(mov["haber"]))
-                ws.cell(row=current_row, column=6, value=float(mov["saldo"]))
+                ws.cell(row=current_row, column=2, value=mov.asiento.numero_asiento)
+                ws.cell(row=current_row, column=3, value=mov.asiento.descripcion_general or "-")
+                ws.cell(row=current_row, column=4, value=float(mov.debe))
+                ws.cell(row=current_row, column=5, value=float(mov.haber))
+                ws.cell(row=current_row, column=6, value=float(saldo_corriente))
 
                 # Formatear
                 for col in [4, 5, 6]:
@@ -505,9 +522,9 @@ class ExcelExportService:
 
             # Totales
             ws.cell(row=current_row, column=3, value="TOTALES:")
-            ws.cell(row=current_row, column=4, value=float(cuenta_data["total_debe"]))
-            ws.cell(row=current_row, column=5, value=float(cuenta_data["total_haber"]))
-            ws.cell(row=current_row, column=6, value=float(cuenta_data["saldo_final"]))
+            ws.cell(row=current_row, column=4, value=float(saldos["debe"]))
+            ws.cell(row=current_row, column=5, value=float(saldos["haber"]))
+            ws.cell(row=current_row, column=6, value=float(saldos["saldo_final"]))
 
             for col in [3, 4, 5, 6]:
                 cell = ws.cell(row=current_row, column=col)
@@ -522,7 +539,7 @@ class ExcelExportService:
 
             current_row += 2  # Espacio entre cuentas
 
-        if not cuentas_mayorizadas:
+        if not hay_movimientos:
             ws["A5"] = "No hay movimientos registrados en el periodo seleccionado."
             ws["A5"].font = Font(italic=True, color="FF0000")
 
@@ -963,7 +980,7 @@ class ExcelExportService:
 
         # Obtener productos con movimientos
         productos = ProductoInventario.objects.filter(empresa=self.empresa, activo=True).order_by(
-            "codigo"
+            "sku"
         )
 
         current_row = 5
@@ -973,9 +990,9 @@ class ExcelExportService:
             ws.merge_cells(f"A{current_row}:J{current_row}")
             producto_header = ws[f"A{current_row}"]
             producto_header.value = (
-                f"PRODUCTO: {producto.codigo} - {producto.nombre} | "
+                f"PRODUCTO: {producto.sku} - {producto.nombre} | "
                 f"Unidad: {producto.unidad_medida} | "
-                f"Método: {producto.get_metodo_valuacion_display()}"
+                f"Método: {producto.get_metodo_valoracion_display()}"
             )
             producto_header.fill = PatternFill(
                 start_color="70AD47", end_color="70AD47", fill_type="solid"
@@ -985,9 +1002,9 @@ class ExcelExportService:
             current_row += 1
 
             # Información adicional del producto
-            ws[f"A{current_row}"] = f"Stock Actual: {producto.cantidad_actual}"
-            ws[f"C{current_row}"] = f"Costo Promedio: ${producto.costo_promedio:,.2f}"
-            ws[f"F{current_row}"] = f"Valor Total: ${producto.valor_total:,.2f}"
+            ws[f"A{current_row}"] = f"Stock Actual: {producto.stock_actual}"
+            ws[f"C{current_row}"] = f"Costo Promedio: ${producto.costo_promedio_actual:,.2f}"
+            ws[f"F{current_row}"] = f"Valor Total: ${producto.valor_inventario_actual:,.2f}"
             current_row += 1
 
             # Encabezados de movimientos
@@ -1017,26 +1034,25 @@ class ExcelExportService:
                 MovimientoKardex.objects.filter(
                     producto=producto,
                     fecha__range=[self.fecha_inicio, self.fecha_fin],
-                    anulado=False,
                 )
                 .select_related("asiento")
-                .order_by("fecha", "created_at")
+                .order_by("fecha", "id")
             )
 
             # Calcular saldo inicial (movimientos anteriores al periodo)
             movimientos_anteriores = MovimientoKardex.objects.filter(
-                producto=producto, fecha__lt=self.fecha_inicio, anulado=False
+                producto=producto, fecha__lt=self.fecha_inicio
             )
 
             cantidad_inicial = 0
             valor_inicial = Decimal("0.00")
             for mov_ant in movimientos_anteriores:
-                if mov_ant.tipo_movimiento in ["CP", "AI"]:  # Entrada
+                if mov_ant.es_entrada:
                     cantidad_inicial += mov_ant.cantidad
-                    valor_inicial += mov_ant.valor_total
+                    valor_inicial += mov_ant.valor_total_movimiento
                 else:  # Salida
                     cantidad_inicial -= mov_ant.cantidad
-                    valor_inicial -= mov_ant.valor_total
+                    valor_inicial -= mov_ant.valor_total_movimiento
 
             # Fila de saldo inicial
             ws.cell(row=current_row, column=4, value="Saldo Inicial")
@@ -1050,25 +1066,18 @@ class ExcelExportService:
             current_row += 1
 
             # Movimientos del periodo
-            saldo_cantidad = cantidad_inicial
-            saldo_valor = valor_inicial
-
             for mov in movimientos:
                 # Calcular entrada/salida
-                if mov.tipo_movimiento in ["CP", "AI"]:  # Entrada
+                if mov.es_entrada:
                     cant_entrada = mov.cantidad
-                    val_entrada = float(mov.valor_total)
+                    val_entrada = float(mov.valor_total_movimiento)
                     cant_salida = 0
                     val_salida = 0
-                    saldo_cantidad += mov.cantidad
-                    saldo_valor += mov.valor_total
                 else:  # Salida
                     cant_entrada = 0
                     val_entrada = 0
                     cant_salida = mov.cantidad
-                    val_salida = float(mov.valor_total)
-                    saldo_cantidad -= mov.cantidad
-                    saldo_valor -= mov.valor_total
+                    val_salida = float(mov.valor_total_movimiento)
 
                 ws.cell(row=current_row, column=1, value=mov.fecha.strftime("%d/%m/%Y"))
                 ws.cell(row=current_row, column=2, value=mov.get_tipo_movimiento_display())
@@ -1077,13 +1086,17 @@ class ExcelExportService:
                     column=3,
                     value=mov.asiento.numero_asiento if mov.asiento else "-",
                 )
-                ws.cell(row=current_row, column=4, value=mov.concepto or "-")
+                ws.cell(
+                    row=current_row,
+                    column=4,
+                    value=mov.observaciones or mov.documento_referencia or "-",
+                )
                 ws.cell(row=current_row, column=5, value=cant_entrada)
                 ws.cell(row=current_row, column=6, value=val_entrada)
                 ws.cell(row=current_row, column=7, value=cant_salida)
                 ws.cell(row=current_row, column=8, value=val_salida)
-                ws.cell(row=current_row, column=9, value=saldo_cantidad)
-                ws.cell(row=current_row, column=10, value=float(saldo_valor))
+                ws.cell(row=current_row, column=9, value=float(mov.cantidad_saldo))
+                ws.cell(row=current_row, column=10, value=float(mov.valor_total_saldo))
 
                 # Formatear cantidades
                 for col in [5, 7, 9]:
@@ -1107,7 +1120,7 @@ class ExcelExportService:
 
                 # Destacar tipo de movimiento con color
                 tipo_cell = ws.cell(row=current_row, column=2)
-                if mov.tipo_movimiento in ["CP", "AI"]:
+                if mov.es_entrada:
                     tipo_cell.fill = PatternFill(
                         start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"
                     )
@@ -1120,8 +1133,8 @@ class ExcelExportService:
 
             # Fila de saldo final
             ws.cell(row=current_row, column=4, value="Saldo Final")
-            ws.cell(row=current_row, column=9, value=saldo_cantidad)
-            ws.cell(row=current_row, column=10, value=float(saldo_valor))
+            ws.cell(row=current_row, column=9, value=float(producto.stock_actual))
+            ws.cell(row=current_row, column=10, value=float(producto.valor_inventario_actual))
 
             for col in [4, 9, 10]:
                 cell = ws.cell(row=current_row, column=col)
