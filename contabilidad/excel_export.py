@@ -18,19 +18,35 @@ from .services import EstadosFinancierosService, LibroMayorService
 class ExcelExportService:
     """Servicio para generar exportaciones Excel consolidadas."""
 
-    # Estilos predefinidos
-    HEADER_FILL = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    # Estilos predefinidos - Paleta corporativa profesional
+    HEADER_FILL = PatternFill(start_color="2C5F88", end_color="2C5F88", fill_type="solid")
     HEADER_FONT = Font(color="FFFFFF", bold=True, size=11)
-    TITLE_FONT = Font(size=14, bold=True, color="1F4E78")
-    SUBTITLE_FONT = Font(size=11, bold=True, color="4472C4")
-    TOTAL_FILL = PatternFill(start_color="E7E6E6", end_color="E7E6E6", fill_type="solid")
-    TOTAL_FONT = Font(bold=True, size=10)
+    TITLE_FONT = Font(size=16, bold=True, color="1F4E78")
+    SUBTITLE_FONT = Font(size=12, bold=True, color="2C5F88")
+    TOTAL_FILL = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    TOTAL_FONT = Font(bold=True, size=11, color="1F4E78")
+
+    # Colores adicionales para secciones
+    ACTIVO_FILL = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
+    PASIVO_FILL = PatternFill(start_color="FFE699", end_color="FFE699", fill_type="solid")
+    PATRIMONIO_FILL = PatternFill(start_color="BDD7EE", end_color="BDD7EE", fill_type="solid")
+    INGRESO_FILL = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
+    EGRESO_FILL = PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")
+    ALERT_FILL = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+    SUCCESS_FILL = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
 
     BORDER_THIN = Border(
-        left=Side(style="thin", color="D0CECE"),
-        right=Side(style="thin", color="D0CECE"),
-        top=Side(style="thin", color="D0CECE"),
-        bottom=Side(style="thin", color="D0CECE"),
+        left=Side(style="thin", color="B4B4B4"),
+        right=Side(style="thin", color="B4B4B4"),
+        top=Side(style="thin", color="B4B4B4"),
+        bottom=Side(style="thin", color="B4B4B4"),
+    )
+
+    BORDER_MEDIUM = Border(
+        left=Side(style="medium", color="5B9BD5"),
+        right=Side(style="medium", color="5B9BD5"),
+        top=Side(style="medium", color="5B9BD5"),
+        bottom=Side(style="medium", color="5B9BD5"),
     )
 
     def __init__(self, empresa, fecha_inicio=None, fecha_fin=None):
@@ -120,61 +136,97 @@ class ExcelExportService:
         """Crea la hoja de portada con información general."""
         ws = wb.create_sheet("Portada")
 
-        # Título principal
+        # Título principal con fondo
+        ws.merge_cells("B2:E2")
         ws["B2"] = "REPORTE CONTABLE COMPLETO"
-        ws["B2"].font = Font(size=18, bold=True, color="1F4E78")
+        ws["B2"].font = Font(size=20, bold=True, color="FFFFFF")
+        ws["B2"].alignment = Alignment(horizontal="center", vertical="center")
+        ws["B2"].fill = PatternFill(start_color="2C5F88", end_color="2C5F88", fill_type="solid")
+        ws.row_dimensions[2].height = 35
 
-        # Información de la empresa
-        ws["B4"] = "Empresa:"
-        ws["B4"].font = Font(bold=True, size=12)
-        ws["C4"] = self.empresa.nombre
-        ws["C4"].font = Font(size=12)
+        # Información de la empresa con cuadro
+        ws["B4"] = "INFORMACIÓN DE LA EMPRESA"
+        ws["B4"].font = Font(bold=True, size=13, color="1F4E78")
 
-        ws["B5"] = "RUC/ID:"
+        ws["B5"] = "Empresa:"
         ws["B5"].font = Font(bold=True, size=11)
-        ws["C5"] = f"Empresa #{self.empresa.id}"
+        ws["C5"] = self.empresa.nombre
+        ws["C5"].font = Font(size=11)
 
-        ws["B6"] = "Propietario:"
-        ws["B6"].font = Font(bold=True, size=11)
-        ws["C6"] = self.empresa.owner.get_full_name() or self.empresa.owner.username
+        ws["B6"] = "ID Empresa:"
+        ws["B6"].font = Font(bold=True, size=10)
+        ws["C6"] = f"#{self.empresa.id}"
 
-        # Periodo del reporte
-        ws["B8"] = "Periodo del Reporte:"
-        ws["B8"].font = Font(bold=True, size=12, color="1F4E78")
+        ws["B7"] = "Propietario:"
+        ws["B7"].font = Font(bold=True, size=10)
+        ws["C7"] = self.empresa.owner.get_full_name() or self.empresa.owner.username
 
-        ws["B9"] = "Fecha Inicio:"
-        ws["B9"].font = Font(bold=True)
-        ws["C9"] = self.fecha_inicio.strftime("%d/%m/%Y")
+        ws["B8"] = "Email:"
+        ws["B8"].font = Font(bold=True, size=10)
+        ws["C8"] = self.empresa.owner.email or "No especificado"
 
-        ws["B10"] = "Fecha Fin:"
-        ws["B10"].font = Font(bold=True)
-        ws["C10"] = self.fecha_fin.strftime("%d/%m/%Y")
+        # Periodo del reporte con fondo
+        ws["B10"] = "PERIODO DEL REPORTE"
+        ws["B10"].font = Font(bold=True, size=13, color="1F4E78")
 
-        ws["B11"] = "Fecha de Generación:"
+        ws["B11"] = "Fecha Inicio:"
         ws["B11"].font = Font(bold=True)
-        ws["C11"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        ws["C11"] = self.fecha_inicio.strftime("%d/%m/%Y")
 
-        # Índice de contenidos
-        ws["B13"] = "CONTENIDO DEL REPORTE"
-        ws["B13"].font = Font(size=14, bold=True, color="1F4E78")
+        ws["B12"] = "Fecha Fin:"
+        ws["B12"].font = Font(bold=True)
+        ws["C12"] = self.fecha_fin.strftime("%d/%m/%Y")
+
+        ws["B13"] = "Días del Periodo:"
+        ws["B13"].font = Font(bold=True)
+        dias = (self.fecha_fin - self.fecha_inicio).days + 1
+        ws["C13"] = f"{dias} días"
+
+        ws["B14"] = "Fecha de Generación:"
+        ws["B14"].font = Font(bold=True)
+        ws["C14"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+        # Índice de contenidos con mejor formato
+        ws["B16"] = "ÍNDICE DE CONTENIDOS"
+        ws["B16"].font = Font(size=14, bold=True, color="FFFFFF")
+        ws["B16"].fill = PatternFill(start_color="2C5F88", end_color="2C5F88", fill_type="solid")
+        ws["B16"].alignment = Alignment(horizontal="left", vertical="center")
+        ws.merge_cells("B16:D16")
+        ws.row_dimensions[16].height = 25
 
         contenido = [
-            "1. Plan de Cuentas - Estructura jerárquica completa",
-            "2. Balance de Comprobación - Movimientos del periodo",
-            "3. Balance General - Situación financiera al corte",
-            "4. Estado de Resultados - Utilidad del periodo",
-            "5. Métricas Financieras - Ratios e indicadores",
-            "6. Tendencias - Análisis temporal (ML)",
-            "7. Top Cuentas - Cuentas más activas",
+            ("1", "Plan de Cuentas", "Estructura jerárquica completa del catálogo contable"),
+            ("2", "Balance de Comprobación", "Saldos y movimientos detallados del periodo"),
+            ("3", "Balance General", "Estado de situación financiera al corte"),
+            ("4", "Estado de Resultados", "Ingresos, costos, gastos y utilidad del periodo"),
+            ("5", "Métricas Financieras", "Ratios financieros e indicadores clave (KPIs)"),
+            ("6", "Tendencias ML", "Análisis temporal con Machine Learning"),
+            ("7", "Top Cuentas", "Cuentas más activas por volumen de transacciones"),
         ]
 
-        for idx, item in enumerate(contenido, start=14):
-            ws[f"B{idx}"] = item
-            ws[f"B{idx}"].font = Font(size=10)
+        row = 18
+        for num, titulo, desc in contenido:
+            ws[f"B{row}"] = num
+            ws[f"B{row}"].font = Font(size=12, bold=True, color="2C5F88")
+            ws[f"B{row}"].alignment = Alignment(horizontal="center")
+
+            ws[f"C{row}"] = titulo
+            ws[f"C{row}"].font = Font(size=11, bold=True)
+
+            ws[f"D{row}"] = desc
+            ws[f"D{row}"].font = Font(size=9, italic=True, color="595959")
+            row += 1
+
+        # Nota al pie
+        ws[f"B{row+1}"] = "📊 Este reporte fue generado automáticamente por el Sistema ENCI"
+        ws[f"B{row+1}"].font = Font(size=9, italic=True, color="7F7F7F")
+        ws.merge_cells(f"B{row+1}:D{row+1}")
 
         # Ajustar anchos
-        ws.column_dimensions["B"].width = 30
-        ws.column_dimensions["C"].width = 40
+        ws.column_dimensions["B"].width = 8
+        ws.column_dimensions["C"].width = 28
+        ws.column_dimensions["D"].width = 55
+        ws.column_dimensions["E"].width = 15
 
     def _crear_hoja_plan_cuentas(self, wb):
         """Crea la hoja del plan de cuentas."""
@@ -320,11 +372,24 @@ class ExcelExportService:
 
         self._aplicar_estilo_total(ws, row_total, 1, len(headers))
 
+        # Aplicar bordes a toda la tabla
+        for row in ws.iter_rows(
+            min_row=row_header, max_row=ws.max_row, min_col=1, max_col=len(headers)
+        ):
+            for cell in row:
+                cell.border = self.BORDER_THIN
+
         # Formatear números
         for row in ws.iter_rows(min_row=row_header + 1, max_row=ws.max_row, min_col=3, max_col=8):
             for cell in row:
                 if cell.value and isinstance(cell.value, int | float):
                     cell.number_format = "#,##0.00"
+                cell.alignment = Alignment(horizontal="right", vertical="center")
+
+        # Alinear textos
+        for row in ws.iter_rows(min_row=row_header + 1, max_row=ws.max_row, min_col=1, max_col=2):
+            for cell in row:
+                cell.alignment = Alignment(horizontal="left", vertical="center")
 
         self._autoajustar_columnas(ws)
 
@@ -351,39 +416,76 @@ class ExcelExportService:
 
         # ACTIVOS
         ws.append(["ACTIVO", "", "", ""])
-        ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+        row_activo_header = ws.max_row
+        ws.cell(row=row_activo_header, column=1).font = Font(size=12, bold=True, color="FFFFFF")
+        ws.cell(row=row_activo_header, column=1).fill = PatternFill(
+            start_color="70AD47", end_color="70AD47", fill_type="solid"
+        )
+        ws.merge_cells(f"A{row_activo_header}:D{row_activo_header}")
+        ws.cell(row=row_activo_header, column=1).alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+        ws.row_dimensions[row_activo_header].height = 20
 
         for det in bg["detalle_activos"]:
             ws.append(
                 ["ACTIVO", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["saldo"])]
             )
+            row = ws.max_row
+            ws.cell(row=row, column=1).fill = self.ACTIVO_FILL
 
         # Total Activos
         row_total = ws.max_row + 1
         ws.append(["TOTAL ACTIVO", "", "", float(bg["activos"])])
         self._aplicar_estilo_total(ws, row_total, 1, 4)
+        ws.cell(row=row_total, column=4).fill = self.SUCCESS_FILL
+        ws.cell(row=row_total, column=4).font = Font(bold=True, size=11, color="375623")
 
         ws.append([])
 
         # PASIVOS
         ws.append(["PASIVO", "", "", ""])
-        ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+        row_pasivo_header = ws.max_row
+        ws.cell(row=row_pasivo_header, column=1).font = Font(size=12, bold=True, color="FFFFFF")
+        ws.cell(row=row_pasivo_header, column=1).fill = PatternFill(
+            start_color="F4B084", end_color="F4B084", fill_type="solid"
+        )
+        ws.merge_cells(f"A{row_pasivo_header}:D{row_pasivo_header}")
+        ws.cell(row=row_pasivo_header, column=1).alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+        ws.row_dimensions[row_pasivo_header].height = 20
 
         for det in bg["detalle_pasivos"]:
             ws.append(
                 ["PASIVO", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["saldo"])]
             )
+            row = ws.max_row
+            ws.cell(row=row, column=1).fill = self.PASIVO_FILL
 
         # Total Pasivos
         row_total = ws.max_row + 1
         ws.append(["TOTAL PASIVO", "", "", float(bg["pasivos"])])
         self._aplicar_estilo_total(ws, row_total, 1, 4)
+        ws.cell(row=row_total, column=4).fill = PatternFill(
+            start_color="FBE5D6", end_color="FBE5D6", fill_type="solid"
+        )
+        ws.cell(row=row_total, column=4).font = Font(bold=True, size=11, color="C65911")
 
         ws.append([])
 
         # PATRIMONIO
         ws.append(["PATRIMONIO", "", "", ""])
-        ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+        row_patrim_header = ws.max_row
+        ws.cell(row=row_patrim_header, column=1).font = Font(size=12, bold=True, color="FFFFFF")
+        ws.cell(row=row_patrim_header, column=1).fill = PatternFill(
+            start_color="5B9BD5", end_color="5B9BD5", fill_type="solid"
+        )
+        ws.merge_cells(f"A{row_patrim_header}:D{row_patrim_header}")
+        ws.cell(row=row_patrim_header, column=1).alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+        ws.row_dimensions[row_patrim_header].height = 20
 
         for det in bg["detalle_patrimonio"]:
             ws.append(
@@ -394,19 +496,54 @@ class ExcelExportService:
                     float(det["saldo"]),
                 ]
             )
+            row = ws.max_row
+            ws.cell(row=row, column=1).fill = self.PATRIMONIO_FILL
 
         # Total Patrimonio
         row_total = ws.max_row + 1
         ws.append(["TOTAL PATRIMONIO", "", "", float(bg["patrimonio"])])
         self._aplicar_estilo_total(ws, row_total, 1, 4)
+        ws.cell(row=row_total, column=4).fill = PatternFill(
+            start_color="DEEBF7", end_color="DEEBF7", fill_type="solid"
+        )
+        ws.cell(row=row_total, column=4).font = Font(bold=True, size=11, color="1F4E78")
 
         ws.append([])
         ws.append([])
 
-        # Verificación
+        # Verificación del balance
         row_verif = ws.max_row + 1
-        ws.append(["VERIFICACIÓN", "", "", "SI ✓" if bg["balanceado"] else "NO ✗ (Descuadre)"])
-        ws.cell(row=row_verif, column=1).font = Font(bold=True, color="FF0000")
+        balanceado = bg["balanceado"]
+        ws.append(
+            [
+                "VERIFICACIÓN",
+                "",
+                "",
+                "✓ BALANCE CORRECTO" if balanceado else "✗ DESCUADRE DETECTADO",
+            ]
+        )
+        ws.cell(row=row_verif, column=1).font = Font(bold=True, size=11, color="1F4E78")
+        ws.cell(row=row_verif, column=4).font = Font(
+            bold=True, size=12, color="00B050" if balanceado else "FF0000"
+        )
+        ws.cell(row=row_verif, column=4).fill = self.SUCCESS_FILL if balanceado else self.ALERT_FILL
+        ws.merge_cells(f"A{row_verif}:C{row_verif}")
+        ws.cell(row=row_verif, column=1).alignment = Alignment(horizontal="center")
+        ws.row_dimensions[row_verif].height = 25
+
+        # Ecuación contable
+        ws.append([])
+        ws.append(["Ecuación Contable:", "Activos = Pasivos + Patrimonio"])
+        ws.cell(row=ws.max_row, column=1).font = Font(bold=True, size=10, italic=True)
+        ws.cell(row=ws.max_row, column=2).font = Font(size=10, italic=True)
+        ws.append(
+            [
+                "Verificación:",
+                f"${float(bg['activos']):,.2f} = ${float(bg['pasivos']):,.2f} + ${float(bg['patrimonio']):,.2f}",
+            ]
+        )
+        ws.cell(row=ws.max_row, column=1).font = Font(bold=True, size=10)
+        ws.cell(row=ws.max_row, column=2).font = Font(size=10)
 
         # Formatear números
         for row in ws.iter_rows(min_row=row_header + 1, max_row=ws.max_row, min_col=4, max_col=4):
@@ -612,38 +749,148 @@ class ExcelExportService:
         ws["A1"] = "ANÁLISIS DE TENDENCIAS (Machine Learning)"
         self._aplicar_estilo_titulo(ws["A1"])
         ws["A2"] = f"Empresa: {self.empresa.nombre}"
-        ws["A3"] = "Serie temporal de ingresos y gastos - Últimos 12 meses"
+        ws["A3"] = "Análisis de series temporales - Últimos 12 meses"
 
         try:
             ml_service = MLAnalyticsService(self.empresa)
             data = ml_service.get_analytics_time_series(meses=12)
 
+            # Encabezados
             ws.append([])
-            ws.append(["Mes", "Ingresos", "Gastos", "Flujo Neto", "Tendencia Ingresos"])
-            self._aplicar_estilo_header(ws, 5, 1, 5)
+            headers = [
+                "Periodo",
+                "Ingresos",
+                "Gastos",
+                "Costos",
+                "Utilidad",
+                "Activos",
+                "Pasivos",
+                "Flujo Neto",
+            ]
+            ws.append(headers)
+            row_header = ws.max_row
+            self._aplicar_estilo_header(ws, row_header, 1, len(headers))
 
-            if "series_mensuales" in data:
-                for mes_data in data["series_mensuales"]:
-                    flujo_neto = mes_data["ingresos"] - mes_data["gastos"]
+            if "series" in data and len(data["series"]) > 0:
+                total_ingresos = 0
+                total_gastos = 0
+                total_costos = 0
+                total_utilidad = 0
+
+                for periodo_data in data["series"]:
+                    ingresos = float(periodo_data.get("ingresos", 0))
+                    gastos = float(periodo_data.get("gastos", 0))
+                    costos = float(periodo_data.get("costos", 0))
+                    utilidad = float(periodo_data.get("utilidad", 0))
+                    activos = float(periodo_data.get("activos", 0))
+                    pasivos = float(periodo_data.get("pasivos", 0))
+                    flujo_neto = ingresos - gastos - costos
+
+                    # Convertir periodo YYYY-MM a formato legible
+                    periodo = periodo_data.get("periodo", "")
+                    if periodo:
+                        try:
+                            fecha = datetime.strptime(periodo, "%Y-%m")
+                            periodo_formatted = fecha.strftime("%b %Y")
+                        except:
+                            periodo_formatted = periodo
+                    else:
+                        periodo_formatted = "N/A"
+
                     ws.append(
                         [
-                            mes_data["mes"],
-                            float(mes_data["ingresos"]),
-                            float(mes_data["gastos"]),
-                            float(flujo_neto),
-                            mes_data.get("tendencia", "N/A"),
+                            periodo_formatted,
+                            ingresos,
+                            gastos,
+                            costos,
+                            utilidad,
+                            activos,
+                            pasivos,
+                            flujo_neto,
                         ]
                     )
 
-                # Formatear números
-                for row in ws.iter_rows(min_row=6, max_row=ws.max_row, min_col=2, max_col=4):
+                    # Color según flujo neto
+                    row = ws.max_row
+                    if flujo_neto > 0:
+                        ws.cell(row=row, column=8).fill = self.SUCCESS_FILL
+                    elif flujo_neto < 0:
+                        ws.cell(row=row, column=8).fill = self.ALERT_FILL
+
+                    total_ingresos += ingresos
+                    total_gastos += gastos
+                    total_costos += costos
+                    total_utilidad += utilidad
+
+                # Fila de totales
+                ws.append([])
+                row_total = ws.max_row + 1
+                ws.append(
+                    [
+                        "TOTALES",
+                        total_ingresos,
+                        total_gastos,
+                        total_costos,
+                        total_utilidad,
+                        "",
+                        "",
+                        total_ingresos - total_gastos - total_costos,
+                    ]
+                )
+                self._aplicar_estilo_total(ws, row_total, 1, len(headers))
+
+                # Estadísticas adicionales
+                ws.append([])
+                ws.append([])
+                ws.append(["ESTADÍSTICAS DEL PERIODO"])
+                ws.cell(row=ws.max_row, column=1).font = self.SUBTITLE_FONT
+
+                num_periodos = len(data["series"])
+                promedio_ingresos = total_ingresos / num_periodos if num_periodos > 0 else 0
+                promedio_gastos = total_gastos / num_periodos if num_periodos > 0 else 0
+                promedio_utilidad = total_utilidad / num_periodos if num_periodos > 0 else 0
+
+                ws.append(["Total de periodos analizados:", num_periodos])
+                ws.append(["Promedio mensual de ingresos:", promedio_ingresos])
+                ws.append(["Promedio mensual de gastos:", promedio_gastos])
+                ws.append(["Promedio mensual de utilidad:", promedio_utilidad])
+
+                # Formatear estadísticas
+                for row in range(ws.max_row - 3, ws.max_row + 1):
+                    ws.cell(row=row, column=1).font = Font(bold=True, size=10)
+                    if ws.cell(row=row, column=2).value and isinstance(
+                        ws.cell(row=row, column=2).value, int | float
+                    ):
+                        ws.cell(row=row, column=2).number_format = "#,##0.00"
+
+                # Formatear números en la tabla
+                for row in ws.iter_rows(
+                    min_row=row_header + 1, max_row=row_total, min_col=2, max_col=8
+                ):
                     for cell in row:
                         if cell.value and isinstance(cell.value, int | float):
                             cell.number_format = "#,##0.00"
+                            cell.alignment = Alignment(horizontal="right", vertical="center")
+
+                # Aplicar bordes
+                for row in ws.iter_rows(
+                    min_row=row_header, max_row=row_total, min_col=1, max_col=len(headers)
+                ):
+                    for cell in row:
+                        cell.border = self.BORDER_THIN
+            else:
+                ws.append([])
+                ws.append(["No hay datos suficientes para generar el análisis de tendencias."])
+                ws.cell(row=ws.max_row, column=1).font = Font(italic=True, color="FF0000")
+                ws.append(["Se requieren transacciones contables en los últimos 12 meses."])
+                ws.cell(row=ws.max_row, column=1).font = Font(italic=True, size=10)
 
         except Exception as e:
             ws.append([])
             ws.append([f"Error al generar tendencias: {str(e)}"])
+            ws.cell(row=ws.max_row, column=1).font = Font(bold=True, color="FF0000")
+            ws.append(["Por favor, verifique que existan transacciones registradas."])
+            ws.cell(row=ws.max_row, column=1).font = Font(italic=True, size=10)
 
         self._autoajustar_columnas(ws)
 
