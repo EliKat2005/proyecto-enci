@@ -1385,9 +1385,21 @@ class AnomaliaDetectada(models.Model):
     ]
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="anomalias")
-    asiento_id = models.BigIntegerField(null=True, blank=True, help_text="ID del asiento anómalo")
-    transaccion_id = models.BigIntegerField(
-        null=True, blank=True, help_text="ID de la transacción anómala"
+    asiento = models.ForeignKey(
+        EmpresaAsiento,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="anomalias",
+        help_text="Asiento anómalo detectado",
+    )
+    transaccion = models.ForeignKey(
+        EmpresaTransaccion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="anomalias",
+        help_text="Transacción anómala detectada",
     )
 
     tipo_anomalia = models.CharField(max_length=5, choices=TIPO_ANOMALIA_CHOICES)
