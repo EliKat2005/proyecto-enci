@@ -16,8 +16,8 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-bold text-slate-900 dark:text-gray-100">Mis Empresas</h1>
-            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Gestión completa de empresas</p>
+            <h1 class="text-xl font-bold text-slate-900 dark:text-slate-50">Mis Empresas</h1>
+            <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Gestión completa de empresas</p>
           </div>
         </div>
         <a href="{% url 'contabilidad:create_company' %}" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 hover:from-blue-700 hover:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2">
@@ -46,11 +46,11 @@
           </div>
         </div>
         <div class="flex-1">
-          <h2 class="text-lg font-bold text-slate-900 dark:text-gray-100 mb-2">Importar Empresa Plantilla</h2>
-          <p class="text-slate-700 dark:text-slate-300 mb-4 text-sm">Ingresa el código proporcionado por tu docente para importar una empresa plantilla</p>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50 mb-2">Importar Empresa Plantilla</h2>
+          <p class="text-slate-700 dark:text-slate-200 mb-4 text-sm">Ingresa el código proporcionado por tu docente para importar una empresa plantilla</p>
           <form method="post" action="{% url 'contabilidad:import_company' %}" class="flex items-center gap-3">
             {% csrf_token %}
-            <input name="join_code" placeholder="Código de plantilla" class="flex-1 px-4 py-2.5 border-2 border-emerald-300/50 dark:border-emerald-900/50 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-xl text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-900 transition-all bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm font-mono tracking-wider">
+            <input name="join_code" placeholder="Código de plantilla" class="flex-1 px-4 py-2.5 border-2 border-emerald-300/50 dark:border-emerald-900/50 dark:bg-slate-800 dark:text-slate-50 dark:placeholder-slate-400 rounded-xl text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-2 focus:ring-emerald-200 dark:focus:ring-emerald-900 transition-all bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm font-mono tracking-wider">
             <button class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-700 dark:to-teal-700 hover:from-emerald-700 hover:to-teal-700 dark:hover:from-emerald-800 dark:hover:to-teal-800 text-white rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>

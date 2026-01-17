@@ -17,7 +17,7 @@
         <div class="flex items-center gap-2">
           <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold text-sm">EF</div>
           <div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-gray-100">Estados Financieros</h2>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Estados Financieros</h2>
             <p class="text-xs text-slate-600 dark:text-slate-300">{{ empresa.nombre }}</p>
           </div>
         </div>
@@ -46,7 +46,7 @@
         <div class="flex-1 min-w-[200px] max-w-xs">
           <label for="fecha" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha de Corte</label>
           <input type="date" id="fecha" name="fecha" value="{{ fecha_corte|date:'Y-m-d' }}"
-                 class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+                 class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
         </div>
         <button type="submit" class="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 transition-colors">
           Generar
@@ -139,13 +139,13 @@
               {% for item in balance_general.detalle_patrimonio %}
               <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
                 <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-                <span class="font-mono font-semibold dark:text-gray-100">${{ item.saldo|floatformat:2 }}</span>
+                <span class="font-mono font-semibold dark:text-slate-100">${{ item.saldo|floatformat:2 }}</span>
               </div>
               {% empty %}
               <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
               {% endfor %}
             </div>
-            <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-gray-100">
+            <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-slate-100">
               <span>TOTAL PATRIMONIO</span>
               <span class="font-mono">${{ balance_general.patrimonio|floatformat:2 }}</span>
             </div>
@@ -189,12 +189,12 @@
         <div class="flex-1 min-w-[200px]">
           <label for="fecha_inicio" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha Inicio</label>
           <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}"
-                 class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+                 class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
         </div>
         <div class="flex-1 min-w-[200px]">
           <label for="fecha_fin" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fecha Fin</label>
           <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}"
-                 class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
+                 class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500">
         </div>
         <button type="submit" class="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 transition-colors">
           Generar
@@ -266,7 +266,7 @@
             {% for item in estado_resultados.detalle_costos %}
             <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
               <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-              <span class="font-mono font-semibold dark:text-gray-100">${{ item.monto|floatformat:2 }}</span>
+                <span class="font-mono font-semibold dark:text-slate-100">${{ item.monto|floatformat:2 }}</span>
             </div>
             {% empty %}
             <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin costos registrados</div>
@@ -279,7 +279,7 @@
         </div>
 
         {# Utilidad Bruta #}
-        <div class="px-3 py-2 flex justify-between font-bold bg-blue-100 dark:bg-blue-950/50 rounded-lg mb-3 text-sm dark:text-gray-100">
+        <div class="px-3 py-2 flex justify-between font-bold bg-blue-100 dark:bg-blue-950/50 rounded-lg mb-3 text-sm dark:text-slate-100">
           <span>UTILIDAD BRUTA</span>
           <span class="font-mono {% if estado_resultados.utilidad_bruta >= 0 %}text-green-700 dark:text-green-400{% else %}text-red-700 dark:text-red-400{% endif %}">
             ${{ estado_resultados.utilidad_bruta|floatformat:2 }}
@@ -293,13 +293,13 @@
             {% for item in estado_resultados.detalle_gastos %}
             <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
               <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-              <span class="font-mono font-semibold dark:text-gray-100">${{ item.monto|floatformat:2 }}</span>
+              <span class="font-mono font-semibold dark:text-slate-100">${{ item.monto|floatformat:2 }}</span>
             </div>
             {% empty %}
             <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin gastos registrados</div>
             {% endfor %}
           </div>
-          <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-gray-100">
+          <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-slate-100">
             <span>TOTAL GASTOS</span>
             <span class="font-mono">-${{ estado_resultados.gastos|floatformat:2 }}</span>
           </div>
@@ -339,7 +339,9 @@
     {% endif %}
 
     <!-- Comentarios del Docente - Componente Unificado -->
-    {% include 'contabilidad/_comments_section.html' with section_code='EF' %}
+    {% if empresa.visible_to_supervisor %}
+      {% include 'contabilidad/_comments_section.html' with comments=comments section_code='EF' section_name='Estados Financieros' %}
+    {% endif %}
 
   </div>
 

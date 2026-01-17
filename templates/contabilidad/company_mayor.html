@@ -208,7 +208,9 @@
     </div>
 
     <!-- Comentarios del Docente - Componente Unificado -->
-    {% include 'contabilidad/_comments_section.html' with section_code='MA' %}
+    {% if empresa.visible_to_supervisor %}
+      {% include 'contabilidad/_comments_section.html' with comments=comments section_code='MA' section_name='Libro Mayor' %}
+    {% endif %}
 
   </div>
 </div>

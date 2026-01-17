@@ -21,8 +21,8 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-base font-bold text-slate-900 dark:text-slate-100">Panel Docente</h1>
-                    <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">Gestión de Grupos, Estudiantes y Códigos de Invitación</p>
+                    <h1 class="text-base font-bold text-slate-900 dark:text-slate-50">Panel Docente</h1>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">Gestión de Grupos, Estudiantes y Códigos de Invitación</p>
                 </div>
             </div>
         </div>
@@ -33,19 +33,19 @@
         <div class="bg-white dark:bg-slate-900 shadow-md rounded-lg border border-slate-200 dark:border-slate-800">
             <!-- Tabs de navegación -->
             <div class="border-b border-slate-200 dark:border-slate-800 flex space-x-2 px-6 pt-6">
-                <button onclick="showTab('grupos')" id="tab-grupos" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500">
+                <button onclick="showTab('grupos')" id="tab-grupos" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-300 border-b-2 border-blue-600 dark:border-blue-500">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                     </svg>
                     Mis Grupos
                 </button>
-                <button onclick="showTab('invitaciones')" id="tab-invitaciones" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <button onclick="showTab('invitaciones')" id="tab-invitaciones" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                     </svg>
                     Códigos de Invitación
                 </button>
-                <button onclick="showTab('empresas')" id="tab-empresas" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+                <button onclick="showTab('empresas')" id="tab-empresas" class="px-6 py-3 text-sm font-semibold rounded-t-lg transition-all bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
                     <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
@@ -65,7 +65,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                             </svg>
                         </div>
-                        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Mis Grupos</h2>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50">Mis Grupos</h2>
                     </div>
                     <div class="flex items-center space-x-2.5">
                         <!-- Buscador de grupos -->
@@ -87,17 +87,17 @@
 
                 <!-- Formulario Crear Grupo (oculto por defecto) -->
                     <div id="grupo-form" class="hidden bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 rounded-lg p-4 mb-4 border-l-4 border-blue-600 dark:border-blue-500">
-                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-3 uppercase tracking-wide">Crear Nuevo Grupo</h3>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-50 mb-3 uppercase tracking-wide">Crear Nuevo Grupo</h3>
                     <form method="post" class="space-y-4">
                         {% csrf_token %}
                         <input type="hidden" name="operation" value="create_grupo">
                         <input type="hidden" name="active" value="on">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Nombre del Grupo</label>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 uppercase tracking-wide">Nombre del Grupo</label>
                             <input type="text" name="nombre" required class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all" placeholder="Ej: Grupo A">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Descripción (opcional)</label>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2 uppercase tracking-wide">Descripción (opcional)</label>
                             <textarea name="descripcion" rows="3" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-all" placeholder="Descripción del grupo"></textarea>
                         </div>
                         <div class="flex items-center space-x-4">
@@ -114,7 +114,7 @@
                 <!-- Lista de Grupos con diseño compacto -->
                 <div id="grupos-container" class="space-y-3">
                     {% for grupo in grupos %}
-                    <div class="grupo-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-blue-400 dark:hover:border-blue-600 transition-all" data-grupo-nombre="{{ grupo.nombre|lower }}">
+                    <div class="grupo-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden hover:border-blue-400 dark:hover:border-blue-600 transition-all" data-grupo-nombre="{{ grupo.nombre|lower }}">
                         <!-- Header compacto del grupo -->
                         <div class="grupo-header flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800" onclick="toggleGrupoDetails({{ grupo.id }})">
                         <div class="flex items-center space-x-3 flex-1">
@@ -125,7 +125,7 @@
                                 </button>
                                 <div class="flex-1">
                                     <div class="flex items-center space-x-2.5">
-                                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">{{ grupo.nombre }}</h3>
+                                        <h3 class="text-base font-bold text-slate-900 dark:text-slate-50">{{ grupo.nombre }}</h3>
                                         <span class="grupo-status inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {% if grupo.active %}bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400{% else %}bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-400{% endif %}">
                                             {% if grupo.active %}Activo{% else %}Inactivo{% endif %}
                                         </span>
@@ -305,12 +305,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                             </svg>
                         </div>
-                        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Códigos de Invitación</h2>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50">Códigos de Invitación</h2>
                     </div>
 
                     <!-- Crear nuevo código -->
                     <div class="bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 rounded-lg p-4 mb-4 border-l-4 border-blue-600 dark:border-blue-500">
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center uppercase tracking-wide">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center uppercase tracking-wide">
                             <svg class="w-4 h-4 mr-1.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
@@ -351,20 +351,20 @@
                     <div class="overflow-x-auto">
                         <table class="w-full table-fixed">
             <thead>
-                <tr class="border-b-2 border-gray-200 dark:border-slate-700">
-                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Código</th>
-                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Grupo</th>
-                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Usos</th>
-                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Expira</th>
-                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Activo</th>
-                    <th class="px-3 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+                <tr class="border-b-2 border-slate-200 dark:border-slate-700">
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Código</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Grupo</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Usos</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Expira</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Activo</th>
+                    <th class="px-3 py-2.5 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                 {% for inv in invitations %}
-                <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                     <td class="px-3 py-2.5">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-mono font-semibold bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-300">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                             {{ inv.code }}
                         </span>
                     </td>
@@ -377,8 +377,8 @@
                             <span class="text-gray-400 dark:text-slate-500">-</span>
                         {% endif %}
                     </td>
-                    <td class="px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400"><span class="font-semibold">{{ inv.uses_count }}</span> / {{ inv.max_uses }}</td>
-                    <td class="px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400">{% if inv.expires_at %}{{ inv.expires_at|date:"d M Y" }}{% else %}-{% endif %}</td>
+                    <td class="px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300"><span class="font-semibold">{{ inv.uses_count }}</span> / {{ inv.max_uses }}</td>
+                    <td class="px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300">{% if inv.expires_at %}{{ inv.expires_at|date:"d M Y" }}{% else %}-{% endif %}</td>
                     <td class="px-3 py-2.5">
                         {% if inv.active %}
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-400">Sí</span>
@@ -436,7 +436,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Empresas Compartidas</h2>
+                                <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50">Empresas Compartidas</h2>
                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Empresas visibles compartidas por tus estudiantes</p>
                             </div>
                         </div>
@@ -488,11 +488,11 @@
                             <table class="w-full" id="tabla-empresas">
                             <thead>
                                 <tr class="border-b-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Empresa</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Estudiante</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Grupo</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Última Actualización</th>
-                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Acciones</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Empresa</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Estudiante</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Grupo</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Última Actualización</th>
+                                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200 dark:divide-slate-800">

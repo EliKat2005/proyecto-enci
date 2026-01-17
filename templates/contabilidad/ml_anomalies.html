@@ -4,22 +4,22 @@
 {% block title %}Anomalías - {{ empresa.nombre }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+    <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
 
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-50">
                         🚨 Detección de Anomalías
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         Isolation Forest - <span class="font-semibold">{{ empresa.nombre }}</span>
                     </p>
                 </div>
                 <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                   class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-dark-surface hover:bg-slate-100 dark:hover:bg-slate-700">
                     ← Dashboard ML
                 </a>
             </div>
@@ -29,15 +29,15 @@
         <div class="mb-8">
             <nav class="flex space-x-4 overflow-x-auto">
                 <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     📊 Dashboard
                 </a>
                 <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     📈 Analytics
                 </a>
                 <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🔮 Predicciones
                 </a>
                 <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
@@ -45,7 +45,7 @@
                     🚨 Anomalías
                 </a>
                 <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🧠 Búsqueda Semántica
                 </a>
             </nav>
@@ -56,10 +56,10 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                             Período
                         </label>
-                        <select id="periodo-anomalias" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <select id="periodo-anomalias" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="3">Últimos 3 meses</option>
                             <option value="6" selected>Últimos 6 meses</option>
                             <option value="12">Últimos 12 meses</option>
@@ -68,10 +68,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                             Umbral
                         </label>
-                        <select id="umbral-anomalias" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <select id="umbral-anomalias" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="3.0">Estricto (Z > 3.0)</option>
                             <option value="2.5" selected>Normal (Z > 2.5)</option>
                             <option value="2.0">Relajado (Z > 2.0)</option>
@@ -79,10 +79,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                             Severidad
                         </label>
-                        <select id="severidad-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <select id="severidad-filter" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="all" selected>Todas</option>
                             <option value="alta">Alta</option>
                             <option value="media">Media</option>
@@ -102,9 +102,9 @@
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="anomalies-summary">
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Anomalías</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Total Anomalías</p>
                     <div class="bg-red-100 dark:bg-red-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -112,11 +112,11 @@
                     </div>
                 </div>
                 <p id="total-anomalias" class="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">0</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Transacciones atípicas</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Transacciones atípicas</p>
             </div>
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Severidad Alta</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Severidad Alta</p>
                     <div class="bg-red-100 dark:bg-red-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-red-700 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -124,11 +124,11 @@
                     </div>
                 </div>
                 <p id="high-severity" class="text-2xl font-bold text-red-700 dark:text-red-300 mb-1">0</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Z-score > 3.0</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Z-score > 3.0</p>
             </div>
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Severidad Media</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Severidad Media</p>
                     <div class="bg-orange-100 dark:bg-orange-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -136,11 +136,11 @@
                     </div>
                 </div>
                 <p id="medium-severity" class="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">0</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">2.0 < Z-score ≤ 3.0</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">2.0 < Z-score ≤ 3.0</p>
             </div>
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Monto Total</p>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Monto Total</p>
                     <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
                         <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -148,30 +148,30 @@
                     </div>
                 </div>
                 <p id="monto-afectado" class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">$0</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Suma de anomalías</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Suma de anomalías</p>
             </div>
         </div>
 
         <!-- Loading State -->
         <div id="loading-anomalies" class="hidden text-center py-12">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p class="mt-4 text-gray-600 dark:text-gray-400">Analizando transacciones...</p>
+            <p class="mt-4 text-slate-700 dark:text-slate-300">Analizando transacciones...</p>
         </div>
 
         <!-- Distribución Chart -->
-        <div id="distribution-chart" class="hidden bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución de Z-Scores</h3>
+        <div id="distribution-chart" class="hidden bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">Distribución de Z-Scores</h3>
             <div class="h-64 mb-4">
                 <canvas id="anomalyDistributionChart"></canvas>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>Interpretación:</strong> El Z-score mide cuántas desviaciones estándar se aleja una transacción del promedio. Valores altos indican comportamientos atípicos.
                     </p>
                 </div>
-                <div id="anomaly-interpretation" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                <div id="anomaly-interpretation" class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border-l-4 border-slate-400 dark:border-slate-500">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>Estado:</strong> <span id="interpretation-text">Detecta anomalías para ver el análisis.</span>
                     </p>
                 </div>
@@ -184,11 +184,11 @@
         </div>
 
         <!-- Empty State -->
-        <div id="empty-state" class="text-center py-12 bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-gray-200 dark:border-dark-border">
+        <div id="empty-state" class="text-center py-12 bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
             <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Sin anomalías detectadas</h3>
+            <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-50">Sin anomalías detectadas</h3>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">No se encontraron transacciones anómalas en el período seleccionado</p>
         </div>
     </div>
@@ -342,34 +342,34 @@ function mostrarAnomalias(data, filterSeveridad) {
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                         <div>
-                            <p class="text-xs text-gray-600 dark:text-gray-400">Cuenta</p>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">${anomalia.cuenta_codigo}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${anomalia.cuenta_descripcion}</p>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">Cuenta</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-slate-50">${anomalia.cuenta_codigo}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${anomalia.cuenta_descripcion}</p>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-600 dark:text-gray-400">Monto</p>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">Monto</p>
                             <p class="text-lg font-bold text-${severity.color}-600 dark:text-${severity.color}-400">
                                 ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(anomalia.monto)}
                             </p>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-600 dark:text-gray-400">Z-Score</p>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">Z-Score</p>
                             <p class="text-lg font-mono font-bold text-${severity.color}-600 dark:text-${severity.color}-400">
                                 ${anomalia.z_score.toFixed(2)}
                             </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${anomalia.z_score.toFixed(1)}σ del promedio</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${anomalia.z_score.toFixed(1)}σ del promedio</p>
                         </div>
                     </div>
 
                     ${anomalia.descripcion ? `
-                    <div class="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Descripción:</p>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">${anomalia.descripcion}</p>
+                    <div class="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Descripción:</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-200">${anomalia.descripcion}</p>
                     </div>
                     ` : ''}
 
                     ${anomalia.tercero ? `
-                    <div class="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <div class="mt-2 flex items-center text-sm text-slate-600 dark:text-slate-300">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>

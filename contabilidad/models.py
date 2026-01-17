@@ -812,6 +812,7 @@ class EmpresaComment(models.Model):
         ("MA", "Libro Mayor"),
         ("BC", "Balance de Comprobación"),
         ("EF", "Estados Financieros"),
+        ("KD", "Kardex de Inventario"),
     ]
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="comments")

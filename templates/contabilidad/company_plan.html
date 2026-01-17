@@ -27,29 +27,29 @@
             {% csrf_token %}
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Código *</label>
-              <input name="codigo" required class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all" />
+              <input name="codigo" required class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all" />
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Descripción *</label>
-              <input name="descripcion" required class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all" />
+              <input name="descripcion" required class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all" />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Tipo</label>
-                <select name="tipo" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
+                <select name="tipo" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
                   <option>Activo</option><option>Pasivo</option><option>Patrimonio</option><option>Ingreso</option><option>Costo</option><option>Gasto</option>
                 </select>
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Naturaleza</label>
-                <select name="naturaleza" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
+                <select name="naturaleza" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
                   <option>Deudora</option><option>Acreedora</option>
                 </select>
               </div>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Cuenta Padre</label>
-              <select name="padre" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
+              <select name="padre" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
                 <option value="">-- Ninguno --</option>
                 {% for p in cuentas %}<option value="{{ p.id }}">{{ p.codigo }} — {{ p.descripcion }}</option>{% endfor %}
               </select>
@@ -200,17 +200,17 @@
             <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-600 dark:to-slate-700 rounded-lg flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
             </div>
-            <h3 class="text-sm font-bold text-slate-900 dark:text-gray-100">Filtros</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Filtros</h3>
           </div>
           <form id="plan-filter-form" class="space-y-3.5">
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Buscar</label>
-              <input type="text" id="plan-search" placeholder="Código o descripción" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-600 transition-all text-sm" />
+              <input type="text" id="plan-search" placeholder="Código o descripción" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-600 transition-all text-sm" />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Tipo</label>
-                <select id="plan-tipo" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-600 transition-all">
+                <select id="plan-tipo" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-600 transition-all">
                   <option value="">Todos</option>
                   <option>Activo</option>
                   <option>Pasivo</option>
@@ -222,7 +222,7 @@
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Naturaleza</label>
-                <select id="plan-naturaleza" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-600 transition-all">
+                <select id="plan-naturaleza" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-600 transition-all">
                   <option value="">Todas</option>
                   <option>Deudora</option>
                   <option>Acreedora</option>
@@ -239,7 +239,9 @@
     </div> <!-- fin grid -->
 
     <!-- Comentarios del Docente - Componente Unificado -->
-    {% include 'contabilidad/_comments_section.html' with section_code='PL' %}
+    {% if empresa.visible_to_supervisor %}
+      {% include 'contabilidad/_comments_section.html' with comments=comments section_code='PL' section_name='Plan de Cuentas' %}
+    {% endif %}
 
   </div>
 </div>

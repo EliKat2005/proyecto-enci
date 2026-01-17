@@ -101,6 +101,9 @@ def import_company(request):
 
     Si la plantilla es encontrada, se crea una copia para el usuario y se registra
     una relación `EmpresaSupervisor` entre la nueva empresa y el docente propietario.
+
+    VALIDACIÓN: El estudiante solo puede importar plantillas de docentes a los que
+    pertenece (verificado mediante Referral/Grupo).
     """
     if request.method != "POST":
         return HttpResponseForbidden("Invalid")
@@ -108,19 +111,42 @@ def import_company(request):
     if not join_code:
         messages.error(request, "Código requerido.")
         return redirect("contabilidad:my_companies")
-    try:
-        new_emp = Empresa.import_from_template(join_code, request.user)
-        # Registrar relación de supervisión con el docente original si existe
-        if new_emp.original and new_emp.original.owner:
-            try:
-                EmpresaSupervisor.objects.get_or_create(
-                    empresa=new_emp, docente=new_emp.original.owner
-                )
-            except Exception:
-                pass
 
-        messages.success(request, f"Empresa importada: {new_emp.nombre}")
+    try:
+        # Buscar la plantilla
+        template = Empresa.objects.get(join_code=join_code, is_template=True)
+        docente_owner = template.owner
+
+        # VALIDACIÓN: Verificar que el estudiante pertenece a un grupo del docente
+        from core.models import Referral
+
+        es_estudiante_del_docente = Referral.objects.filter(
+            student=request.user,
+            docente=docente_owner,
+            activated=True,  # Solo estudiantes activados por el docente
+        ).exists()
+
+        if not es_estudiante_del_docente:
+            messages.error(
+                request,
+                "No puedes importar esta plantilla. Solo puedes importar plantillas de "
+                "docentes a cuyos grupos perteneces. Asegúrate de haberte unido mediante "
+                "el código de invitación de tu docente.",
+            )
+            return redirect("contabilidad:my_companies")
+
+        # Si pasa la validación, importar la empresa
+        new_emp = template.copy_for_owner(request.user)
+
+        # Registrar relación de supervisión con el docente original
+        try:
+            EmpresaSupervisor.objects.get_or_create(empresa=new_emp, docente=docente_owner)
+        except Exception:
+            pass
+
+        messages.success(request, f"Empresa importada exitosamente: {new_emp.nombre}")
         return redirect("home")
+
     except Empresa.DoesNotExist:
         messages.error(request, "Código inválido o plantilla no encontrada.")
         return redirect("contabilidad:my_companies")
@@ -766,6 +792,7 @@ def add_comment(request, empresa_id, section):
         "MA": "Libro Mayor",
         "BC": "Balance de Comprobación",
         "EF": "Estados Financieros",
+        "KD": "Kardex de Inventario",
     }
 
     # Solo notificar si el autor no es el dueño (evitar auto-notificaciones)
@@ -778,6 +805,8 @@ def add_comment(request, empresa_id, section):
             "BC": reverse("contabilidad:company_balance_comprobacion", args=[empresa.id])
             + "#comments-section",
             "EF": reverse("contabilidad:company_estados_financieros", args=[empresa.id])
+            + "#comments-section",
+            "KD": reverse("contabilidad:kardex_lista_productos", args=[empresa.id])
             + "#comments-section",
         }
         url = section_urls.get(section, reverse("contabilidad:company_detail", args=[empresa.id]))
@@ -1371,6 +1400,28 @@ def ml_embeddings(request, empresa_id):
     return render(request, "contabilidad/ml_embeddings.html", context)
 
 
+@login_required
+def ml_health_score(request, empresa_id):
+    """Vista de health score financiero avanzado (FASE 4)."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    if not (
+        request.user == empresa.owner
+        or request.user.is_superuser
+        or (is_supervisor and empresa.visible_to_supervisor)
+    ):
+        return HttpResponseForbidden("No tienes permiso para ver esta empresa.")
+
+    context = {
+        "empresa": empresa,
+        "seccion_activa": "ml_health_score",
+        "titulo_pagina": "Salud Financiera",
+    }
+    return render(request, "contabilidad/ml_health_score.html", context)
+
+
 # ==================== ML/AI API ENDPOINTS ====================
 
 
@@ -1750,6 +1801,11 @@ def kardex_lista_productos(request, empresa_id):
 
     is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
 
+    # Comentarios de Kardex (solo si la empresa es visible)
+    comments_kardex = []
+    if empresa.visible_to_supervisor:
+        comments_kardex = empresa.comments.filter(section="KD")
+
     context = {
         "empresa": empresa,
         "productos_data": productos_data,
@@ -1768,6 +1824,9 @@ def kardex_lista_productos(request, empresa_id):
         "categorias_top": categorias_top,
         "tipo_empresa_detectado": tipo_empresa_detectado,
         "sugerencias_productos": sugerencias_productos,
+        # Sistema de comentarios
+        "comments_kardex": comments_kardex,
+        "section_code": "KD",
     }
 
     return render(request, "contabilidad/kardex_lista_productos.html", context)

@@ -12,15 +12,15 @@
         <div class="mb-8 mt-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-50">
                         🤖 Dashboard ML/AI
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         Análisis inteligente y predicciones automáticas
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span class="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
+                    <span class="inline-flex items-center text-xs text-slate-600 dark:text-slate-300">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
@@ -44,19 +44,19 @@
                     📊 Dashboard
                 </a>
                 <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     📈 Analytics
                 </a>
                 <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🔮 Predicciones
                 </a>
                 <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🚨 Anomalías
                 </a>
                 <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🧠 Búsqueda Semántica
                 </a>
             </nav>
@@ -65,7 +65,7 @@
         <!-- Loading State -->
         <div id="loading-metricas" class="hidden text-center py-12">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p class="mt-4 text-gray-600 dark:text-gray-400">Cargando métricas...</p>
+            <p class="mt-4 text-slate-700 dark:text-slate-300">Cargando métricas...</p>
         </div>
 
         <!-- Error State -->
@@ -76,23 +76,23 @@
         <!-- Resumen Ejecutivo -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" id="resumen-ejecutivo" style="display: none;">
             <!-- Semáforo de Salud Financiera -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Estado General</h3>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">Estado General</h3>
                     <span id="semaforo-icon" class="text-3xl">🟢</span>
                 </div>
-                <p id="semaforo-texto" class="text-sm text-gray-600 dark:text-gray-400 mb-3">Evaluando...</p>
+                <p id="semaforo-texto" class="text-sm text-slate-600 dark:text-slate-300 mb-3">Evaluando...</p>
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-gray-500 dark:text-gray-400">Liquidez</span>
+                        <span class="text-slate-500 dark:text-slate-400">Liquidez</span>
                         <span id="semaforo-liquidez" class="font-medium">-</span>
                     </div>
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-gray-500 dark:text-gray-400">Rentabilidad</span>
+                        <span class="text-slate-500 dark:text-slate-400">Rentabilidad</span>
                         <span id="semaforo-rentabilidad" class="font-medium">-</span>
                     </div>
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-gray-500 dark:text-gray-400">Endeudamiento</span>
+                        <span class="text-slate-500 dark:text-slate-400">Endeudamiento</span>
                         <span id="semaforo-endeudamiento" class="font-medium">-</span>
                     </div>
                 </div>
@@ -104,9 +104,9 @@
                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                     </svg>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Insights IA</h3>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">Insights IA</h3>
                 </div>
-                <div id="insights-container" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                <div id="insights-container" class="space-y-2 text-sm text-slate-700 dark:text-slate-200">
                     <p class="flex items-start">
                         <span class="mr-2">💡</span>
                         <span>Analizando patrones...</span>
@@ -118,13 +118,13 @@
         <!-- KPIs Principales -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Liquidez -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Liquidez Corriente</p>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Liquidez Corriente</p>
                         <p id="liquidez-value" class="text-3xl font-bold mt-2">-</p>
                         <p class="text-xs mt-2">
-                            <span class="text-gray-500 dark:text-gray-400">Óptimo:</span>
+                            <span class="text-slate-500 dark:text-slate-400">Óptimo:</span>
                             <span class="text-green-600 dark:text-green-400 font-medium">1.5 - 2.0</span>
                         </p>
                     </div>
@@ -134,19 +134,19 @@
                         </svg>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Capacidad de pago a corto plazo
                 </p>
             </div>
 
             <!-- Rentabilidad -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">ROA</p>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">ROA</p>
                         <p id="rentabilidad-value" class="text-3xl font-bold mt-2">-</p>
                         <p class="text-xs mt-2">
-                            <span class="text-gray-500 dark:text-gray-400">Bueno:</span>
+                            <span class="text-slate-500 dark:text-slate-400">Bueno:</span>
                             <span class="text-green-600 dark:text-green-400 font-medium">> 5%</span>
                         </p>
                     </div>
@@ -156,19 +156,19 @@
                         </svg>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Rentabilidad sobre activos
                 </p>
             </div>
 
             <!-- Endeudamiento -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Endeudamiento</p>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Endeudamiento</p>
                         <p id="endeudamiento-value" class="text-3xl font-bold mt-2">-</p>
                         <p class="text-xs mt-2">
-                            <span class="text-gray-500 dark:text-gray-400">Bajo:</span>
+                            <span class="text-slate-500 dark:text-slate-400">Bajo:</span>
                             <span class="text-green-600 dark:text-green-400 font-medium">< 50%</span>
                         </p>
                     </div>
@@ -178,16 +178,16 @@
                         </svg>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Nivel de deuda total
                 </p>
             </div>
 
             <!-- Margen Neto -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Margen Neto</p>
+                        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Margen Neto</p>
                         <p id="margen-value" class="text-3xl font-bold mt-2">-</p>
                         <p class="text-xs mt-2">
                             <span class="text-gray-500 dark:text-gray-400">Bueno:</span>
@@ -210,30 +210,30 @@
         <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Gráfico Radar -->
-            <div id="radarChartContainer" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="radarChartContainer" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
                     Análisis Multidimensional
                 </h3>
                 <div class="h-80 mb-4">
                     <canvas id="metricsRadarChart"></canvas>
                 </div>
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>Interpretación:</strong> El área azul muestra su situación actual. La línea verde punteada representa los valores ideales. Cuanto más cerca esté del objetivo, mejor.
                     </p>
                 </div>
             </div>
 
             <!-- Gráfico de Barras -->
-            <div id="barChartContainer" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="barChartContainer" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
                     Comparativa de Ratios
                 </h3>
                 <div class="h-80 mb-4">
                     <canvas id="metricsBarChart"></canvas>
                 </div>
                 <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border-l-4 border-green-500">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>Interpretación:</strong> <span class="text-green-600 dark:text-green-400">Verde</span> = Bueno, <span class="text-yellow-600 dark:text-yellow-400">Amarillo</span> = Atención, <span class="text-red-600 dark:text-red-400">Rojo</span> = Requiere mejora.
                     </p>
                 </div>
@@ -639,7 +639,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
                     <p class="text-gray-600 dark:text-gray-400 font-medium mb-2">No hay datos disponibles</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-500">Comienza registrando asientos contables confirmados para visualizar métricas y análisis ML/AI.</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Comienza registrando asientos contables confirmados para visualizar métricas y análisis ML/AI.</p>
                 </div>
             `;
         }

@@ -4,22 +4,22 @@
 {% block title %}Predicciones - {{ empresa.nombre }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-dark-bg py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+    <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
 
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-50">
                         🔮 Predicciones Financieras
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         Forecasting con Prophet - <span class="font-semibold">{{ empresa.nombre }}</span>
                     </p>
                 </div>
                 <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700">
+                   class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-dark-surface hover:bg-slate-100 dark:hover:bg-slate-700">
                     ← Dashboard ML
                 </a>
             </div>
@@ -29,11 +29,11 @@
         <div class="mb-8">
             <nav class="flex space-x-4 overflow-x-auto">
                 <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     📊 Dashboard
                 </a>
                 <a href="{% url 'contabilidad:ml_analytics' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     📈 Analytics
                 </a>
                 <a href="{% url 'contabilidad:ml_predictions' empresa.id %}"
@@ -41,11 +41,11 @@
                     🔮 Predicciones
                 </a>
                 <a href="{% url 'contabilidad:ml_anomalies' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🚨 Anomalías
                 </a>
                 <a href="{% url 'contabilidad:ml_embeddings' empresa.id %}"
-                   class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface">
+                   class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700">
                     🧠 Búsqueda Semántica
                 </a>
             </nav>
@@ -55,20 +55,20 @@
         <div class="bg-white dark:bg-dark-surface rounded-lg shadow p-6 mb-8 border border-gray-200 dark:border-dark-border">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                         Tipo de Predicción
                     </label>
-                    <select id="tipo-prediccion" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <select id="tipo-prediccion" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                         <option value="ingresos">Ingresos Totales</option>
                         <option value="gastos">Gastos Totales</option>
                         <option value="flujo">Flujo de Caja</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                         Períodos Futuros
                     </label>
-                    <select id="periodos-futuro" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <select id="periodos-futuro" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 dark:border-slate-600 dark:bg-dark-bg dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                         <option value="3">3 meses</option>
                         <option value="6" selected>6 meses</option>
                         <option value="12">12 meses</option>
@@ -86,16 +86,16 @@
         <!-- Loading State -->
         <div id="loading-predictions" class="hidden text-center py-12">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p class="mt-4 text-gray-600 dark:text-gray-400">Generando predicciones con Prophet...</p>
+            <p class="mt-4 text-slate-700 dark:text-slate-300">Generando predicciones con Prophet...</p>
         </div>
 
         <!-- Results Container -->
         <div id="predictions-results" class="hidden">
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Próximo Período</p>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Próximo Período</p>
                         <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
                             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
@@ -139,14 +139,14 @@
                         </div>
                     </div>
                     <p id="accuracy-value" class="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">-</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Variación esperada</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Variación esperada</p>
                 </div>
             </div>
 
             <!-- Chart -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Predicción con Intervalos de Confianza</h3>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">Predicción con Intervalos de Confianza</h3>
                     <span id="prediction-type-badge" class="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                         Tipo no especificado
                     </span>
@@ -156,12 +156,12 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
-                        <p class="text-xs text-gray-700 dark:text-gray-300">
+                        <p class="text-xs text-slate-700 dark:text-slate-200">
                             <strong>Interpretación:</strong> Los puntos verdes muestran datos históricos reales. La línea azul es la predicción esperada. Las líneas verde (optimista +10%) y roja (pesimista -10%) muestran escenarios alternativos. El área sombreada es el intervalo de confianza (90%).
                         </p>
                     </div>
-                    <div id="prediction-analysis" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-gray-400">
-                        <p class="text-xs text-gray-700 dark:text-gray-300">
+                    <div id="prediction-analysis" class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border-l-4 border-slate-400 dark:border-slate-500">
+                        <p class="text-xs text-slate-700 dark:text-slate-200">
                             <strong>Análisis:</strong> <span id="prediction-text">Genera una predicción para ver el análisis.</span>
                         </p>
                     </div>
@@ -169,51 +169,51 @@
             </div>
 
             <!-- Risk Analysis -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-gray-200 dark:border-dark-border">
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 mb-8 border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">⚠️ Análisis de Riesgo y Escenarios</h3>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">⚠️ Análisis de Riesgo y Escenarios</h3>
                     <span class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full font-medium">
                         Optimista +10% | Pesimista -10%
                     </span>
                 </div>
                 <div id="risk-analysis" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                         <div class="flex items-center mb-2">
                             <div class="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Nivel de Riesgo</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Nivel de Riesgo</p>
                         </div>
-                        <p id="risk-level" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                        <p id="risk-level" class="text-xl font-bold text-slate-900 dark:text-slate-50">-</p>
                     </div>
-                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                         <div class="flex items-center mb-2">
                             <div class="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Variabilidad</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Variabilidad</p>
                         </div>
-                        <p id="variability" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                        <p id="variability" class="text-xl font-bold text-slate-900 dark:text-slate-50">-</p>
                     </div>
-                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                         <div class="flex items-center mb-2">
                             <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Recomendación</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Recomendación</p>
                         </div>
-                        <p id="recommendation" class="text-sm text-gray-700 dark:text-gray-300">-</p>
+                        <p id="recommendation" class="text-sm text-slate-700 dark:text-slate-200">-</p>
                     </div>
                 </div>
                 <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-700 dark:text-gray-300">
+                    <p class="text-xs text-slate-700 dark:text-slate-200">
                         <strong>💡 Sobre los escenarios:</strong> El escenario optimista (+10%) representa condiciones favorables, mientras el pesimista (-10%) representa adversidades. Use el rango para planificar reservas de contingencia y evaluar el impacto de variaciones en sus proyecciones.
                     </p>
                 </div>
             </div>
 
             <!-- Predictions Table -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Valores Predichos y Escenarios</h3>
+            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">Valores Predichos y Escenarios</h3>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-dark-bg">
+                    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                        <thead class="bg-slate-50 dark:bg-slate-800/50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Período</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Período</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wider">
                                     <div class="flex items-center justify-end">
                                         <span class="mr-1">↑</span>
@@ -232,27 +232,27 @@
                                         Pesimista
                                     </div>
                                 </th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rango</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Confianza</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Rango</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wider">Confianza</th>
                             </tr>
                         </thead>
-                        <tbody id="predictions-table-body" class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody id="predictions-table-body" class="bg-white dark:bg-dark-surface divide-y divide-slate-200 dark:divide-slate-700">
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                <div class="mt-3 text-xs text-slate-600 dark:text-slate-300">
                     <span class="font-semibold">Nota:</span> Optimista (+10%), Esperado (base), Pesimista (-10%). La confianza se basa en la estrechez del intervalo de predicción.
                 </div>
             </div>
         </div>
 
         <!-- Empty State -->
-        <div id="empty-state" class="text-center py-12 bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-gray-200 dark:border-dark-border">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="empty-state" class="text-center py-12 bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+            <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Sin predicciones</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Selecciona los parámetros y genera tu primera predicción</p>
+            <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-50">Sin predicciones</h3>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Selecciona los parámetros y genera tu primera predicción</p>
         </div>
 
     </div>
@@ -438,7 +438,7 @@ function mostrarPredicciones(data) {
         const rango = optimista - pesimista;
 
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">${pred.periodo}</td>
+            <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-50">${pred.periodo}</td>
             <td class="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400 font-semibold">
                 ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(optimista)}
             </td>
@@ -448,7 +448,7 @@ function mostrarPredicciones(data) {
             <td class="px-4 py-3 text-sm text-right text-red-600 dark:text-red-400 font-semibold">
                 ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(pesimista)}
             </td>
-            <td class="px-4 py-3 text-xs text-center text-gray-600 dark:text-gray-400">
+            <td class="px-4 py-3 text-xs text-center text-slate-600 dark:text-slate-300">
                 ±${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(rango / 2)}
             </td>
             <td class="px-4 py-3 text-sm">

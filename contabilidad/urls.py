@@ -73,6 +73,7 @@ urlpatterns = [
     path("<int:empresa_id>/ml-predictions/", views.ml_predictions, name="ml_predictions"),
     path("<int:empresa_id>/ml-anomalies/", views.ml_anomalies, name="ml_anomalies"),
     path("<int:empresa_id>/ml-embeddings/", views.ml_embeddings, name="ml_embeddings"),
+    path("<int:empresa_id>/ml-health-score/", views.ml_health_score, name="ml_health_score"),
     # ML/AI API Endpoints
     path(
         "api/ml/dashboard/<int:empresa_id>/",

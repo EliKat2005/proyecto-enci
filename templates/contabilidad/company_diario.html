@@ -21,18 +21,18 @@
             <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-lg flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             </div>
-            <h2 class="text-sm font-bold text-slate-900 dark:text-gray-100 tracking-wide">Nuevo Asiento</h2>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-wide">Nuevo Asiento</h2>
           </div>
           <form method="post" action="{% url 'contabilidad:create_journal_entry' empresa.id %}" onsubmit="return buildLinesJSON(this)">
             {% csrf_token %}
             <div class="space-y-3.5">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Fecha</label>
-                <input type="date" name="fecha" value="{% now 'Y-m-d' %}" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-3 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-all" />
+                <input type="date" name="fecha" value="{% now 'Y-m-d' %}" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-3 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-all" />
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Descripción</label>
-                <input type="text" name="descripcion" placeholder="Descripción general" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-lg text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-3 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-all" />
+                <input type="text" name="descripcion" placeholder="Descripción general" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-3 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-all" />
               </div>
               <div class="overflow-x-auto" id="lineas-wrapper">
                 <table class="min-w-full text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded" id="tabla-lineas">
@@ -73,7 +73,7 @@
             <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-lg flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             </div>
-            <h2 class="text-sm font-bold text-slate-900 dark:text-gray-100 uppercase tracking-wide">Asientos Contables</h2>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Asientos Contables</h2>
           </div>
           {% if asientos %}
             <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -156,20 +156,20 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wide">Desde</label>
-                <input type="date" id="f-desde" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm" />
+                <input type="date" id="f-desde" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm" />
               </div>
               <div>
                 <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wide">Hasta</label>
-                <input type="date" id="f-hasta" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm" />
+                <input type="date" id="f-hasta" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm" />
               </div>
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wide">Buscar</label>
-              <input type="text" id="f-search" placeholder="Descripción o cuenta" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded-lg text-sm" />
+              <input type="text" id="f-search" placeholder="Descripción o cuenta" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg text-sm" />
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 uppercase tracking-wide">Estado</label>
-              <select id="f-estado" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm">
+              <select id="f-estado" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm">
                 <option value="">Todos</option>
                 <option>Borrador</option>
                 <option>Confirmado</option>
@@ -183,14 +183,16 @@
     </div> <!-- fin grid superior -->
 
     <!-- Comentarios del Docente - Componente Unificado -->
-    {% include 'contabilidad/_comments_section.html' with section_code='DI' %}
+    {% if empresa.visible_to_supervisor %}
+      {% include 'contabilidad/_comments_section.html' with comments=comments section_code='DI' section_name='Libro Diario' %}
+    {% endif %}
 
   </div>
 </div>
 
 <!-- Select template for cuentas -->
 <template id="select-cuenta-template">
-  <select class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded" name="cuenta_id">
+  <select class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded" name="cuenta_id">
     {% for c in cuentas_aux %}
       <option value="{{ c.id }}">{{ c.codigo }} — {{ c.descripcion }}</option>
     {% endfor %}
@@ -206,13 +208,13 @@
     tr.innerHTML = `
       <td class="px-2 py-1">\n        ${selectHtml}\n      </td>
       <td class="px-2 py-1">
-        <input type="text" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 dark:placeholder-slate-500 rounded" name="detalle" placeholder="Detalle opcional" />
+        <input type="text" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded" name="detalle" placeholder="Detalle opcional" />
       </td>
       <td class="px-2 py-1 text-right">
-        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded text-right" name="debe" value="0.00" />
+        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded text-right" name="debe" value="0.00" />
       </td>
       <td class="px-2 py-1 text-right">
-        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded text-right" name="haber" value="0.00" />
+        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded text-right" name="haber" value="0.00" />
       </td>
       <td class="px-2 py-1 text-right">
         <button type="button" class="px-2 py-1 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded" onclick="this.closest('tr').remove()">Quitar</button>
