@@ -18,7 +18,8 @@ ENV/
 
 # Environment files
 .env
-.env.*
+.env.local
+.env.*.local
 
 # Django
 *.log
@@ -52,9 +53,6 @@ backups/
 *.bak
 *.backup
 *.html.bak
-
-# Scripts de desarrollo y testing
-scripts/
 
 # IDE / OS
 .idea/
