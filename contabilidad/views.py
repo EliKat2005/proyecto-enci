@@ -1,5 +1,3 @@
-import csv
-import io
 import json
 from datetime import date
 
@@ -15,6 +13,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from core.models import Notification, UserProfile
 
+from .forms import MovimientoKardexForm, ProductoInventarioForm
+from .kardex_service import KardexService
 from .ml_services import MLAnalyticsService
 from .models import (
     Empresa,
@@ -23,6 +23,8 @@ from .models import (
     EmpresaPlanCuenta,
     EmpresaSupervisor,
     EmpresaTransaccion,
+    ProductoInventario,
+    TipoMovimientoKardex,
 )
 from .services import AsientoService, EstadosFinancierosService, LibroMayorService
 
@@ -949,157 +951,8 @@ def company_estados_financieros(request, empresa_id):
     return render(request, "contabilidad/company_estados_financieros.html", context)
 
 
-@login_required
-def export_balance_csv(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    if empresa.owner != request.user and not (
-        EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
-        and empresa.visible_to_supervisor
-    ):
-        return HttpResponseForbidden("No tienes permisos")
-    from datetime import datetime
-
-    fecha_inicio_str = request.GET.get("fecha_inicio")
-    fecha_fin_str = request.GET.get("fecha_fin")
-    hoy = date.today()
-    fecha_inicio = date(hoy.year, 1, 1)
-    fecha_fin = hoy
-    if fecha_inicio_str:
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    if fecha_fin_str:
-        try:
-            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    cuentas = empresa.cuentas.filter(es_auxiliar=True).order_by("codigo")
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    writer.writerow(
-        [
-            "Codigo",
-            "Cuenta",
-            "Saldo Inicial Deudor",
-            "Saldo Inicial Acreedor",
-            "Debe",
-            "Haber",
-            "Saldo Final Deudor",
-            "Saldo Final Acreedor",
-        ]
-    )
-    for cuenta in cuentas:
-        s = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-        si_d = s["saldo_inicial"] if s["saldo_inicial"] > 0 else 0
-        si_a = abs(s["saldo_inicial"]) if s["saldo_inicial"] < 0 else 0
-        sf_d = s["saldo_final"] if s["saldo_final"] > 0 else 0
-        sf_a = abs(s["saldo_final"]) if s["saldo_final"] < 0 else 0
-        if si_d or si_a or s["debe"] or s["haber"] or sf_d or sf_a:
-            writer.writerow(
-                [
-                    cuenta.codigo,
-                    cuenta.descripcion,
-                    f"{si_d:.2f}",
-                    f"{si_a:.2f}",
-                    f"{s['debe']:.2f}",
-                    f"{s['haber']:.2f}",
-                    f"{sf_d:.2f}",
-                    f"{sf_a:.2f}",
-                ]
-            )
-    resp = HttpResponse(buffer.getvalue(), content_type="text/csv")
-    resp["Content-Disposition"] = f'attachment; filename="balance_{empresa.id}.csv"'
-    return resp
-
-
-@login_required
-def export_estados_csv(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    if empresa.owner != request.user and not (
-        EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
-        and empresa.visible_to_supervisor
-    ):
-        return HttpResponseForbidden("No tienes permisos")
-    from datetime import datetime
-
-    reporte = request.GET.get("reporte", "balance")
-    fecha_str = request.GET.get("fecha")
-    fecha_inicio_str = request.GET.get("fecha_inicio")
-    fecha_fin_str = request.GET.get("fecha_fin")
-    hoy = date.today()
-    fecha_corte = hoy
-    fecha_inicio = date(hoy.year, 1, 1)
-    fecha_fin = hoy
-    if fecha_str:
-        try:
-            fecha_corte = datetime.strptime(fecha_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    if fecha_inicio_str:
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    if fecha_fin_str:
-        try:
-            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    if reporte == "balance":
-        bg = EstadosFinancierosService.balance_general(empresa, fecha_corte)
-        writer.writerow(["SECCION", "CODIGO", "CUENTA", "SALDO"])
-        for det in bg["detalle_activos"]:
-            writer.writerow(
-                ["ACTIVO", det["cuenta"].codigo, det["cuenta"].descripcion, f"{det['saldo']:.2f}"]
-            )
-        for det in bg["detalle_pasivos"]:
-            writer.writerow(
-                ["PASIVO", det["cuenta"].codigo, det["cuenta"].descripcion, f"{det['saldo']:.2f}"]
-            )
-        for det in bg["detalle_patrimonio"]:
-            writer.writerow(
-                [
-                    "PATRIMONIO",
-                    det["cuenta"].codigo,
-                    det["cuenta"].descripcion,
-                    f"{det['saldo']:.2f}",
-                ]
-            )
-        writer.writerow([])
-        writer.writerow(["TOTALES", "", "", ""])
-        writer.writerow(["ACTIVO", "", "", f"{bg['activos']:.2f}"])
-        writer.writerow(["PASIVO", "", "", f"{bg['pasivos']:.2f}"])
-        writer.writerow(["PATRIMONIO", "", "", f"{bg['patrimonio']:.2f}"])
-        writer.writerow(["BALANCEADO", "", "", "SI" if bg["balanceado"] else "NO"])
-    else:
-        er = EstadosFinancierosService.estado_de_resultados(empresa, fecha_inicio, fecha_fin)
-        writer.writerow(["SECCION", "CODIGO", "CUENTA", "MONTO"])
-        for det in er["detalle_ingresos"]:
-            writer.writerow(
-                ["INGRESOS", det["cuenta"].codigo, det["cuenta"].descripcion, f"{det['monto']:.2f}"]
-            )
-        for det in er["detalle_costos"]:
-            writer.writerow(
-                ["COSTOS", det["cuenta"].codigo, det["cuenta"].descripcion, f"{det['monto']:.2f}"]
-            )
-        for det in er["detalle_gastos"]:
-            writer.writerow(
-                ["GASTOS", det["cuenta"].codigo, det["cuenta"].descripcion, f"{det['monto']:.2f}"]
-            )
-        writer.writerow([])
-        writer.writerow(["TOTALES", "", "", ""])
-        writer.writerow(["INGRESOS", "", "", f"{er['ingresos']:.2f}"])
-        writer.writerow(["COSTOS", "", "", f"{er['costos']:.2f}"])
-        writer.writerow(["GASTOS", "", "", f"{er['gastos']:.2f}"])
-        writer.writerow(["UTILIDAD BRUTA", "", "", f"{er['utilidad_bruta']:.2f}"])
-        writer.writerow(["UTILIDAD NETA", "", "", f"{er['utilidad_neta']:.2f}"])
-    resp = HttpResponse(buffer.getvalue(), content_type="text/csv")
-    fname = "estados_balance" if reporte == "balance" else "estados_resultados"
-    resp["Content-Disposition"] = f'attachment; filename="{fname}_{empresa.id}.csv"'
-    return resp
+# DEPRECATED: export_balance_csv, export_balance_xlsx, export_estados_csv y export_estados_xlsx eliminadas.
+# Usar export_empresa_completo_xlsx() para exportación consolidada con 8 hojas profesionales.
 
 
 @login_required
@@ -1164,200 +1017,6 @@ def export_empresa_completo_xlsx(request, empresa_id):
             request, f"Error al generar el reporte Excel: {str(e)}. Por favor, intente nuevamente."
         )
         return redirect("contabilidad:company_detail", empresa_id=empresa.id)
-
-
-# ==================== DEPRECATED: Mantener por compatibilidad ====================
-# Las siguientes funciones se mantienen por compatibilidad pero no deben usarse.
-# Usar export_empresa_completo_xlsx() en su lugar.
-
-
-@login_required
-def export_balance_xlsx(request, empresa_id):
-    """DEPRECATED: Usar export_empresa_completo_xlsx() en su lugar."""
-    try:
-        import openpyxl
-    except Exception:
-        return export_balance_csv(request, empresa_id)
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    if empresa.owner != request.user and not (
-        EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
-        and empresa.visible_to_supervisor
-    ):
-        return HttpResponseForbidden("No tienes permisos")
-    from datetime import datetime
-
-    fecha_inicio_str = request.GET.get("fecha_inicio")
-    fecha_fin_str = request.GET.get("fecha_fin")
-    hoy = date.today()
-    fecha_inicio = date(hoy.year, 1, 1)
-    fecha_fin = hoy
-    if fecha_inicio_str:
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    if fecha_fin_str:
-        try:
-            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Balance"
-    ws.append(
-        [
-            "Balance de Comprobación",
-            f"Empresa: {empresa.nombre}",
-            f"Periodo: {fecha_inicio} a {fecha_fin}",
-        ]
-    )
-    ws.append([])
-    ws.append(
-        [
-            "Codigo",
-            "Cuenta",
-            "Saldo Inicial Deudor",
-            "Saldo Inicial Acreedor",
-            "Debe",
-            "Haber",
-            "Saldo Final Deudor",
-            "Saldo Final Acreedor",
-        ]
-    )
-    cuentas = empresa.cuentas.filter(es_auxiliar=True).order_by("codigo")
-    for cuenta in cuentas:
-        s = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-        si_d = s["saldo_inicial"] if s["saldo_inicial"] > 0 else 0
-        si_a = abs(s["saldo_inicial"]) if s["saldo_inicial"] < 0 else 0
-        sf_d = s["saldo_final"] if s["saldo_final"] > 0 else 0
-        sf_a = abs(s["saldo_final"]) if s["saldo_final"] < 0 else 0
-        if si_d or si_a or s["debe"] or s["haber"] or sf_d or sf_a:
-            ws.append(
-                [
-                    cuenta.codigo,
-                    cuenta.descripcion,
-                    float(si_d),
-                    float(si_a),
-                    float(s["debe"]),
-                    float(s["haber"]),
-                    float(sf_d),
-                    float(sf_a),
-                ]
-            )
-    output = io.BytesIO()
-    wb.save(output)
-    resp = HttpResponse(
-        output.getvalue(),
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-    resp["Content-Disposition"] = f'attachment; filename="balance_{empresa.id}.xlsx"'
-    return resp
-
-
-@login_required
-def export_estados_xlsx(request, empresa_id):
-    """DEPRECATED: Usar export_empresa_completo_xlsx() en su lugar."""
-    try:
-        import openpyxl
-    except Exception:
-        return export_estados_csv(request, empresa_id)
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    if empresa.owner != request.user and not (
-        EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
-        and empresa.visible_to_supervisor
-    ):
-        return HttpResponseForbidden("No tienes permisos")
-    from datetime import datetime
-
-    reporte = request.GET.get("reporte", "balance")
-    fecha_str = request.GET.get("fecha")
-    fecha_inicio_str = request.GET.get("fecha_inicio")
-    fecha_fin_str = request.GET.get("fecha_fin")
-    hoy = date.today()
-    fecha_corte = hoy
-    fecha_inicio = date(hoy.year, 1, 1)
-    fecha_fin = hoy
-    if fecha_str:
-        try:
-            fecha_corte = datetime.strptime(fecha_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    if fecha_inicio_str:
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    if fecha_fin_str:
-        try:
-            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    if reporte == "balance":
-        ws.title = "Balance General"
-        bg = EstadosFinancierosService.balance_general(empresa, fecha_corte)
-        ws.append(["Balance General", f"Empresa: {empresa.nombre}", f"Corte: {fecha_corte}"])
-        ws.append([])
-        ws.append(["SECCION", "CODIGO", "CUENTA", "SALDO"])
-        for det in bg["detalle_activos"]:
-            ws.append(
-                ["ACTIVO", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["saldo"])]
-            )
-        for det in bg["detalle_pasivos"]:
-            ws.append(
-                ["PASIVO", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["saldo"])]
-            )
-        for det in bg["detalle_patrimonio"]:
-            ws.append(
-                ["PATRIMONIO", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["saldo"])]
-            )
-        ws.append([])
-        ws.append(["TOTALES", "", "", ""])
-        ws.append(["ACTIVO", "", "", float(bg["activos"])])
-        ws.append(["PASIVO", "", "", float(bg["pasivos"])])
-        ws.append(["PATRIMONIO", "", "", float(bg["patrimonio"])])
-        ws.append(["BALANCEADO", "", "", "SI" if bg["balanceado"] else "NO"])
-    else:
-        ws.title = "Estado Resultados"
-        er = EstadosFinancierosService.estado_de_resultados(empresa, fecha_inicio, fecha_fin)
-        ws.append(
-            [
-                "Estado de Resultados",
-                f"Empresa: {empresa.nombre}",
-                f"Periodo: {fecha_inicio} a {fecha_fin}",
-            ]
-        )
-        ws.append([])
-        ws.append(["SECCION", "CODIGO", "CUENTA", "MONTO"])
-        for det in er["detalle_ingresos"]:
-            ws.append(
-                ["INGRESOS", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["monto"])]
-            )
-        for det in er["detalle_costos"]:
-            ws.append(
-                ["COSTOS", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["monto"])]
-            )
-        for det in er["detalle_gastos"]:
-            ws.append(
-                ["GASTOS", det["cuenta"].codigo, det["cuenta"].descripcion, float(det["monto"])]
-            )
-        ws.append([])
-        ws.append(["TOTALES", "", "", ""])
-        ws.append(["INGRESOS", "", "", float(er["ingresos"])])
-        ws.append(["COSTOS", "", "", float(er["costos"])])
-        ws.append(["GASTOS", "", "", float(er["gastos"])])
-        ws.append(["UTILIDAD BRUTA", "", "", float(er["utilidad_bruta"])])
-        ws.append(["UTILIDAD NETA", "", "", float(er["utilidad_neta"])])
-    output = io.BytesIO()
-    wb.save(output)
-    fname = "estados_balance" if reporte == "balance" else "estados_resultados"
-    resp = HttpResponse(
-        output.getvalue(),
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-    resp["Content-Disposition"] = f'attachment; filename="{fname}_{empresa.id}.xlsx"'
-    return resp
 
 
 @login_required
@@ -1815,3 +1474,507 @@ def ml_api_embeddings(request, empresa_id):
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+# -------------------------
+# Vistas de Control de Inventarios (Kardex)
+# -------------------------
+
+
+@login_required
+def kardex_lista_productos(request, empresa_id):
+    """Lista de productos con control de inventario (Kardex) y análisis inteligente."""
+    from datetime import datetime, timedelta
+
+    from django.db.models import Sum
+
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+
+    # Verificar permisos
+    if empresa.owner != request.user:
+        supervisor_access = EmpresaSupervisor.objects.filter(
+            empresa=empresa, docente=request.user
+        ).exists()
+        if not (supervisor_access and empresa.visible_to_supervisor):
+            return HttpResponseForbidden("No tienes permisos para ver esta empresa.")
+
+    from .models import ProductoInventario
+
+    # Obtener todos los productos de la empresa
+    productos = (
+        ProductoInventario.objects.filter(empresa=empresa)
+        .select_related("cuenta_inventario", "cuenta_costo_venta")
+        .prefetch_related("movimientos")
+        .order_by("sku")
+    )
+
+    # Fecha de hace 30 días para análisis de rotación
+    hace_30_dias = datetime.now().date() - timedelta(days=30)
+
+    # Enriquecer con datos calculados y análisis
+    productos_data = []
+    total_productos_activos = 0
+    total_con_stock_bajo = 0
+    valor_total_inventario = 0
+    productos_criticos = []
+    productos_sin_movimiento = []
+    productos_alta_rotacion = []
+
+    for producto in productos:
+        stock_actual = producto.stock_actual
+        costo_promedio = producto.costo_promedio_actual
+        valor_total = producto.valor_inventario_actual
+        requiere_reabastecimiento = producto.requiere_reabastecimiento
+
+        # Analizar movimientos recientes (últimos 30 días)
+        movimientos_recientes = producto.movimientos.filter(fecha__gte=hace_30_dias)
+        num_movimientos = movimientos_recientes.count()
+
+        # Calcular salidas (ventas) en los últimos 30 días
+        salidas_recientes = (
+            movimientos_recientes.filter(
+                tipo_movimiento__in=[
+                    TipoMovimientoKardex.SALIDA,
+                    TipoMovimientoKardex.DEVOLUCION_COMPRA,
+                    TipoMovimientoKardex.AJUSTE_SALIDA,
+                ]
+            ).aggregate(total=Sum("cantidad"))["total"]
+            or 0
+        )
+
+        # Clasificar productos
+        if requiere_reabastecimiento and producto.activo:
+            productos_criticos.append(
+                {
+                    "producto": producto,
+                    "stock": stock_actual,
+                    "minimo": producto.stock_minimo,
+                    "deficit": producto.stock_minimo - stock_actual,
+                }
+            )
+
+        # Productos sin movimiento en 30 días
+        if num_movimientos == 0 and producto.activo and stock_actual > 0:
+            productos_sin_movimiento.append(
+                {"producto": producto, "dias_inactivo": 30, "valor_inmovilizado": valor_total}
+            )
+
+        # Productos de alta rotación (más del 50% del stock vendido en 30 días)
+        if salidas_recientes > 0 and stock_actual > 0:
+            ratio_rotacion = float(salidas_recientes / stock_actual) if stock_actual > 0 else 0
+            if ratio_rotacion > 0.5:
+                productos_alta_rotacion.append(
+                    {
+                        "producto": producto,
+                        "rotacion": ratio_rotacion * 100,
+                        "salidas": salidas_recientes,
+                    }
+                )
+
+        item = {
+            "producto": producto,
+            "stock_actual": stock_actual,
+            "costo_promedio": costo_promedio,
+            "valor_total": valor_total,
+            "requiere_reabastecimiento": requiere_reabastecimiento,
+            "num_movimientos_30d": num_movimientos,
+            "salidas_30dias": salidas_recientes,
+        }
+        productos_data.append(item)
+
+        # Calcular estadísticas
+        if producto.activo:
+            total_productos_activos += 1
+        if requiere_reabastecimiento:
+            total_con_stock_bajo += 1
+        valor_total_inventario += valor_total
+
+    can_edit = (request.user == empresa.owner) or request.user.is_superuser
+
+    # Categorías más valiosas
+    from collections import defaultdict
+
+    categorias_stats = defaultdict(lambda: {"cantidad": 0, "valor": 0})
+    for item in productos_data:
+        cat = item["producto"].categoria or "Sin categoría"
+        categorias_stats[cat]["cantidad"] += 1
+        categorias_stats[cat]["valor"] += float(item["valor_total"])
+
+    categorias_top = sorted(categorias_stats.items(), key=lambda x: x[1]["valor"], reverse=True)[:5]
+
+    # Recomendaciones inteligentes
+    recomendaciones = []
+
+    if productos_criticos:
+        recomendaciones.append(
+            {
+                "tipo": "urgente",
+                "icono": "🚨",
+                "titulo": f"{len(productos_criticos)} producto(s) crítico(s)",
+                "mensaje": "Requieren reabastecimiento inmediato",
+                "detalle": ", ".join([p["producto"].sku for p in productos_criticos[:3]]),
+                "color": "red",
+            }
+        )
+
+    if productos_sin_movimiento:
+        valor_inmovilizado = sum(p["valor_inmovilizado"] for p in productos_sin_movimiento)
+        recomendaciones.append(
+            {
+                "tipo": "advertencia",
+                "icono": "⚠️",
+                "titulo": f"{len(productos_sin_movimiento)} producto(s) sin movimiento",
+                "mensaje": f"${valor_inmovilizado:,.2f} en inventario inmovilizado (30 días)",
+                "detalle": "Considerar liquidación o promoción",
+                "color": "yellow",
+            }
+        )
+
+    if productos_alta_rotacion:
+        recomendaciones.append(
+            {
+                "tipo": "exito",
+                "icono": "📈",
+                "titulo": f"{len(productos_alta_rotacion)} producto(s) de alta rotación",
+                "mensaje": "Productos estrella con alta demanda",
+                "detalle": "Considerar aumentar stock de seguridad",
+                "color": "green",
+            }
+        )
+
+    # Detectar tipo de empresa por descripción/nombre para sugerencias
+    nombre_lower = empresa.nombre.lower() + " " + (empresa.descripcion or "").lower()
+    tipo_empresa_detectado = None
+    sugerencias_productos = []
+
+    if any(
+        word in nombre_lower
+        for word in ["restaurant", "comida", "cafetería", "bar", "cocina", "gastro"]
+    ):
+        tipo_empresa_detectado = "Restaurante/Gastronomía"
+        sugerencias_productos = ["Ingredientes perecederos", "Bebidas", "Utensilios", "Suministros"]
+    elif any(
+        word in nombre_lower
+        for word in ["retail", "tienda", "comercio", "venta", "boutique", "almacén"]
+    ):
+        tipo_empresa_detectado = "Retail/Comercio"
+        sugerencias_productos = [
+            "Productos de temporada",
+            "Artículos promocionales",
+            "Merchandising",
+        ]
+    elif any(
+        word in nombre_lower for word in ["manufactur", "fabric", "producc", "industrial", "planta"]
+    ):
+        tipo_empresa_detectado = "Manufactura/Industrial"
+        sugerencias_productos = [
+            "Materias primas",
+            "Producto en proceso",
+            "Producto terminado",
+            "Insumos",
+        ]
+    elif any(
+        word in nombre_lower for word in ["farmacia", "droguería", "salud", "medical", "clínica"]
+    ):
+        tipo_empresa_detectado = "Farmacia/Salud"
+        sugerencias_productos = [
+            "Medicamentos",
+            "Productos de cuidado",
+            "Equipos médicos",
+            "Suplementos",
+        ]
+    elif any(
+        word in nombre_lower
+        for word in ["tecnología", "software", "electrónica", "informática", "tech"]
+    ):
+        tipo_empresa_detectado = "Tecnología/Electrónica"
+        sugerencias_productos = ["Hardware", "Software", "Accesorios", "Componentes"]
+
+    # Determinar si es docente y supervisor
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile") and request.user.userprofile.rol == "DOCENTE"
+        )
+    except:
+        is_docente = False
+
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+
+    context = {
+        "empresa": empresa,
+        "productos_data": productos_data,
+        "total_productos_activos": total_productos_activos,
+        "total_con_stock_bajo": total_con_stock_bajo,
+        "valor_total_inventario": valor_total_inventario,
+        "can_edit": can_edit,
+        "is_supervisor": is_supervisor,
+        "is_docente": is_docente,
+        "active_section": "kardex",
+        # Análisis inteligente
+        "productos_criticos": productos_criticos,
+        "productos_sin_movimiento": productos_sin_movimiento,
+        "productos_alta_rotacion": productos_alta_rotacion,
+        "recomendaciones": recomendaciones,
+        "categorias_top": categorias_top,
+        "tipo_empresa_detectado": tipo_empresa_detectado,
+        "sugerencias_productos": sugerencias_productos,
+    }
+
+    return render(request, "contabilidad/kardex_lista_productos.html", context)
+
+
+@login_required
+def kardex_producto_detalle(request, empresa_id, producto_id):
+    """Vista del Kardex (tarjeta de movimientos) de un producto específico."""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+
+    # Verificar permisos
+    if empresa.owner != request.user:
+        supervisor_access = EmpresaSupervisor.objects.filter(
+            empresa=empresa, docente=request.user
+        ).exists()
+        if not (supervisor_access and empresa.visible_to_supervisor):
+            return HttpResponseForbidden("No tienes permisos para ver esta empresa.")
+
+    from .kardex_service import KardexService
+    from .models import ProductoInventario
+
+    producto = get_object_or_404(ProductoInventario, id=producto_id, empresa=empresa)
+
+    # Filtros de fecha
+    from datetime import datetime
+
+    fecha_inicio_str = request.GET.get("fecha_inicio")
+    fecha_fin_str = request.GET.get("fecha_fin")
+
+    fecha_inicio = None
+    fecha_fin = None
+
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.warning(request, "Fecha de inicio inválida.")
+
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.warning(request, "Fecha de fin inválida.")
+
+    # Obtener reporte Kardex
+    kardex_raw = KardexService.obtener_kardex_producto(producto, fecha_inicio, fecha_fin)
+
+    # Formatear datos para template
+    kardex_data = {
+        "movimientos": kardex_raw["movimientos"],
+        "saldo_inicial": {
+            "cantidad": kardex_raw["saldo_inicial"],
+            "costo_promedio": kardex_raw["valor_inicial"] / kardex_raw["saldo_inicial"]
+            if kardex_raw["saldo_inicial"] > 0
+            else 0,
+            "valor_total": kardex_raw["valor_inicial"],
+        },
+        "saldo_final": {
+            "cantidad": kardex_raw["saldo_final"],
+            "costo_promedio": kardex_raw["valor_final"] / kardex_raw["saldo_final"]
+            if kardex_raw["saldo_final"] > 0
+            else 0,
+            "valor_total": kardex_raw["valor_final"],
+        },
+        "total_entradas": kardex_raw["total_entradas"],
+        "total_salidas": kardex_raw["total_salidas"],
+    }
+
+    can_edit = (request.user == empresa.owner) or request.user.is_superuser
+
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile") and request.user.userprofile.rol == "DOCENTE"
+        )
+    except:
+        is_docente = False
+
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+
+    context = {
+        "empresa": empresa,
+        "producto": producto,
+        "kardex_data": kardex_data,
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+        "can_edit": can_edit,
+        "is_supervisor": is_supervisor,
+        "is_docente": is_docente,
+        "active_section": "kardex",
+    }
+
+    return render(request, "contabilidad/kardex_producto_detalle.html", context)
+
+
+@login_required
+def kardex_crear_producto(request, empresa_id):
+    """Vista para crear un nuevo producto de inventario."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+
+    # Verificar permisos
+    can_edit = (
+        request.user == empresa.owner
+        or EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    )
+
+    if not can_edit:
+        messages.error(request, "No tienes permisos para crear productos en esta empresa.")
+        return redirect("contabilidad:kardex_lista_productos", empresa_id=empresa_id)
+
+    if request.method == "POST":
+        form = ProductoInventarioForm(request.POST, empresa=empresa)
+        if form.is_valid():
+            producto = form.save(commit=False)
+            producto.empresa = empresa
+            producto.save()
+            messages.success(
+                request, f"✅ Producto '{producto.sku} - {producto.nombre}' creado exitosamente."
+            )
+            return redirect("contabilidad:kardex_lista_productos", empresa_id=empresa_id)
+    else:
+        form = ProductoInventarioForm(empresa=empresa)
+
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile") and request.user.userprofile.rol == "DOCENTE"
+        )
+    except:
+        is_docente = False
+
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+
+    context = {
+        "empresa": empresa,
+        "form": form,
+        "can_edit": can_edit,
+        "is_supervisor": is_supervisor,
+        "is_docente": is_docente,
+        "active_section": "kardex",
+    }
+
+    return render(request, "contabilidad/kardex_producto_form.html", context)
+
+
+@login_required
+def kardex_registrar_movimiento(request, empresa_id, producto_id):
+    """Vista para registrar un movimiento de inventario (entrada/salida)."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    producto = get_object_or_404(ProductoInventario, pk=producto_id, empresa=empresa)
+
+    # Verificar permisos
+    can_edit = (
+        request.user == empresa.owner
+        or EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+    )
+
+    if not can_edit:
+        messages.error(request, "No tienes permisos para registrar movimientos en esta empresa.")
+        return redirect(
+            "contabilidad:kardex_producto_detalle", empresa_id=empresa_id, producto_id=producto_id
+        )
+
+    if request.method == "POST":
+        form = MovimientoKardexForm(request.POST, producto=producto)
+        if form.is_valid():
+            try:
+                # Extraer datos del formulario
+                tipo_movimiento = form.cleaned_data["tipo_movimiento"]
+                fecha = form.cleaned_data["fecha"]
+                cantidad = form.cleaned_data["cantidad"]
+                costo_unitario = form.cleaned_data.get("costo_unitario")
+                documento_referencia = form.cleaned_data.get("documento_referencia", "")
+                tercero = form.cleaned_data.get("tercero")
+                observaciones = form.cleaned_data.get("observaciones", "")
+
+                # Determinar si es entrada o salida
+                entradas = [
+                    TipoMovimientoKardex.COMPRA,
+                    TipoMovimientoKardex.DEVOLUCION_VENTA,
+                    TipoMovimientoKardex.AJUSTE_ENTRADA,
+                ]
+                salidas = [
+                    TipoMovimientoKardex.VENTA,
+                    TipoMovimientoKardex.DEVOLUCION_COMPRA,
+                    TipoMovimientoKardex.AJUSTE_SALIDA,
+                ]
+
+                # Usar KardexService para registrar el movimiento
+                if tipo_movimiento in entradas:
+                    movimiento = KardexService.registrar_entrada(
+                        producto=producto,
+                        tipo_movimiento=tipo_movimiento,
+                        cantidad=cantidad,
+                        costo_unitario=costo_unitario,
+                        fecha=fecha,
+                        documento_referencia=documento_referencia,
+                        tercero=tercero,
+                        observaciones=observaciones,
+                        usuario=request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"✅ Entrada registrada: {cantidad} {producto.unidad_medida} "
+                        f"@ ${costo_unitario:,.2f}. Nuevo stock: {producto.stock_actual}",
+                    )
+                elif tipo_movimiento in salidas:
+                    movimiento = KardexService.registrar_salida(
+                        producto=producto,
+                        tipo_movimiento=tipo_movimiento,
+                        cantidad=cantidad,
+                        fecha=fecha,
+                        documento_referencia=documento_referencia,
+                        tercero=tercero,
+                        observaciones=observaciones,
+                        usuario=request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"✅ Salida registrada: {cantidad} {producto.unidad_medida}. "
+                        f"Nuevo stock: {producto.stock_actual}",
+                    )
+                else:
+                    raise ValueError(f"Tipo de movimiento no reconocido: {tipo_movimiento}")
+
+                # Redirigir al detalle del producto (Kardex)
+                return redirect(
+                    "contabilidad:kardex_producto_detalle",
+                    empresa_id=empresa_id,
+                    producto_id=producto_id,
+                )
+
+            except ValueError as e:
+                messages.error(request, f"❌ Error al registrar el movimiento: {str(e)}")
+            except Exception as e:
+                messages.error(request, f"❌ Error inesperado: {str(e)}")
+    else:
+        # Prellenar la fecha con hoy
+        from datetime import date
+
+        form = MovimientoKardexForm(initial={"fecha": date.today()}, producto=producto)
+
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile") and request.user.userprofile.rol == "DOCENTE"
+        )
+    except:
+        is_docente = False
+
+    is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+
+    context = {
+        "empresa": empresa,
+        "producto": producto,
+        "form": form,
+        "can_edit": can_edit,
+        "is_supervisor": is_supervisor,
+        "is_docente": is_docente,
+        "active_section": "kardex",
+    }
+
+    return render(request, "contabilidad/kardex_movimiento_form.html", context)

@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kardex - Control de Inventarios - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
+  <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
+
+  {# Header #}
+  {% include 'contabilidad/_company_header_minimal.html' with current_panel='kardex' %}
+
+  {# Main Content #}
+  <div class="mt-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
+
+    {# Header Section #}
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 flex items-center justify-center font-bold text-sm">
+              📦
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-gray-100">Control de Inventarios (Kardex)</h2>
+              <p class="text-xs text-slate-600 dark:text-slate-300">{{ empresa.nombre }}</p>
+            </div>
+          </div>
+        </div>
+
+        {% if can_edit %}
+        <div class="flex gap-2">
+          <a href="{% url 'contabilidad:kardex_crear_producto' empresa.id %}"
+             class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors inline-flex items-center gap-2"
+             title="Crear nuevo producto en el inventario">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nuevo Producto
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Statistics Cards #}
+    <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-800/50">
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">Total Productos</p>
+        <p class="text-2xl font-bold text-slate-900 dark:text-gray-100">{{ productos_data|length }}</p>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">Productos Activos</p>
+        <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+          {{ total_productos_activos }}
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">Con Stock Bajo</p>
+        <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          {{ total_con_stock_bajo }}
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">Valor Total Inventario</p>
+        <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          ${{ valor_total_inventario|floatformat:2 }}
+        </p>
+      </div>
+    </div>
+
+    {# Recomendaciones Inteligentes #}
+    {% if recomendaciones %}
+    <div class="p-4">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+        <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        Recomendaciones Inteligentes
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-{{ recomendaciones|length|default:1 }} gap-3">
+        {% for rec in recomendaciones %}
+        <div class="bg-{% if rec.color == 'red' %}red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800{% elif rec.color == 'yellow' %}yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800{% else %}green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800{% endif %} border-2 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="text-3xl">{{ rec.icono }}</span>
+            <div class="flex-1">
+              <h3 class="font-bold text-{% if rec.color == 'red' %}red-800 dark:text-red-300{% elif rec.color == 'yellow' %}yellow-800 dark:text-yellow-300{% else %}green-800 dark:text-green-300{% endif %} mb-1">
+                {{ rec.titulo }}
+              </h3>
+              <p class="text-sm text-{% if rec.color == 'red' %}red-700 dark:text-red-400{% elif rec.color == 'yellow' %}yellow-700 dark:text-yellow-400{% else %}green-700 dark:text-green-400{% endif %} mb-1">
+                {{ rec.mensaje }}
+              </p>
+              {% if rec.detalle %}
+              <p class="text-xs text-{% if rec.color == 'red' %}red-600 dark:text-red-500{% elif rec.color == 'yellow' %}yellow-600 dark:text-yellow-500{% else %}green-600 dark:text-green-500{% endif %}">
+                {{ rec.detalle }}
+              </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Análisis por Categorías #}
+    {% if categorias_top %}
+    <div class="p-4">
+      <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+        <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+        </svg>
+        Categorías Más Valiosas
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        {% for cat, stats in categorias_top %}
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+          <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">{{ cat }}</p>
+          <p class="text-lg font-bold text-purple-600 dark:text-purple-400">${{ stats.valor|floatformat:2 }}</p>
+          <p class="text-xs text-slate-500 dark:text-slate-500">{{ stats.cantidad }} producto(s)</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Tipo de Empresa y Sugerencias #}
+    {% if tipo_empresa_detectado %}
+    <div class="p-4">
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+          <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="flex-1">
+            <h3 class="font-bold text-blue-800 dark:text-blue-300 mb-2">
+              💡 Detectamos que tu empresa es: <span class="text-blue-600 dark:text-blue-400">{{ tipo_empresa_detectado }}</span>
+            </h3>
+            {% if sugerencias_productos %}
+            <p class="text-sm text-blue-700 dark:text-blue-400 mb-2">Categorías de productos recomendadas:</p>
+            <div class="flex flex-wrap gap-2">
+              {% for sugerencia in sugerencias_productos %}
+              <span class="px-3 py-1 bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 text-xs rounded-full font-semibold">
+                {{ sugerencia }}
+              </span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# Products Table #}
+    <div class="p-4">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-slate-300 dark:border-slate-700">
+              <th class="text-left p-3 font-bold text-slate-700 dark:text-slate-300">SKU</th>
+              <th class="text-left p-3 font-bold text-slate-700 dark:text-slate-300">Producto</th>
+              <th class="text-left p-3 font-bold text-slate-700 dark:text-slate-300">Categoría</th>
+              <th class="text-right p-3 font-bold text-slate-700 dark:text-slate-300">Stock Actual</th>
+              <th class="text-right p-3 font-bold text-slate-700 dark:text-slate-300">Costo Promedio</th>
+              <th class="text-right p-3 font-bold text-slate-700 dark:text-slate-300">Valor Total</th>
+              <th class="text-center p-3 font-bold text-slate-700 dark:text-slate-300">Estado</th>
+              <th class="text-center p-3 font-bold text-slate-700 dark:text-slate-300">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            {% for item in productos_data %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 {% if not item.producto.activo %}opacity-50{% endif %}">
+              <td class="p-3">
+                <span class="font-mono font-semibold text-purple-600 dark:text-purple-400">{{ item.producto.sku }}</span>
+              </td>
+              <td class="p-3">
+                <div>
+                  <p class="font-semibold text-slate-900 dark:text-gray-100">{{ item.producto.nombre }}</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <p class="text-xs text-slate-600 dark:text-slate-400">{{ item.producto.unidad_medida }}</p>
+                    {% if item.num_movimientos_30d > 0 %}
+                      <span class="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full font-semibold" title="Movimientos en últimos 30 días">
+                        {{ item.num_movimientos_30d }} mov.
+                      </span>
+                    {% endif %}
+                    {% if item.salidas_30dias > 0 %}
+                      <span class="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-semibold" title="Ventas en últimos 30 días">
+                        📊 {{ item.salidas_30dias|floatformat:0 }}
+                      </span>
+                    {% endif %}
+                    {% if item.num_movimientos_30d == 0 and item.producto.activo and item.stock_actual > 0 %}
+                      <span class="px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full font-semibold" title="Sin movimiento en 30 días">
+                        💤
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td class="p-3 text-slate-700 dark:text-slate-300">
+                {% if item.producto.categoria %}
+                  <span class="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 rounded">{{ item.producto.categoria }}</span>
+                {% else %}
+                  <span class="text-slate-400">-</span>
+                {% endif %}
+              </td>
+              <td class="p-3 text-right">
+                <div class="font-mono">
+                  {% if item.requiere_reabastecimiento %}
+                    <span class="text-red-600 dark:text-red-400 font-bold">{{ item.stock_actual|floatformat:3 }}</span>
+                    <span class="text-xs text-red-500">⚠️</span>
+                  {% else %}
+                    <span class="text-slate-900 dark:text-gray-100">{{ item.stock_actual|floatformat:3 }}</span>
+                  {% endif %}
+                </div>
+                <p class="text-xs text-slate-500">Min: {{ item.producto.stock_minimo|floatformat:0 }}</p>
+              </td>
+              <td class="p-3 text-right font-mono text-slate-900 dark:text-gray-100">
+                ${{ item.costo_promedio|floatformat:2 }}
+              </td>
+              <td class="p-3 text-right font-mono font-semibold text-purple-600 dark:text-purple-400">
+                ${{ item.valor_total|floatformat:2 }}
+              </td>
+              <td class="p-3 text-center">
+                {% if item.producto.activo %}
+                  <span class="px-2 py-1 text-xs bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 rounded font-semibold">Activo</span>
+                {% else %}
+                  <span class="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded">Inactivo</span>
+                {% endif %}
+              </td>
+              <td class="p-3 text-center">
+                <div class="flex gap-2 justify-center">
+                  <a href="{% url 'contabilidad:kardex_producto_detalle' empresa.id item.producto.id %}"
+                     class="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold">
+                    Ver Kardex
+                  </a>
+                  {% if can_edit %}
+                  <a href="{% url 'contabilidad:kardex_registrar_movimiento' empresa.id item.producto.id %}"
+                     class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-semibold inline-flex items-center gap-1"
+                     title="Registrar entrada/salida de {{ item.producto.sku }}">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                    </svg>
+                    Movimiento
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="p-8 text-center">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="text-6xl">📦</div>
+                  <p class="text-slate-600 dark:text-slate-400 font-semibold">No hay productos registrados</p>
+                  <p class="text-sm text-slate-500 dark:text-slate-500">Comienza agregando tu primer producto al inventario</p>
+                  {% if can_edit %}
+                  <a href="{% url 'contabilidad:kardex_crear_producto' empresa.id %}"
+                     class="mt-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors inline-flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Agregar Primer Producto
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  {# Comments Section (if supervisor) #}
+  {% if is_docente and is_supervisor %}
+  <div class="mt-4 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+    <h3 class="font-bold text-slate-900 dark:text-gray-100 mb-3">💬 Comentarios del Supervisor</h3>
+    <form method="post" action="{% url 'contabilidad:add_comment' empresa.id 'KD' %}" class="mb-4">
+      {% csrf_token %}
+      <textarea name="content" rows="3" placeholder="Escribe un comentario sobre el inventario..."
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 rounded-lg text-sm"></textarea>
+      <button type="submit" class="mt-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+        Enviar Comentario
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+
+<!-- Los botones de acción redirigen directamente al admin de Django -->
+{% endblock %}

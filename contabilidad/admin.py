@@ -1,15 +1,18 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 
 from .models import (
     Empresa,
     EmpresaAsiento,
+    EmpresaCierrePeriodo,
     EmpresaComment,
     EmpresaPlanCuenta,
     EmpresaSupervisor,
     EmpresaTercero,
     EmpresaTransaccion,
+    MovimientoKardex,
     PeriodoContable,
     PlanDeCuentas,
+    ProductoInventario,
 )
 
 
@@ -139,3 +142,241 @@ class EmpresaTerceroAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+# --- Admin para ProductoInventario (Kardex) ---
+@admin.register(ProductoInventario)
+class ProductoInventarioAdmin(admin.ModelAdmin):
+    list_display = (
+        "sku",
+        "nombre",
+        "empresa",
+        "categoria",
+        "metodo_valoracion",
+        "stock_actual_display",
+        "costo_promedio_display",
+        "activo",
+    )
+    search_fields = ("sku", "nombre", "descripcion", "empresa__nombre")
+    list_filter = ("metodo_valoracion", "activo", "categoria", "empresa")
+    readonly_fields = (
+        "fecha_creacion",
+        "fecha_actualizacion",
+        "stock_actual_display",
+        "costo_promedio_display",
+        "valor_inventario_display",
+    )
+    raw_id_fields = ("empresa", "cuenta_inventario", "cuenta_costo_venta", "creado_por")
+
+    fieldsets = (
+        (
+            "Información Básica",
+            {
+                "fields": (
+                    "empresa",
+                    "sku",
+                    "nombre",
+                    "descripcion",
+                    "categoria",
+                    "unidad_medida",
+                    "activo",
+                )
+            },
+        ),
+        (
+            "Valoración y Contabilidad",
+            {
+                "fields": (
+                    "metodo_valoracion",
+                    "cuenta_inventario",
+                    "cuenta_costo_venta",
+                )
+            },
+        ),
+        (
+            "Control de Stock",
+            {
+                "fields": (
+                    "stock_minimo",
+                    "stock_maximo",
+                    "stock_actual_display",
+                    "costo_promedio_display",
+                    "valor_inventario_display",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Auditoría",
+            {
+                "fields": ("creado_por", "fecha_creacion", "fecha_actualizacion"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def stock_actual_display(self, obj):
+        return f"{obj.stock_actual} {obj.unidad_medida}"
+
+    stock_actual_display.short_description = "Stock Actual"
+
+    def costo_promedio_display(self, obj):
+        return f"${obj.costo_promedio_actual:,.2f}"
+
+    costo_promedio_display.short_description = "Costo Promedio"
+
+    def valor_inventario_display(self, obj):
+        return f"${obj.valor_inventario_actual:,.2f}"
+
+    valor_inventario_display.short_description = "Valor Inventario"
+
+
+# --- Admin para MovimientoKardex ---
+@admin.register(MovimientoKardex)
+class MovimientoKardexAdmin(admin.ModelAdmin):
+    list_display = (
+        "fecha",
+        "producto",
+        "tipo_movimiento",
+        "cantidad",
+        "costo_unitario",
+        "cantidad_saldo",
+        "costo_promedio",
+    )
+    search_fields = (
+        "producto__sku",
+        "producto__nombre",
+        "documento_referencia",
+        "observaciones",
+    )
+    list_filter = ("tipo_movimiento", "fecha", "producto__empresa")
+    readonly_fields = (
+        "cantidad_saldo",
+        "costo_promedio",
+        "valor_total_saldo",
+        "valor_total_movimiento",
+        "fecha_registro",
+    )
+    raw_id_fields = ("producto", "asiento", "tercero", "creado_por")
+    date_hierarchy = "fecha"
+
+    fieldsets = (
+        (
+            "Información del Movimiento",
+            {
+                "fields": (
+                    "producto",
+                    "fecha",
+                    "tipo_movimiento",
+                    "cantidad",
+                    "costo_unitario",
+                    "valor_total_movimiento",
+                )
+            },
+        ),
+        (
+            "Referencias",
+            {
+                "fields": (
+                    "documento_referencia",
+                    "tercero",
+                    "asiento",
+                    "observaciones",
+                )
+            },
+        ),
+        (
+            "Saldos Calculados (Solo Lectura)",
+            {
+                "fields": (
+                    "cantidad_saldo",
+                    "costo_promedio",
+                    "valor_total_saldo",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Auditoría",
+            {
+                "fields": ("creado_por", "fecha_creacion"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def has_delete_permission(self, request, obj=None):
+        # Advertencia: Eliminar movimientos puede descuadrar el Kardex
+        # Solo superusuarios pueden eliminar
+        return request.user.is_superuser
+
+    def save_model(self, request, obj, form, change):
+        # Si es un nuevo movimiento, usar KardexService para mantener consistencia
+        if not change and not obj.pk:
+            messages.warning(
+                request,
+                "⚠️ ADVERTENCIA: Se recomienda usar KardexService.registrar_entrada() "
+                "o registrar_salida() para mantener la consistencia del Kardex. "
+                "Crear movimientos manualmente puede descuadrar los saldos.",
+            )
+        super().save_model(request, obj, form, change)
+
+
+# --- Admin para EmpresaCierrePeriodo ---
+@admin.register(EmpresaCierrePeriodo)
+class EmpresaCierrePeriodoAdmin(admin.ModelAdmin):
+    list_display = (
+        "empresa",
+        "periodo",
+        "fecha_cierre",
+        "utilidad_neta",
+        "bloqueado",
+        "cerrado_por",
+    )
+    search_fields = ("empresa__nombre",)
+    list_filter = ("bloqueado", "periodo", "fecha_cierre")
+    readonly_fields = (
+        "fecha_cierre",
+        "total_ingresos",
+        "total_costos",
+        "total_gastos",
+        "utilidad_neta",
+    )
+    raw_id_fields = ("empresa", "asiento_cierre", "cerrado_por")
+    date_hierarchy = "fecha_cierre"
+
+    fieldsets = (
+        (
+            "Información del Cierre",
+            {
+                "fields": (
+                    "empresa",
+                    "periodo",
+                    "fecha_cierre",
+                    "bloqueado",
+                    "asiento_cierre",
+                )
+            },
+        ),
+        (
+            "Resumen Financiero",
+            {
+                "fields": (
+                    "total_ingresos",
+                    "total_costos",
+                    "total_gastos",
+                    "utilidad_neta",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Auditoría",
+            {"fields": ("cerrado_por",), "classes": ("collapse",)},
+        ),
+    )
+
+    def has_delete_permission(self, request, obj=None):
+        # No permitir eliminar cierres de periodo desde el admin
+        # Usar comando cerrar_periodo --desbloquear en su lugar
+        return False

@@ -50,28 +50,11 @@ urlpatterns = [
         views.company_estados_financieros,
         name="company_estados_financieros",
     ),
-    # Exports - Nuevo endpoint consolidado
+    # Exports - Consolidado (incluye todas las hojas: Balance, Estados, Métricas, etc.)
     path(
         "<int:empresa_id>/export/completo/",
         views.export_empresa_completo_xlsx,
         name="export_empresa_completo",
-    ),
-    # Exports - Legacy (mantener por compatibilidad)
-    path(
-        "<int:empresa_id>/balance/export/xlsx/",
-        views.export_balance_xlsx,
-        name="export_balance_xlsx",
-    ),
-    path(
-        "<int:empresa_id>/balance/export/csv/", views.export_balance_csv, name="export_balance_csv"
-    ),
-    path(
-        "<int:empresa_id>/estados/export/xlsx/",
-        views.export_estados_xlsx,
-        name="export_estados_xlsx",
-    ),
-    path(
-        "<int:empresa_id>/estados/export/csv/", views.export_estados_csv, name="export_estados_csv"
     ),
     path("<int:empresa_id>/comment/<str:section>/", views.add_comment, name="add_comment"),
     # Machine Learning & AI Dashboard Views
@@ -101,5 +84,28 @@ urlpatterns = [
         "api/ml/embeddings/<int:empresa_id>/buscar/",
         views.ml_api_embeddings,
         name="ml_api_embeddings",
+    ),
+    # Kardex (Control de Inventarios)
+    path(
+        "<int:empresa_id>/kardex/",
+        views.kardex_lista_productos,
+        name="kardex_lista_productos",
+    ),
+    path(
+        "<int:empresa_id>/kardex/<int:producto_id>/",
+        views.kardex_producto_detalle,
+        name="kardex_producto_detalle",
+    ),
+    # Crear producto
+    path(
+        "<int:empresa_id>/kardex/producto/crear/",
+        views.kardex_crear_producto,
+        name="kardex_crear_producto",
+    ),
+    # Registrar movimiento
+    path(
+        "<int:empresa_id>/kardex/<int:producto_id>/movimiento/",
+        views.kardex_registrar_movimiento,
+        name="kardex_registrar_movimiento",
     ),
 ]

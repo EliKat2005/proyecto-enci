@@ -57,6 +57,14 @@
       {% if current_panel == 'diario' %}bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 text-white shadow-lg scale-105{% else %}text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950 hover:text-emerald-700 dark:hover:text-emerald-400{% endif %}">Libro Diario</a>
     <a href="{% url 'contabilidad:company_mayor' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
       {% if current_panel == 'mayor' %}bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 text-white shadow-lg scale-105{% else %}text-slate-700 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-950 hover:text-purple-700 dark:hover:text-purple-400{% endif %}">Libro Mayor</a>
+    <a href="{% url 'contabilidad:company_balance_comprobacion' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
+      {% if current_panel == 'balance' %}bg-gradient-to-r from-amber-600 to-amber-700 dark:from-amber-700 dark:to-amber-800 text-white shadow-lg scale-105{% else %}text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-950 hover:text-amber-700 dark:hover:text-amber-400{% endif %}">Balance</a>
+    <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
+      {% if current_panel == 'estados' %}bg-gradient-to-r from-rose-600 to-rose-700 dark:from-rose-700 dark:to-rose-800 text-white shadow-lg scale-105{% else %}text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950 hover:text-rose-700 dark:hover:text-rose-400{% endif %}">Estados</a>
+    <a href="{% url 'contabilidad:kardex_lista_productos' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
+      {% if current_panel == 'kardex' %}bg-gradient-to-r from-cyan-600 to-cyan-700 dark:from-cyan-700 dark:to-cyan-800 text-white shadow-lg scale-105{% else %}text-slate-700 dark:text-slate-300 hover:bg-cyan-50 dark:hover:bg-cyan-950 hover:text-cyan-700 dark:hover:text-cyan-400{% endif %}">📦 Kardex</a>
+    <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}" class="px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
+      {% if current_panel == 'ml_dashboard' %}bg-gradient-to-r from-teal-600 to-teal-700 dark:from-teal-700 dark:to-teal-800 text-white shadow-lg scale-105{% else %}text-slate-700 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-teal-950 hover:text-teal-700 dark:hover:text-teal-400{% endif %}">🤖 ML/AI</a>
   </div>
 </nav>
 {% endif %}
