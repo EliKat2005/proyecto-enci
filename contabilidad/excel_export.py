@@ -947,7 +947,15 @@ class ExcelExportService:
             ws.append(["Por favor, verifique que existan transacciones registradas."])
             ws.cell(row=ws.max_row, column=1).font = Font(italic=True, size=10)
 
-        self._autoajustar_columnas(ws)
+        # Ajustar anchos de columnas manualmente para esta hoja (números grandes)
+        ws.column_dimensions["A"].width = 12  # Periodo
+        ws.column_dimensions["B"].width = 16  # Ingresos
+        ws.column_dimensions["C"].width = 16  # Gastos
+        ws.column_dimensions["D"].width = 16  # Costos
+        ws.column_dimensions["E"].width = 16  # Utilidad
+        ws.column_dimensions["F"].width = 16  # Activos
+        ws.column_dimensions["G"].width = 16  # Pasivos
+        ws.column_dimensions["H"].width = 16  # Flujo Neto
 
     def _crear_hoja_top_cuentas(self, wb):
         """Crea la hoja de top cuentas más activas."""
