@@ -38,6 +38,16 @@ urlpatterns = [
     ),
     path("<int:empresa_id>/diario/", views.company_diario, name="company_diario"),
     path("<int:empresa_id>/diario/add/", views.create_journal_entry, name="create_journal_entry"),
+    path(
+        "<int:empresa_id>/diario/<int:asiento_id>/confirmar/",
+        views.confirmar_asiento,
+        name="confirmar_asiento",
+    ),
+    path(
+        "<int:empresa_id>/diario/<int:asiento_id>/anular/",
+        views.anular_asiento,
+        name="anular_asiento",
+    ),
     path("<int:empresa_id>/mayor/", views.company_mayor, name="company_mayor"),
     path("<int:empresa_id>/libro-mayor/", views.company_libro_mayor, name="company_libro_mayor"),
     path(

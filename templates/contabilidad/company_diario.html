@@ -115,6 +115,24 @@
                   {% if a.lineas.count > 4 %}
                   <button type="button" class="mt-2 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 toggle-lineas" data-open="0">Ver todas ({{ a.lineas.count }})</button>
                   {% endif %}
+
+                  {# Botones de acción según estado #}
+                  {% if can_edit %}
+                  <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex gap-2">
+                    {% if a.estado == 'Borrador' %}
+                    <form method="post" action="{% url 'contabilidad:confirmar_asiento' empresa.id a.id %}" class="inline">
+                      {% csrf_token %}
+                      <button type="submit" class="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white rounded-lg text-xs font-semibold transition-colors">
+                        ✓ Confirmar
+                      </button>
+                    </form>
+                    {% elif a.estado == 'Confirmado' %}
+                    <button onclick="anularAsiento({{ empresa.id }}, {{ a.id }}, {{ a.numero_asiento }})" class="px-3 py-1.5 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg text-xs font-semibold transition-colors">
+                      ✗ Anular
+                    </button>
+                    {% endif %}
+                  </div>
+                  {% endif %}
                 </div>
               </div>
               {% endfor %}
@@ -263,6 +281,36 @@
       });
     });
   });
+
+  // Función para anular asiento con motivo
+  async function anularAsiento(empresaId, asientoId, numeroAsiento) {
+    const motivo = await customPrompt(
+      `Anular Asiento #${numeroAsiento}`,
+      'Anulación por corrección',
+      'Motivo de Anulación'
+    );
+
+    if (motivo !== null && motivo.trim()) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/contabilidad/${empresaId}/diario/${asientoId}/anular/`;
+
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = 'csrfmiddlewaretoken';
+      csrf.value = '{{ csrf_token }}';
+
+      const motivoInput = document.createElement('input');
+      motivoInput.type = 'hidden';
+      motivoInput.name = 'motivo';
+      motivoInput.value = motivo.trim();
+
+      form.appendChild(csrf);
+      form.appendChild(motivoInput);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
 </script>
 <script>
   (function(){

@@ -673,15 +673,65 @@ def create_journal_entry(request, empresa_id):
             descripcion=descripcion or "Asiento contable",
             lineas=lineas,
             creado_por=request.user,
-            auto_confirmar=True,
+            auto_confirmar=False,  # Crear como BORRADOR por defecto
         )
-        messages.success(request, "Asiento creado correctamente.")
+        messages.success(
+            request, "Asiento creado como borrador. Confírmalo para incluirlo en reportes."
+        )
     except ValidationError as e:
         # e.messages puede ser lista o string
         msg = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
         messages.error(request, msg)
     except Exception as e:
         messages.error(request, f"Error al crear el asiento: {e}")
+
+    return redirect("contabilidad:company_diario", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def confirmar_asiento(request, empresa_id, asiento_id):
+    """Confirmar un asiento en estado BORRADOR."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not (request.user == empresa.owner or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    asiento = get_object_or_404(EmpresaAsiento, pk=asiento_id, empresa=empresa)
+
+    try:
+        AsientoService.confirmar_asiento(asiento)
+        messages.success(
+            request, f"Asiento #{asiento.numero_asiento} confirmado. Ahora se incluye en reportes."
+        )
+    except ValidationError as e:
+        messages.error(request, str(e))
+    except Exception as e:
+        messages.error(request, f"Error al confirmar el asiento: {e}")
+
+    return redirect("contabilidad:company_diario", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def anular_asiento(request, empresa_id, asiento_id):
+    """Anular un asiento confirmado (crea contra-asiento)."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not (request.user == empresa.owner or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    asiento = get_object_or_404(EmpresaAsiento, pk=asiento_id, empresa=empresa)
+    motivo = request.POST.get("motivo", "Anulación por corrección").strip()
+
+    try:
+        contra_asiento = AsientoService.anular_asiento(asiento, request.user, motivo)
+        messages.success(
+            request,
+            f"Asiento #{asiento.numero_asiento} anulado. Contra-asiento #{contra_asiento.numero_asiento} creado.",
+        )
+    except ValidationError as e:
+        messages.error(request, str(e))
+    except Exception as e:
+        messages.error(request, f"Error al anular el asiento: {e}")
 
     return redirect("contabilidad:company_diario", empresa_id=empresa.id)
 
