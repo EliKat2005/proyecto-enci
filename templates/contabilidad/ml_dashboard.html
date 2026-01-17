@@ -210,7 +210,7 @@
         <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Gráfico Radar -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div id="radarChartContainer" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Análisis Multidimensional
                 </h3>
@@ -225,7 +225,7 @@
             </div>
 
             <!-- Gráfico de Barras -->
-            <div class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
+            <div id="barChartContainer" class="bg-white dark:bg-dark-surface rounded-lg shadow-lg p-6 border border-gray-200 dark:border-dark-border">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Comparativa de Ratios
                 </h3>
@@ -304,6 +304,13 @@
             }
 
             const data = await response.json();
+
+            // Verificar si hay datos
+            if (data.has_data === false) {
+                mostrarMensajeSinDatos();
+                loadingEl.classList.add('hidden');
+                return;
+            }
 
             // Actualizar KPIs con colores según el valor
             const liquidezEl = document.getElementById('liquidez-value');
@@ -608,6 +615,46 @@
     document.addEventListener('DOMContentLoaded', function() {
         cargarDashboard();
     });
+
+    function mostrarMensajeSinDatos() {
+        // Actualizar todos los valores a guiones
+        document.getElementById('liquidez-value').textContent = '-';
+        document.getElementById('liquidez-value').className = 'text-3xl font-bold mt-2 text-gray-400 dark:text-gray-500';
+
+        document.getElementById('rentabilidad-value').textContent = '-';
+        document.getElementById('rentabilidad-value').className = 'text-3xl font-bold mt-2 text-gray-400 dark:text-gray-500';
+
+        document.getElementById('endeudamiento-value').textContent = '-';
+        document.getElementById('endeudamiento-value').className = 'text-3xl font-bold mt-2 text-gray-400 dark:text-gray-500';
+
+        document.getElementById('margen-value').textContent = '-';
+        document.getElementById('margen-value').className = 'text-3xl font-bold mt-2 text-gray-400 dark:text-gray-500';
+
+        // Mostrar mensaje en contenedor de insights
+        const insightsContainer = document.getElementById('insights-container');
+        if (insightsContainer) {
+            insightsContainer.innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <p class="text-gray-600 dark:text-gray-400 font-medium mb-2">No hay datos disponibles</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500">Comienza registrando asientos contables confirmados para visualizar métricas y análisis ML/AI.</p>
+                </div>
+            `;
+        }
+
+        // Ocultar contenedores de gráficos
+        const radarChart = document.getElementById('radarChartContainer');
+        if (radarChart) radarChart.style.display = 'none';
+
+        const barChart = document.getElementById('barChartContainer');
+        if (barChart) barChart.style.display = 'none';
+
+        // Ocultar semáforo
+        const semaforo = document.getElementById('resumen-ejecutivo');
+        if (semaforo) semaforo.style.display = 'none';
+    }
 
     function cargarDashboard() {
         const empresaId = {{ empresa.id }};

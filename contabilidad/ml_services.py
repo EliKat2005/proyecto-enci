@@ -31,8 +31,29 @@ class MLAnalyticsService:
         Calcula métricas financieras principales para el dashboard.
 
         Returns:
-            dict con liquidez, ROA, endeudamiento, margen_neto
+            dict con liquidez, ROA, endeudamiento, margen_neto y has_data flag
         """
+        # Verificar si hay asientos confirmados
+        tiene_asientos = EmpresaTransaccion.objects.filter(
+            asiento__empresa=self.empresa, asiento__estado=EstadoAsiento.CONFIRMADO
+        ).exists()
+
+        if not tiene_asientos:
+            return {
+                "has_data": False,
+                "liquidez": 0.0,
+                "roa": 0.0,
+                "endeudamiento": 0.0,
+                "margen_neto": 0.0,
+                "activos": 0.0,
+                "pasivos": 0.0,
+                "patrimonio": 0.0,
+                "ingresos": 0.0,
+                "gastos": 0.0,
+                "costos": 0.0,
+                "utilidad_neta": 0.0,
+            }
+
         # Obtener saldos por tipo de cuenta
         activos = self._get_saldo_por_tipo(TipoCuenta.ACTIVO)
         pasivos = self._get_saldo_por_tipo(TipoCuenta.PASIVO)
@@ -40,6 +61,23 @@ class MLAnalyticsService:
         ingresos = self._get_saldo_por_tipo(TipoCuenta.INGRESO)
         gastos = self._get_saldo_por_tipo(TipoCuenta.GASTO)
         costos = self._get_saldo_por_tipo(TipoCuenta.COSTO)
+
+        # Verificar que haya datos mínimos para calcular
+        if activos == 0 and pasivos == 0 and ingresos == 0:
+            return {
+                "has_data": False,
+                "liquidez": 0.0,
+                "roa": 0.0,
+                "endeudamiento": 0.0,
+                "margen_neto": 0.0,
+                "activos": 0.0,
+                "pasivos": 0.0,
+                "patrimonio": 0.0,
+                "ingresos": 0.0,
+                "gastos": 0.0,
+                "costos": 0.0,
+                "utilidad_neta": 0.0,
+            }
 
         # Liquidez corriente (activos corrientes / pasivos corrientes)
         # Simplificado: usamos todos los activos y pasivos
@@ -58,6 +96,7 @@ class MLAnalyticsService:
         margen_neto = float((utilidad_neta / ingresos) * 100) if ingresos > 0 else 0.0
 
         return {
+            "has_data": True,
             "liquidez": round(liquidez, 2),
             "roa": round(roa, 2),
             "endeudamiento": round(endeudamiento, 2),
