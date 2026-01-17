@@ -312,7 +312,6 @@ class ExcelExportService:
                 fecha__range=[self.fecha_inicio, self.fecha_fin],
                 anulado=False,
             )
-            .select_related("estado")
             .prefetch_related("transacciones__cuenta")
             .order_by("fecha", "numero_asiento")
         )
@@ -326,7 +325,7 @@ class ExcelExportService:
             asiento_header.value = (
                 f"ASIENTO #{asiento.numero_asiento} - "
                 f"{asiento.fecha.strftime('%d/%m/%Y')} - "
-                f"Estado: {asiento.estado.get_descripcion_display()}"
+                f"Estado: {asiento.get_estado_display()}"
             )
             asiento_header.fill = PatternFill(
                 start_color="E7E6E6", end_color="E7E6E6", fill_type="solid"
