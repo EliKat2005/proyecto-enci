@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('max_uses', models.IntegerField(default=1)),
                 ('uses_count', models.IntegerField(default=0)),
                 ('active', models.BooleanField(default=True)),
-                ('creator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invitations', to=settings.AUTH_USER_MODEL)),
+                ('creator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invitations', to=settings.AUTH_USER_MODEL, db_constraint=False)),
             ],
             options={
                 'verbose_name': 'Invitation',
@@ -36,9 +36,9 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('activated', models.BooleanField(default=False)),
-                ('docente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='referred_students', to=settings.AUTH_USER_MODEL)),
+                ('docente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='referred_students', to=settings.AUTH_USER_MODEL, db_constraint=False)),
                 ('invitation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.invitation')),
-                ('student', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='referrals', to=settings.AUTH_USER_MODEL)),
+                ('student', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='referrals', to=settings.AUTH_USER_MODEL, db_constraint=False)),
             ],
             options={
                 'verbose_name': 'Referral',

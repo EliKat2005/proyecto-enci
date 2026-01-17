@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='empresaasiento',
             name='anulado_por',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='asientos_anulados', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='asientos_anulados', to=settings.AUTH_USER_MODEL, db_constraint=False),
         ),
         migrations.AddField(
             model_name='empresaasiento',

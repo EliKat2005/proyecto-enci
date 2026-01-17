@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('section', models.CharField(choices=[('PL', 'Plan de Cuentas'), ('DI', 'Libro Diario'), ('RP', 'Reportes')], max_length=2)),
                 ('content', models.TextField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, db_constraint=False)),
                 ('empresa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='contabilidad.empresa')),
             ],
             options={

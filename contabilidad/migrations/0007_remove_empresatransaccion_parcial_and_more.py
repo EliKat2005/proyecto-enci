@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ('estado', models.CharField(choices=[('ABIERTO', 'Abierto'), ('CERRADO', 'Cerrado'), ('BLOQUEADO', 'Bloqueado (Auditoría)')], default='ABIERTO', max_length=10)),
                 ('fecha_cierre', models.DateTimeField(blank=True, null=True)),
                 ('notas', models.TextField(blank=True, help_text='Observaciones del cierre')),
-                ('cerrado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='periodos_cerrados', to=settings.AUTH_USER_MODEL)),
+                ('cerrado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='periodos_cerrados', to=settings.AUTH_USER_MODEL, db_constraint=False)),
                 ('empresa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='periodos', to='contabilidad.empresa')),
             ],
             options={

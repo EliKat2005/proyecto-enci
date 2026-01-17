@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('activo', models.BooleanField(db_index=True, default=True)),
                 ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
                 ('fecha_modificacion', models.DateTimeField(auto_now=True)),
-                ('creado_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='terceros_creados', to=settings.AUTH_USER_MODEL)),
+                ('creado_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='terceros_creados', to=settings.AUTH_USER_MODEL, db_constraint=False)),
                 ('empresa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='terceros', to='contabilidad.empresa')),
             ],
             options={
@@ -64,12 +64,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='empresaasiento',
             name='modificado_por',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='asientos_modificados', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='asientos_modificados', to=settings.AUTH_USER_MODEL, db_constraint=False),
         ),
         migrations.AddField(
             model_name='empresatransaccion',
             name='creado_por',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='transacciones_creadas', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='transacciones_creadas', to=settings.AUTH_USER_MODEL, db_constraint=False),
         ),
         migrations.AddField(
             model_name='empresatransaccion',
@@ -91,7 +91,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='empresaasiento',
             name='creado_por',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='asientos_creados', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='asientos_creados', to=settings.AUTH_USER_MODEL, db_constraint=False),
         ),
         migrations.AddField(
             model_name='empresatransaccion',

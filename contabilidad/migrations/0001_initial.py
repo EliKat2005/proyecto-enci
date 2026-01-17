@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('original', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='copies', to='contabilidad.empresa')),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='empresas', to=settings.AUTH_USER_MODEL)),
+                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='empresas', to=settings.AUTH_USER_MODEL, db_constraint=False)),
             ],
             options={
                 'verbose_name': 'Empresa',
@@ -93,7 +93,7 @@ class Migration(migrations.Migration):
                 ('estado', models.CharField(choices=[('Borrador', 'Borrador'), ('Confirmado', 'Confirmado')], default='Borrador', max_length=10)),
                 ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
                 ('fecha_modificacion', models.DateTimeField(auto_now=True)),
-                ('creado_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                ('creado_por', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL, db_constraint=False)),
                 ('empresa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='asientos', to='contabilidad.empresa')),
             ],
             options={
@@ -144,7 +144,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('docente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='supervisiones', to=settings.AUTH_USER_MODEL)),
+                ('docente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='supervisiones', to=settings.AUTH_USER_MODEL, db_constraint=False)),
                 ('empresa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='supervisores', to='contabilidad.empresa')),
             ],
             options={

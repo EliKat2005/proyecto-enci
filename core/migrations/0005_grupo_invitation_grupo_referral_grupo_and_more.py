@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('active', models.BooleanField(default=True)),
-                ('docente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='grupos', to=settings.AUTH_USER_MODEL)),
+                ('docente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='grupos', to=settings.AUTH_USER_MODEL, db_constraint=False)),
             ],
             options={
                 'verbose_name': 'Grupo',
