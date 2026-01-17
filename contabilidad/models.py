@@ -220,7 +220,7 @@ class EmpresaPlanCuenta(models.Model):
     naturaleza = models.CharField(max_length=9, choices=NaturalezaCuenta.choices)
     es_auxiliar = models.BooleanField(
         default=False,
-        help_text="True si es una cuenta hoja (auxiliar) que puede recibir transacciones",
+        help_text="True si es una cuenta transaccional (hoja) que puede recibir movimientos",
     )
     activa = models.BooleanField(
         default=True, help_text="True si la cuenta está activa y puede recibir transacciones"
@@ -281,20 +281,20 @@ class EmpresaPlanCuenta(models.Model):
                     )
                 ancestro = ancestro.padre
 
-        # Validar jerarquía: cuentas con hijas no pueden ser auxiliares
+        # Validar jerarquía: cuentas con hijas no pueden ser transaccionales
         # Evitar acceso a relaciones antes de tener PK
         if self.es_auxiliar and self.pk:
             if self.hijas.exists():
                 raise ValidationError(
                     {
-                        "es_auxiliar": "Las cuentas que tienen subcuentas no pueden ser marcadas como auxiliares."
+                        "es_auxiliar": "Las cuentas que tienen subcuentas no pueden ser marcadas como transaccionales."
                     }
                 )
 
-        # No permitir agregar hijas a una cuenta auxiliar
+        # No permitir agregar hijas a una cuenta transaccional
         if self.padre and self.padre.es_auxiliar:
             raise ValidationError(
-                {"padre": "No se puede agregar subcuentas a una cuenta auxiliar."}
+                {"padre": "No se puede agregar subcuentas a una cuenta transaccional."}
             )
 
     def save(self, *args, **kwargs):
@@ -308,7 +308,7 @@ class EmpresaPlanCuenta(models.Model):
 
     @property
     def puede_recibir_transacciones(self):
-        """Solo las cuentas auxiliares (hojas del árbol) activas pueden recibir transacciones."""
+        """Solo las cuentas transaccionales (hojas del árbol) activas pueden recibir movimientos."""
         return self.es_auxiliar and not self.tiene_hijas and self.activa
 
     @property

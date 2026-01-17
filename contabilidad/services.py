@@ -166,12 +166,17 @@ class AsientoService:
         for linea_data in lineas_norm:
             cuenta = cuentas_by_id[linea_data["cuenta_id"]]
 
-            # Permitir cuentas que sean hojas (sin hijos) y estén activas
+            # Validar que sea cuenta transaccional, activa y sin hijos
             tiene_hijos = bool(getattr(cuenta, "_has_children", False))
-            puede_recibir = bool(cuenta.activa) and not tiene_hijos
+            puede_recibir = bool(cuenta.es_auxiliar) and bool(cuenta.activa) and not tiene_hijos
 
             if not puede_recibir:
-                if tiene_hijos:
+                if not cuenta.es_auxiliar:
+                    raise ValidationError(
+                        f"La cuenta {cuenta.codigo} - {cuenta.descripcion} no es transaccional. "
+                        f"Solo las cuentas marcadas como transaccionales pueden recibir movimientos."
+                    )
+                elif tiene_hijos:
                     raise ValidationError(
                         f"La cuenta {cuenta.codigo} - {cuenta.descripcion} no puede recibir transacciones "
                         f"porque tiene subcuentas. Use una cuenta hoja (sin subcuentas)."
@@ -398,7 +403,7 @@ class LibroMayorService:
         Args:
             empresa: Empresa a analizar
             fecha: Fecha de corte (None = hoy)
-            solo_auxiliares: Si solo muestra cuentas auxiliares (con movimiento)
+            solo_auxiliares: Si solo muestra cuentas transaccionales (con movimiento)
 
         Returns:
             Lista de diccionarios con saldos por cuenta
