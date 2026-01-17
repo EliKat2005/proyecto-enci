@@ -312,7 +312,7 @@ class ExcelExportService:
                 fecha__range=[self.fecha_inicio, self.fecha_fin],
                 anulado=False,
             )
-            .prefetch_related("transacciones__cuenta")
+            .prefetch_related("lineas__cuenta")
             .order_by("fecha", "numero_asiento")
         )
 
@@ -357,7 +357,7 @@ class ExcelExportService:
             total_debe = Decimal("0.00")
             total_haber = Decimal("0.00")
 
-            transacciones = asiento.transacciones.all()
+            transacciones = asiento.lineas.all()
             for trans in transacciones:
                 ws.cell(row=current_row, column=1, value=trans.cuenta.codigo)
                 ws.cell(row=current_row, column=2, value=trans.cuenta.descripcion)
