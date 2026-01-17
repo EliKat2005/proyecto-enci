@@ -33,17 +33,6 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-2 justify-end">
-        {% if reporte == 'balance' %}
-          <a href="{% url 'contabilidad:export_estados_csv' empresa.id %}?reporte=balance&fecha={{ fecha_corte|date:'Y-m-d' }}"
-             class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">CSV</a>
-          <a href="{% url 'contabilidad:export_estados_xlsx' empresa.id %}?reporte=balance&fecha={{ fecha_corte|date:'Y-m-d' }}"
-             class="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors">XLSX</a>
-        {% else %}
-          <a href="{% url 'contabilidad:export_estados_csv' empresa.id %}?reporte=resultados&fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}"
-             class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">CSV</a>
-          <a href="{% url 'contabilidad:export_estados_xlsx' empresa.id %}?reporte=resultados&fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}"
-             class="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors">XLSX</a>
-        {% endif %}
         <button onclick="window.print()" class="px-3 py-1.5 text-sm bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors no-print">Imprimir</button>
       </div>
     </div>

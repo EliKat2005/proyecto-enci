@@ -1103,7 +1103,77 @@ def export_estados_csv(request, empresa_id):
 
 
 @login_required
+def export_empresa_completo_xlsx(request, empresa_id):
+    """
+    Exporta un archivo Excel completo con toda la información de la empresa.
+    Incluye: Plan de Cuentas, Balance de Comprobación, Estados Financieros,
+    Métricas ML, Tendencias, Top Cuentas, etc.
+    """
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+
+    # Verificar permisos
+    if empresa.owner != request.user and not (
+        EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
+        and empresa.visible_to_supervisor
+    ):
+        return HttpResponseForbidden("No tienes permisos para acceder a esta empresa")
+
+    from datetime import datetime
+
+    from .excel_export import ExcelExportService
+
+    # Obtener parámetros de fecha
+    fecha_inicio_str = request.GET.get("fecha_inicio")
+    fecha_fin_str = request.GET.get("fecha_fin")
+
+    hoy = date.today()
+    fecha_inicio = date(hoy.year, 1, 1)
+    fecha_fin = hoy
+
+    if fecha_inicio_str:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    # Generar Excel completo
+    try:
+        service = ExcelExportService(empresa, fecha_inicio, fecha_fin)
+        excel_content = service.generar_excel_completo()
+
+        # Crear respuesta
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"Reporte_Completo_{empresa.nombre.replace(' ', '_')}_{timestamp}.xlsx"
+
+        response = HttpResponse(
+            excel_content,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
+
+    except Exception as e:
+        messages.error(
+            request, f"Error al generar el reporte Excel: {str(e)}. Por favor, intente nuevamente."
+        )
+        return redirect("contabilidad:company_detail", empresa_id=empresa.id)
+
+
+# ==================== DEPRECATED: Mantener por compatibilidad ====================
+# Las siguientes funciones se mantienen por compatibilidad pero no deben usarse.
+# Usar export_empresa_completo_xlsx() en su lugar.
+
+
+@login_required
 def export_balance_xlsx(request, empresa_id):
+    """DEPRECATED: Usar export_empresa_completo_xlsx() en su lugar."""
     try:
         import openpyxl
     except Exception:
@@ -1186,6 +1256,7 @@ def export_balance_xlsx(request, empresa_id):
 
 @login_required
 def export_estados_xlsx(request, empresa_id):
+    """DEPRECATED: Usar export_empresa_completo_xlsx() en su lugar."""
     try:
         import openpyxl
     except Exception:

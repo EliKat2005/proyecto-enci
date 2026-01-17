@@ -13,6 +13,14 @@
       {% if current_panel == 'balance' %}bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-400{% endif %}">Balance</a>
     <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
       {% if current_panel == 'estados' %}bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-400{% endif %}">Estados</a>
+
+    <!-- Botón de Exportación Centralizado -->
+    <a href="{% url 'contabilidad:export_empresa_completo' empresa.id %}"
+       class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg flex items-center gap-1"
+       title="Descargar reporte completo en Excel">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      Excel
+    </a>
   </nav>
   {% if current_panel == 'plan' or current_panel == 'diario' or current_panel == 'mayor' %}
     <button id="panel-toggle-btn" type="button" class="absolute right-4 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-slate-700 to-slate-800 text-white hover:from-slate-800 hover:to-slate-900 transition-all duration-200 shadow-md hover:shadow-lg">Ocultar Paneles</button>

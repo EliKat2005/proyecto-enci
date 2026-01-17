@@ -97,16 +97,6 @@
                         </button>
                     </div>
                 </div>
-
-                <div class="pt-7">
-                    <button onclick="exportarAnomaliasCSV()" id="export-btn" disabled
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Exportar CSV
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -506,48 +496,6 @@ function crearGraficoDistribucion(anomalias) {
             }
         }
     });
-}
-
-// Función para exportar anomalías a CSV
-function exportarAnomaliasCSV() {
-    if (!ultimasAnomalias || ultimasAnomalias.length === 0) {
-        alert('No hay anomalías para exportar');
-        return;
-    }
-
-    // Crear CSV con todas las columnas relevantes
-    let csv = 'Fecha,Cuenta,Descripción,Monto,Z-Score,Severidad,Número Asiento,Explicación\n';
-
-    ultimasAnomalias.forEach(anomalia => {
-        const explicacion = generarExplicacionAutomatica(anomalia);
-        const montoFormateado = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2 }).format(Math.abs(anomalia.monto));
-
-        // Escapar comillas dobles en strings
-        const escaparCSV = (texto) => `"${(texto || '').toString().replace(/"/g, '""')}"`;
-
-        csv += [
-            anomalia.fecha,
-            escaparCSV(anomalia.cuenta_codigo),
-            escaparCSV(anomalia.cuenta_descripcion),
-            montoFormateado,
-            anomalia.z_score.toFixed(2),
-            anomalia.severidad.toUpperCase(),
-            anomalia.numero_asiento || anomalia.asiento_id,
-            escaparCSV(explicacion)
-        ].join(',') + '\n';
-    });
-
-    // Crear blob y descargar
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-
-    const fechaActual = new Date().toISOString().split('T')[0];
-    link.download = `anomalias_empresa_${empresaId}_${fechaActual}.csv`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 }
 
 // Función para generar explicaciones automáticas de anomalías

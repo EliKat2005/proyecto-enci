@@ -50,7 +50,13 @@ urlpatterns = [
         views.company_estados_financieros,
         name="company_estados_financieros",
     ),
-    # Exports
+    # Exports - Nuevo endpoint consolidado
+    path(
+        "<int:empresa_id>/export/completo/",
+        views.export_empresa_completo_xlsx,
+        name="export_empresa_completo",
+    ),
+    # Exports - Legacy (mantener por compatibilidad)
     path(
         "<int:empresa_id>/balance/export/xlsx/",
         views.export_balance_xlsx,
