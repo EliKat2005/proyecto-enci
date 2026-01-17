@@ -12,6 +12,12 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from .ml_services import MLAnalyticsService
+from .models import (
+    EmpresaAsiento,
+    EmpresaTransaccion,
+    MovimientoKardex,
+    ProductoInventario,
+)
 from .services import EstadosFinancierosService, LibroMayorService
 
 
@@ -78,9 +84,12 @@ class ExcelExportService:
         # Crear todas las hojas
         self._crear_hoja_portada(wb)
         self._crear_hoja_plan_cuentas(wb)
+        self._crear_hoja_libro_diario(wb)
+        self._crear_hoja_libro_mayor(wb)
         self._crear_hoja_balance_comprobacion(wb)
         self._crear_hoja_balance_general(wb)
         self._crear_hoja_estado_resultados(wb)
+        self._crear_hoja_kardex(wb)
         self._crear_hoja_metricas_financieras(wb)
         self._crear_hoja_tendencias(wb)
         self._crear_hoja_top_cuentas(wb)
@@ -280,6 +289,243 @@ class ExcelExportService:
             elif nivel == 1:  # Grupo
                 for col in range(1, 7):
                     ws.cell(row=row, column=col).font = Font(bold=True, size=10)
+
+        self._autoajustar_columnas(ws)
+
+    def _crear_hoja_libro_diario(self, wb):
+        """Crea la hoja del Libro Diario."""
+        ws = wb.create_sheet("Libro Diario")
+
+        # Título
+        ws["A1"] = "LIBRO DIARIO"
+        self._aplicar_estilo_titulo(ws["A1"])
+        ws["A2"] = f"Empresa: {self.empresa.nombre}"
+        ws["A3"] = (
+            f"Periodo: {self.fecha_inicio.strftime('%d/%m/%Y')} - "
+            f"{self.fecha_fin.strftime('%d/%m/%Y')}"
+        )
+
+        # Obtener asientos del periodo
+        asientos = (
+            EmpresaAsiento.objects.filter(
+                empresa=self.empresa,
+                fecha__range=[self.fecha_inicio, self.fecha_fin],
+                anulado=False,
+            )
+            .select_related("estado")
+            .prefetch_related("transacciones__cuenta")
+            .order_by("fecha", "numero_asiento")
+        )
+
+        current_row = 5
+
+        for asiento in asientos:
+            # Encabezado del asiento
+            ws.merge_cells(f"A{current_row}:G{current_row}")
+            asiento_header = ws[f"A{current_row}"]
+            asiento_header.value = (
+                f"ASIENTO #{asiento.numero_asiento} - "
+                f"{asiento.fecha.strftime('%d/%m/%Y')} - "
+                f"Estado: {asiento.estado.get_descripcion_display()}"
+            )
+            asiento_header.fill = PatternFill(
+                start_color="E7E6E6", end_color="E7E6E6", fill_type="solid"
+            )
+            asiento_header.font = Font(bold=True, size=10)
+            asiento_header.alignment = Alignment(horizontal="left", vertical="center")
+            current_row += 1
+
+            # Concepto
+            if asiento.concepto:
+                ws.merge_cells(f"A{current_row}:G{current_row}")
+                concepto_cell = ws[f"A{current_row}"]
+                concepto_cell.value = f"Concepto: {asiento.concepto}"
+                concepto_cell.font = Font(italic=True, size=9)
+                current_row += 1
+
+            # Encabezados de transacciones
+            headers = ["Código", "Cuenta", "Tipo", "Tercero", "Debe", "Haber"]
+            for col_idx, header in enumerate(headers, start=1):
+                cell = ws.cell(row=current_row, column=col_idx)
+                cell.value = header
+                cell.fill = self.HEADER_FILL
+                cell.font = self.HEADER_FONT
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.border = self.BORDER_THIN
+            current_row += 1
+
+            # Transacciones del asiento
+            total_debe = Decimal("0.00")
+            total_haber = Decimal("0.00")
+
+            transacciones = asiento.transacciones.all()
+            for trans in transacciones:
+                ws.cell(row=current_row, column=1, value=trans.cuenta.codigo)
+                ws.cell(row=current_row, column=2, value=trans.cuenta.descripcion)
+                ws.cell(row=current_row, column=3, value=trans.cuenta.get_tipo_display())
+                ws.cell(
+                    row=current_row,
+                    column=4,
+                    value=trans.tercero.nombre if trans.tercero else "-",
+                )
+
+                if trans.es_debito:
+                    ws.cell(row=current_row, column=5, value=float(trans.monto))
+                    total_debe += trans.monto
+                else:
+                    ws.cell(row=current_row, column=6, value=float(trans.monto))
+                    total_haber += trans.monto
+
+                # Formatear montos
+                for col in [5, 6]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.number_format = "#,##0.00"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                # Bordes y alineación
+                for col in [1, 2, 3, 4]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.alignment = Alignment(horizontal="left", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                current_row += 1
+
+            # Totales del asiento
+            ws.cell(row=current_row, column=4, value="TOTALES:")
+            ws.cell(row=current_row, column=5, value=float(total_debe))
+            ws.cell(row=current_row, column=6, value=float(total_haber))
+
+            for col in [4, 5, 6]:
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = Font(bold=True, size=10)
+                cell.fill = self.TOTAL_FILL
+                cell.border = self.BORDER_THIN
+                if col in [5, 6]:
+                    cell.number_format = "#,##0.00"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                else:
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+
+            current_row += 2  # Espacio entre asientos
+
+        if not asientos.exists():
+            ws["A5"] = "No hay asientos registrados en el periodo seleccionado."
+            ws["A5"].font = Font(italic=True, color="FF0000")
+
+        self._autoajustar_columnas(ws)
+
+    def _crear_hoja_libro_mayor(self, wb):
+        """Crea la hoja del Libro Mayor."""
+        ws = wb.create_sheet("Libro Mayor")
+
+        # Título
+        ws["A1"] = "LIBRO MAYOR"
+        self._aplicar_estilo_titulo(ws["A1"])
+        ws["A2"] = f"Empresa: {self.empresa.nombre}"
+        ws["A3"] = (
+            f"Periodo: {self.fecha_inicio.strftime('%d/%m/%Y')} - "
+            f"{self.fecha_fin.strftime('%d/%m/%Y')}"
+        )
+
+        # Obtener cuentas con movimientos
+        servicio_mayor = LibroMayorService(
+            empresa=self.empresa, fecha_inicio=self.fecha_inicio, fecha_fin=self.fecha_fin
+        )
+        cuentas_mayorizadas = servicio_mayor.obtener_libro_mayor_completo()
+
+        current_row = 5
+
+        for cuenta_data in cuentas_mayorizadas:
+            # Encabezado de la cuenta
+            ws.merge_cells(f"A{current_row}:G{current_row}")
+            cuenta_header = ws[f"A{current_row}"]
+            cuenta_header.value = (
+                f"CUENTA: {cuenta_data['cuenta'].codigo} - {cuenta_data['cuenta'].descripcion}"
+            )
+            cuenta_header.fill = PatternFill(
+                start_color="4472C4", end_color="4472C4", fill_type="solid"
+            )
+            cuenta_header.font = Font(color="FFFFFF", bold=True, size=11)
+            cuenta_header.alignment = Alignment(horizontal="left", vertical="center")
+            current_row += 1
+
+            # Información de la cuenta
+            ws[f"A{current_row}"] = f"Tipo: {cuenta_data['cuenta'].get_tipo_display()}"
+            ws[f"C{current_row}"] = f"Naturaleza: {cuenta_data['cuenta'].get_naturaleza_display()}"
+            ws[f"E{current_row}"] = f"Saldo Inicial: {cuenta_data['saldo_inicial']:,.2f}"
+            current_row += 1
+
+            # Encabezados de movimientos
+            headers = ["Fecha", "Asiento", "Concepto", "Debe", "Haber", "Saldo"]
+            for col_idx, header in enumerate(headers, start=1):
+                cell = ws.cell(row=current_row, column=col_idx)
+                cell.value = header
+                cell.fill = self.HEADER_FILL
+                cell.font = self.HEADER_FONT
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.border = self.BORDER_THIN
+            current_row += 1
+
+            # Saldo inicial
+            ws.cell(row=current_row, column=3, value="Saldo Inicial")
+            ws.cell(row=current_row, column=6, value=float(cuenta_data["saldo_inicial"]))
+            ws.cell(row=current_row, column=6).font = Font(bold=True)
+            ws.cell(row=current_row, column=6).number_format = "#,##0.00"
+            ws.cell(row=current_row, column=6).alignment = Alignment(
+                horizontal="right", vertical="center"
+            )
+            current_row += 1
+
+            # Movimientos
+            for mov in cuenta_data["movimientos"]:
+                ws.cell(
+                    row=current_row,
+                    column=1,
+                    value=mov["fecha"].strftime("%d/%m/%Y") if mov["fecha"] else "",
+                )
+                ws.cell(row=current_row, column=2, value=mov["numero_asiento"])
+                ws.cell(row=current_row, column=3, value=mov["concepto"])
+                ws.cell(row=current_row, column=4, value=float(mov["debe"]))
+                ws.cell(row=current_row, column=5, value=float(mov["haber"]))
+                ws.cell(row=current_row, column=6, value=float(mov["saldo"]))
+
+                # Formatear
+                for col in [4, 5, 6]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.number_format = "#,##0.00"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                for col in [1, 2, 3]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.alignment = Alignment(horizontal="left", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                current_row += 1
+
+            # Totales
+            ws.cell(row=current_row, column=3, value="TOTALES:")
+            ws.cell(row=current_row, column=4, value=float(cuenta_data["total_debe"]))
+            ws.cell(row=current_row, column=5, value=float(cuenta_data["total_haber"]))
+            ws.cell(row=current_row, column=6, value=float(cuenta_data["saldo_final"]))
+
+            for col in [3, 4, 5, 6]:
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = Font(bold=True, size=10)
+                cell.fill = self.TOTAL_FILL
+                cell.border = self.BORDER_THIN
+                if col in [4, 5, 6]:
+                    cell.number_format = "#,##0.00"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                else:
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+
+            current_row += 2  # Espacio entre cuentas
+
+        if not cuentas_mayorizadas:
+            ws["A5"] = "No hay movimientos registrados en el periodo seleccionado."
+            ws["A5"].font = Font(italic=True, color="FF0000")
 
         self._autoajustar_columnas(ws)
 
@@ -703,6 +949,206 @@ class ExcelExportService:
 
         self._autoajustar_columnas(ws)
 
+    def _crear_hoja_kardex(self, wb):
+        """Crea la hoja del Kardex de Inventario."""
+        ws = wb.create_sheet("Kardex")
+
+        # Título
+        ws["A1"] = "KARDEX DE INVENTARIO"
+        self._aplicar_estilo_titulo(ws["A1"])
+        ws["A2"] = f"Empresa: {self.empresa.nombre}"
+        ws["A3"] = (
+            f"Periodo: {self.fecha_inicio.strftime('%d/%m/%Y')} - "
+            f"{self.fecha_fin.strftime('%d/%m/%Y')}"
+        )
+
+        # Obtener productos con movimientos
+        productos = ProductoInventario.objects.filter(empresa=self.empresa, activo=True).order_by(
+            "codigo"
+        )
+
+        current_row = 5
+
+        for producto in productos:
+            # Encabezado del producto
+            ws.merge_cells(f"A{current_row}:J{current_row}")
+            producto_header = ws[f"A{current_row}"]
+            producto_header.value = (
+                f"PRODUCTO: {producto.codigo} - {producto.nombre} | "
+                f"Unidad: {producto.unidad_medida} | "
+                f"Método: {producto.get_metodo_valuacion_display()}"
+            )
+            producto_header.fill = PatternFill(
+                start_color="70AD47", end_color="70AD47", fill_type="solid"
+            )
+            producto_header.font = Font(color="FFFFFF", bold=True, size=11)
+            producto_header.alignment = Alignment(horizontal="left", vertical="center")
+            current_row += 1
+
+            # Información adicional del producto
+            ws[f"A{current_row}"] = f"Stock Actual: {producto.cantidad_actual}"
+            ws[f"C{current_row}"] = f"Costo Promedio: ${producto.costo_promedio:,.2f}"
+            ws[f"F{current_row}"] = f"Valor Total: ${producto.valor_total:,.2f}"
+            current_row += 1
+
+            # Encabezados de movimientos
+            headers = [
+                "Fecha",
+                "Tipo",
+                "Asiento",
+                "Concepto",
+                "Cant. Entrada",
+                "$ Entrada",
+                "Cant. Salida",
+                "$ Salida",
+                "Saldo Cant.",
+                "Saldo $",
+            ]
+            for col_idx, header in enumerate(headers, start=1):
+                cell = ws.cell(row=current_row, column=col_idx)
+                cell.value = header
+                cell.fill = self.HEADER_FILL
+                cell.font = self.HEADER_FONT
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.border = self.BORDER_THIN
+            current_row += 1
+
+            # Obtener movimientos del periodo
+            movimientos = (
+                MovimientoKardex.objects.filter(
+                    producto=producto,
+                    fecha__range=[self.fecha_inicio, self.fecha_fin],
+                    anulado=False,
+                )
+                .select_related("asiento")
+                .order_by("fecha", "created_at")
+            )
+
+            # Calcular saldo inicial (movimientos anteriores al periodo)
+            movimientos_anteriores = MovimientoKardex.objects.filter(
+                producto=producto, fecha__lt=self.fecha_inicio, anulado=False
+            )
+
+            cantidad_inicial = 0
+            valor_inicial = Decimal("0.00")
+            for mov_ant in movimientos_anteriores:
+                if mov_ant.tipo_movimiento in ["CP", "AI"]:  # Entrada
+                    cantidad_inicial += mov_ant.cantidad
+                    valor_inicial += mov_ant.valor_total
+                else:  # Salida
+                    cantidad_inicial -= mov_ant.cantidad
+                    valor_inicial -= mov_ant.valor_total
+
+            # Fila de saldo inicial
+            ws.cell(row=current_row, column=4, value="Saldo Inicial")
+            ws.cell(row=current_row, column=9, value=cantidad_inicial)
+            ws.cell(row=current_row, column=10, value=float(valor_inicial))
+            ws.cell(row=current_row, column=4).font = Font(bold=True, italic=True)
+            ws.cell(row=current_row, column=9).font = Font(bold=True)
+            ws.cell(row=current_row, column=10).font = Font(bold=True)
+            ws.cell(row=current_row, column=9).number_format = "#,##0"
+            ws.cell(row=current_row, column=10).number_format = "#,##0.00"
+            current_row += 1
+
+            # Movimientos del periodo
+            saldo_cantidad = cantidad_inicial
+            saldo_valor = valor_inicial
+
+            for mov in movimientos:
+                # Calcular entrada/salida
+                if mov.tipo_movimiento in ["CP", "AI"]:  # Entrada
+                    cant_entrada = mov.cantidad
+                    val_entrada = float(mov.valor_total)
+                    cant_salida = 0
+                    val_salida = 0
+                    saldo_cantidad += mov.cantidad
+                    saldo_valor += mov.valor_total
+                else:  # Salida
+                    cant_entrada = 0
+                    val_entrada = 0
+                    cant_salida = mov.cantidad
+                    val_salida = float(mov.valor_total)
+                    saldo_cantidad -= mov.cantidad
+                    saldo_valor -= mov.valor_total
+
+                ws.cell(row=current_row, column=1, value=mov.fecha.strftime("%d/%m/%Y"))
+                ws.cell(row=current_row, column=2, value=mov.get_tipo_movimiento_display())
+                ws.cell(
+                    row=current_row,
+                    column=3,
+                    value=mov.asiento.numero_asiento if mov.asiento else "-",
+                )
+                ws.cell(row=current_row, column=4, value=mov.concepto or "-")
+                ws.cell(row=current_row, column=5, value=cant_entrada)
+                ws.cell(row=current_row, column=6, value=val_entrada)
+                ws.cell(row=current_row, column=7, value=cant_salida)
+                ws.cell(row=current_row, column=8, value=val_salida)
+                ws.cell(row=current_row, column=9, value=saldo_cantidad)
+                ws.cell(row=current_row, column=10, value=float(saldo_valor))
+
+                # Formatear cantidades
+                for col in [5, 7, 9]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.number_format = "#,##0"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                # Formatear valores monetarios
+                for col in [6, 8, 10]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.number_format = "#,##0.00"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                # Formatear textos
+                for col in [1, 2, 3, 4]:
+                    cell = ws.cell(row=current_row, column=col)
+                    cell.alignment = Alignment(horizontal="left", vertical="center")
+                    cell.border = self.BORDER_THIN
+
+                # Destacar tipo de movimiento con color
+                tipo_cell = ws.cell(row=current_row, column=2)
+                if mov.tipo_movimiento in ["CP", "AI"]:
+                    tipo_cell.fill = PatternFill(
+                        start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"
+                    )
+                else:
+                    tipo_cell.fill = PatternFill(
+                        start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"
+                    )
+
+                current_row += 1
+
+            # Fila de saldo final
+            ws.cell(row=current_row, column=4, value="Saldo Final")
+            ws.cell(row=current_row, column=9, value=saldo_cantidad)
+            ws.cell(row=current_row, column=10, value=float(saldo_valor))
+
+            for col in [4, 9, 10]:
+                cell = ws.cell(row=current_row, column=col)
+                cell.font = Font(bold=True, size=10)
+                cell.fill = self.TOTAL_FILL
+                cell.border = self.BORDER_THIN
+                if col in [9, 10]:
+                    cell.number_format = "#,##0.00" if col == 10 else "#,##0"
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+                else:
+                    cell.alignment = Alignment(horizontal="right", vertical="center")
+
+            current_row += 2  # Espacio entre productos
+
+            # Mensaje si no hay movimientos
+            if not movimientos.exists() and cantidad_inicial == 0:
+                ws[f"A{current_row}"] = "Sin movimientos en el periodo"
+                ws[f"A{current_row}"].font = Font(italic=True, color="808080")
+                current_row += 1
+
+        if not productos.exists():
+            ws["A5"] = "No hay productos de inventario registrados."
+            ws["A5"].font = Font(italic=True, color="FF0000")
+
+        self._autoajustar_columnas(ws)
+
     def _crear_hoja_metricas_financieras(self, wb):
         """Crea la hoja de métricas financieras (ML)."""
         ws = wb.create_sheet("Métricas Financieras")
@@ -972,7 +1418,7 @@ class ExcelExportService:
         # Obtener transacciones y agrupar por cuenta
         from django.db.models import Count, Sum
 
-        from .models import EmpresaTransaccion, EstadoAsiento
+        from .models import EstadoAsiento
 
         cuentas_activas = (
             EmpresaTransaccion.objects.filter(
