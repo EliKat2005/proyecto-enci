@@ -1430,3 +1430,32 @@ class AnomaliaDetectada(models.Model):
 
     def __str__(self):
         return f"Anomalía {self.get_tipo_anomalia_display()} - {self.empresa.nombre} ({self.severidad})"
+
+
+# -------------------------
+# Cache de Métricas para Performance
+# -------------------------
+class EmpresaMetricasCache(models.Model):
+    """
+    Cache de métricas pre-calculadas para optimizar el dashboard.
+    Se invalida automáticamente con triggers de MariaDB al modificar asientos.
+    """
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="metricas_cache")
+    periodo = models.DateField(help_text="Primer día del período (YYYY-MM-01)")
+    metricas_json = models.JSONField(help_text="Métricas pre-calculadas en formato JSON")
+    fecha_calculo = models.DateTimeField(auto_now=True, help_text="Última actualización")
+
+    class Meta:
+        db_table = "contabilidad_empresa_metricas_cache"
+        verbose_name = "Cache de Métricas"
+        verbose_name_plural = "Cache de Métricas"
+        unique_together = [("empresa", "periodo")]
+        indexes = [
+            models.Index(fields=["empresa", "-fecha_calculo"]),
+            models.Index(fields=["empresa", "periodo"]),
+        ]
+        ordering = ["-periodo"]
+
+    def __str__(self):
+        return f"Métricas {self.empresa.nombre} - {self.periodo.strftime('%Y-%m')}"
