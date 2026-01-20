@@ -7,14 +7,21 @@
   <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
 
     {% with current_panel='diario' %}{% include 'contabilidad/_company_header_minimal.html' %}{% endwith %}
-    <!-- Botones eliminados: Vista Compacta y Ocultar Panel ahora en header mínimo -->
 
-    {# navegación ya incluida en header; se elimina duplicado #}
+    <!-- Botón para toggle filtros -->
+    <div class="mb-4 flex justify-end">
+      <button id="toggle-filtros-btn" onclick="toggleFiltros()" class="flex items-center gap-2 px-4 py-2 bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg text-sm font-semibold shadow-md transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+        </svg>
+        <span id="filtros-btn-text">Mostrar Filtros</span>
+      </button>
+    </div>
 
     <!-- Grid Superior: Acciones (izq) + Lista (centro) + Filtros (der) -->
-    <div id="diario-grid" class="grid gap-4 xl:grid-cols-4 items-start mb-4">
+    <div id="diario-grid" class="grid gap-4 items-start mb-4 transition-all" style="grid-template-columns: 1fr 2fr;">
       <!-- Panel Izquierdo: Nuevo Asiento -->
-      <div id="diario-actions" class="xl:col-span-1 space-y-4">
+      <div id="diario-actions" class="space-y-4">
         {% if can_edit %}
         <div class="bg-gradient-to-br from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-emerald-100 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
@@ -66,7 +73,7 @@
       </div>
 
       <!-- Panel Central: Lista de Asientos -->
-      <div id="diario-main" class="xl:col-span-2 space-y-4">
+      <div id="diario-main" class="space-y-4">
         <div class="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-emerald-200 dark:border-emerald-900">
             <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-lg flex items-center justify-center shadow-md">
@@ -148,9 +155,9 @@
         </div>
       </div>
 
-      <!-- Panel Derecho: Filtros -->
-      <div id="diario-sidebar" class="xl:col-span-1 space-y-4">
-        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 sticky top-20">
+      <!-- Panel Derecho: Filtros (oculto por defecto) -->
+      <div id="diario-sidebar" class="space-y-4 hidden">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 sticky top-20">
           <form id="diario-filter-form" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -335,6 +342,25 @@
       });
     }
   })();
+
+  // Toggle de filtros
+  function toggleFiltros() {
+    const sidebar = document.getElementById('diario-sidebar');
+    const grid = document.getElementById('diario-grid');
+    const btnText = document.getElementById('filtros-btn-text');
+    
+    if (sidebar.classList.contains('hidden')) {
+      // Mostrar filtros
+      sidebar.classList.remove('hidden');
+      grid.style.gridTemplateColumns = '1fr 2fr 1fr';
+      btnText.textContent = 'Ocultar Filtros';
+    } else {
+      // Ocultar filtros
+      sidebar.classList.add('hidden');
+      grid.style.gridTemplateColumns = '1fr 2fr';
+      btnText.textContent = 'Mostrar Filtros';
+    }
+  }
 </script>
 <!-- Compact mode eliminado -->
 {% endblock %}
