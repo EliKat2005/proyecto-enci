@@ -35,20 +35,29 @@ class EmpresaMetricaSerializer(serializers.ModelSerializer):
             "id",
             "empresa",
             "empresa_id",
-            "fecha_inicio",
-            "fecha_fin",
+            "periodo_inicio",
+            "periodo_fin",
+            "fecha_calculo",
+            # Métricas de liquidez
+            "activo_corriente",
+            "pasivo_corriente",
             "razon_corriente",
             "prueba_acida",
-            "capital_trabajo",
-            "razon_endeudamiento",
-            "razon_deuda_patrimonio",
-            "margen_bruto",
-            "margen_operacional",
+            # Métricas de rentabilidad
+            "ingresos_totales",
+            "gastos_totales",
+            "utilidad_neta",
             "margen_neto",
             "roe",
             "roa",
-            "rotacion_activos",
-            "fecha_calculo",
+            # Métricas de endeudamiento
+            "total_activos",
+            "total_pasivos",
+            "total_patrimonio",
+            "razon_endeudamiento",
+            # Métricas operacionales
+            "num_transacciones",
+            "num_cuentas_activas",
         ]
         read_only_fields = ["id", "fecha_calculo"]
 
