@@ -309,10 +309,11 @@
             console.log('📊 Datos recibidos de la API:', data);
 
             // Normalizar nombres de campos del serializer (manejar null correctamente)
-            const liquidez = data.razon_corriente !== null && data.razon_corriente !== undefined ? data.razon_corriente : 0;
-            const roa = data.roa !== null && data.roa !== undefined ? data.roa : 0;
-            const endeudamiento = data.razon_endeudamiento !== null && data.razon_endeudamiento !== undefined ? data.razon_endeudamiento : 0;
-            const margen_neto = data.margen_neto !== null && data.margen_neto !== undefined ? data.margen_neto : 0;
+            // Convertir a número y usar 0 como fallback
+            const liquidez = parseFloat(data.razon_corriente) || 0;
+            const roa = parseFloat(data.roa) || 0;
+            const endeudamiento = parseFloat(data.razon_endeudamiento) || 0;
+            const margen_neto = parseFloat(data.margen_neto) || 0;
 
             // Actualizar KPIs con colores según el valor
             const liquidezEl = document.getElementById('liquidez-value');
@@ -321,34 +322,38 @@
             const margenEl = document.getElementById('margen-value');
 
             if (liquidezEl) {
-                const valor = liquidez.toFixed(2);
+                const valor = liquidez === 0 ? '-' : liquidez.toFixed(2);
                 liquidezEl.textContent = valor;
                 liquidezEl.className = 'text-3xl font-bold mt-2 ' +
-                    (liquidez >= 1.5 ? 'text-green-600 dark:text-green-400' :
+                    (liquidez === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     liquidez >= 1.5 ? 'text-green-600 dark:text-green-400' :
                      liquidez >= 1 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
             if (roaEl) {
-                const valor = roa.toFixed(2) + '%';
+                const valor = roa === 0 ? '-' : roa.toFixed(2) + '%';
                 roaEl.textContent = valor;
                 roaEl.className = 'text-3xl font-bold mt-2 ' +
-                    (roa > 5 ? 'text-green-600 dark:text-green-400' :
+                    (roa === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     roa > 5 ? 'text-green-600 dark:text-green-400' :
                      roa > 0 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
             if (endeudamientoEl) {
-                const valor = endeudamiento.toFixed(2) + '%';
+                const valor = endeudamiento === 0 ? '-' : endeudamiento.toFixed(2) + '%';
                 endeudamientoEl.textContent = valor;
                 endeudamientoEl.className = 'text-3xl font-bold mt-2 ' +
-                    (endeudamiento < 50 ? 'text-green-600 dark:text-green-400' :
+                    (endeudamiento === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     endeudamiento < 50 ? 'text-green-600 dark:text-green-400' :
                      endeudamiento < 70 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
             if (margenEl) {
-                const valor = margen_neto.toFixed(2) + '%';
+                const valor = margen_neto === 0 ? '-' : margen_neto.toFixed(2) + '%';
                 margenEl.textContent = valor;
                 margenEl.className = 'text-3xl font-bold mt-2 ' +
-                    (margen_neto > 10 ? 'text-green-600 dark:text-green-400' :
+                    (margen_neto === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     margen_neto > 10 ? 'text-green-600 dark:text-green-400' :
                      margen_neto > 5 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
