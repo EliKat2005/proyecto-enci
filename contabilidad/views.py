@@ -615,8 +615,8 @@ def company_mayor(request, empresa_id):
         except:
             pass
 
-    # Obtener todas las cuentas auxiliares para el selector
-    cuentas_aux = EmpresaPlanCuenta.objects.filter(empresa=empresa, es_auxiliar=True).order_by(
+    # Obtener todas las cuentas principales (NO auxiliares) para el selector
+    cuentas_aux = EmpresaPlanCuenta.objects.filter(empresa=empresa, es_auxiliar=False).order_by(
         "codigo"
     )
 
