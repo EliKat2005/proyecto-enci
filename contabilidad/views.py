@@ -924,7 +924,14 @@ def company_balance_comprobacion(request, empresa_id):
     )
 
     # Verificar si es docente y supervisor
-    is_docente = request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+    is_docente = False
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile")
+            and request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+        )
+    except Exception:
+        is_docente = False
     is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
 
     context = {
@@ -1010,7 +1017,14 @@ def company_estados_financieros(request, empresa_id):
     )
 
     # Verificar si es docente y supervisor
-    is_docente = request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+    is_docente = False
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile")
+            and request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+        )
+    except Exception:
+        is_docente = False
     is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
 
     context = {

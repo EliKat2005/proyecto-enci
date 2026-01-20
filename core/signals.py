@@ -13,6 +13,32 @@ from .models import Notification, UserProfile
 User = get_user_model()
 
 
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Crea automáticamente un UserProfile cuando se crea un nuevo User.
+    
+    Determina el rol basado en los permisos del usuario:
+    - Admin si es superuser o staff
+    - Estudiante en otros casos
+    """
+    if created and not hasattr(instance, 'userprofile'):
+        try:
+            # Determinar el rol basado en el estado del usuario
+            if instance.is_superuser or instance.is_staff:
+                rol = UserProfile.Roles.ADMIN
+            else:
+                rol = UserProfile.Roles.ESTUDIANTE
+            
+            UserProfile.objects.create(
+                user=instance,
+                rol=rol,
+                esta_activo=instance.is_active
+            )
+        except Exception:
+            # No fallar la creación del usuario si hay problemas con el perfil
+            pass
+
+
 @receiver(post_save, sender=UserProfile)
 def sync_group_on_profile_save(sender, instance, **kwargs):
     """Asegura que el usuario esté en el Group correspondiente a su `rol`.
