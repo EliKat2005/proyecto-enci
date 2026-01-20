@@ -552,15 +552,12 @@ def company_diario(request, empresa_id):
         empresa.comments.filter(section="DI").select_related("author").order_by("-created_at")
     )
     can_edit = (request.user == empresa.owner) or request.user.is_superuser
-    # Obtener cuentas hojas (sin hijos) y activas para usar en asientos
-    from django.db.models import Exists, OuterRef
-
-    cuentas_aux = (
-        EmpresaPlanCuenta.objects.filter(empresa=empresa, activa=True)
-        .annotate(_tiene_hijos=Exists(EmpresaPlanCuenta.objects.filter(padre=OuterRef("pk"))))
-        .exclude(_tiene_hijos=True)
-        .order_by("codigo")
-    )
+    # Obtener solo cuentas transaccionales (es_auxiliar=True) y activas
+    cuentas_aux = EmpresaPlanCuenta.objects.filter(
+        empresa=empresa, 
+        activa=True,
+        es_auxiliar=True
+    ).order_by("codigo")
 
     # Determinar si el usuario es docente
     is_docente = False
