@@ -277,10 +277,12 @@
         const errorEl = document.getElementById('error-metricas');
 
         if (!loadingEl || !errorEl) {
+            console.error('❌ Elementos loading/error no encontrados');
             return;
         }
 
         try {
+            console.log('🔄 Cargando métricas para empresa:', empresaId);
             loadingEl.classList.remove('hidden');
             errorEl.classList.add('hidden');
 
@@ -304,12 +306,13 @@
             }
 
             const data = await response.json();
+            console.log('📊 Datos recibidos de la API:', data);
 
-            // Normalizar nombres de campos del serializer
-            const liquidez = data.razon_corriente || 0;
-            const roa = data.roa || 0;
-            const endeudamiento = data.razon_endeudamiento || 0;
-            const margen_neto = data.margen_neto || 0;
+            // Normalizar nombres de campos del serializer (manejar null correctamente)
+            const liquidez = data.razon_corriente !== null && data.razon_corriente !== undefined ? data.razon_corriente : 0;
+            const roa = data.roa !== null && data.roa !== undefined ? data.roa : 0;
+            const endeudamiento = data.razon_endeudamiento !== null && data.razon_endeudamiento !== undefined ? data.razon_endeudamiento : 0;
+            const margen_neto = data.margen_neto !== null && data.margen_neto !== undefined ? data.margen_neto : 0;
 
             // Actualizar KPIs con colores según el valor
             const liquidezEl = document.getElementById('liquidez-value');
@@ -352,8 +355,8 @@
 
             // Crear objeto normalizado para funciones posteriores
             const metricas = { liquidez, roa, endeudamiento, margen_neto };
-            // Crear objeto normalizado para funciones posteriores
-            const metricas = { liquidez, roa, endeudamiento, margen_neto };
+            
+            console.log('📊 Métricas recibidas:', metricas);
 
             // Crear gráfico radar
             crearGraficoRadar(metricas);
@@ -382,6 +385,7 @@
             loadingEl.classList.add('hidden');
 
         } catch (error) {
+            console.error('❌ Error al cargar métricas:', error);
             loadingEl.classList.add('hidden');
             errorEl.classList.remove('hidden');
             const errorP = errorEl.querySelector('p');
@@ -612,6 +616,12 @@
 
     // Cargar métricas al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Dashboard ML/AI inicializado');
+        // Mostrar loading inmediatamente
+        const loadingEl = document.getElementById('loading-metricas');
+        if (loadingEl) {
+            loadingEl.classList.remove('hidden');
+        }
         cargarDashboard();
     });
 
