@@ -698,7 +698,14 @@ def create_journal_entry(request, empresa_id):
                 cuenta_id = int(item.get("cuenta_id"))
             except Exception:
                 raise ValidationError(f"Línea {idx + 1}: cuenta inválida")
-            detalle = (item.get("detalle") or "").strip()
+            
+            # Obtener automáticamente la descripción de la cuenta como detalle
+            try:
+                cuenta = EmpresaPlanCuenta.objects.get(pk=cuenta_id, empresa=empresa)
+                detalle = cuenta.descripcion
+            except EmpresaPlanCuenta.DoesNotExist:
+                raise ValidationError(f"Línea {idx + 1}: cuenta no encontrada")
+            
             debe = str(item.get("debe") or "0")
             haber = str(item.get("haber") or "0")
             lineas.append(
