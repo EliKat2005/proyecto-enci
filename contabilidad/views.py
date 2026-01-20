@@ -378,6 +378,30 @@ def add_account(request, empresa_id):
         messages.error(request, f"Ya existe una cuenta con el código {codigo} en esta empresa.")
         return redirect("contabilidad:company_plan", empresa_id=empresa.id)
 
+    # AUTOMATIZACIÓN: Detectar tipo de cuenta basándose en el primer dígito
+    if codigo and not tipo:
+        primer_digito = codigo[0]
+        tipo_auto_map = {
+            '1': 'Activo',
+            '2': 'Pasivo',
+            '3': 'Patrimonio',
+            '4': 'Ingreso',
+            '5': 'Costo',
+            '6': 'Gasto',
+        }
+        tipo = tipo_auto_map.get(primer_digito)
+        if tipo:
+            messages.info(request, f"Tipo '{tipo}' asignado automáticamente por código {codigo}.")
+    
+    # AUTOMATIZACIÓN: Detectar naturaleza basándose en el tipo
+    if tipo and not naturaleza:
+        # Activos, Costos y Gastos tienen naturaleza Deudora
+        # Pasivos, Patrimonio e Ingresos tienen naturaleza Acreedora
+        if tipo in ['Activo', 'Costo', 'Gasto']:
+            naturaleza = 'Deudora'
+        elif tipo in ['Pasivo', 'Patrimonio', 'Ingreso']:
+            naturaleza = 'Acreedora'
+
     # Validar que 'tipo' y 'naturaleza' sean valores permitidos
     valid_tipos = [t[0] for t in EmpresaPlanCuenta._meta.get_field("tipo").choices]
     valid_naturalezas = [n[0] for n in EmpresaPlanCuenta._meta.get_field("naturaleza").choices]
