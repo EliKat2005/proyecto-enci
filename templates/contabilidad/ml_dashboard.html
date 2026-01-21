@@ -363,6 +363,28 @@
             
             console.log('📊 Métricas recibidas:', metricas);
 
+            // Verificar si hay datos reales (al menos un valor diferente de 0)
+            const hayDatos = liquidez !== 0 || roa !== 0 || endeudamiento !== 0 || margen_neto !== 0;
+
+            if (!hayDatos) {
+                // Mostrar mensaje de "sin datos" en lugar de gráficas vacías
+                mostrarMensajeSinDatos();
+                
+                // Ocultar insights porque no hay datos
+                const insightsContainer = document.getElementById('insights-container');
+                if (insightsContainer) {
+                    insightsContainer.innerHTML = `
+                        <p class="flex items-start">
+                            <span class="mr-2">ℹ️</span>
+                            <span>No hay datos suficientes para generar análisis. Ingrese asientos contables para comenzar.</span>
+                        </p>
+                    `;
+                }
+                
+                loadingEl.classList.add('hidden');
+                return; // No continuar si no hay datos
+            }
+
             // Crear gráfico radar
             crearGraficoRadar(metricas);
 
@@ -397,6 +419,48 @@
             if (errorP) {
                 errorP.textContent = 'Error al cargar métricas: ' + error.message;
             }
+        }
+    }
+
+    function mostrarMensajeSinDatos() {
+        // Ocultar gráficos y mostrar mensaje informativo
+        const radarContainer = document.getElementById('radarChartContainer');
+        const barContainer = document.getElementById('barChartContainer');
+        
+        const mensajeSinDatos = `
+            <div class="flex flex-col items-center justify-center h-80 text-center">
+                <svg class="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">Sin datos disponibles</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+                    Aún no hay información contable para mostrar. Ingrese asientos para ver análisis y gráficas.
+                </p>
+            </div>
+        `;
+        
+        if (radarContainer) {
+            radarContainer.innerHTML = `
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+                    Análisis Multidimensional
+                </h3>
+                ${mensajeSinDatos}
+            `;
+        }
+        
+        if (barContainer) {
+            barContainer.innerHTML = `
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+                    Comparativa de Ratios
+                </h3>
+                ${mensajeSinDatos}
+            `;
+        }
+        
+        // Ocultar resumen ejecutivo si existe
+        const resumenEjecutivo = document.getElementById('resumen-ejecutivo');
+        if (resumenEjecutivo) {
+            resumenEjecutivo.style.display = 'none';
         }
     }
 
