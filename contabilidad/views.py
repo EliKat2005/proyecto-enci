@@ -378,6 +378,30 @@ def add_account(request, empresa_id):
         messages.error(request, f"Ya existe una cuenta con el código {codigo} en esta empresa.")
         return redirect("contabilidad:company_plan", empresa_id=empresa.id)
 
+    # AUTOMATIZACIÓN: Detectar tipo de cuenta basándose en el primer dígito
+    if codigo and not tipo:
+        primer_digito = codigo[0]
+        tipo_auto_map = {
+            '1': 'Activo',
+            '2': 'Pasivo',
+            '3': 'Patrimonio',
+            '4': 'Ingreso',
+            '5': 'Costo',
+            '6': 'Gasto',
+        }
+        tipo = tipo_auto_map.get(primer_digito)
+        if tipo:
+            messages.info(request, f"Tipo '{tipo}' asignado automáticamente por código {codigo}.")
+    
+    # AUTOMATIZACIÓN: Detectar naturaleza basándose en el tipo
+    if tipo and not naturaleza:
+        # Activos, Costos y Gastos tienen naturaleza Deudora
+        # Pasivos, Patrimonio e Ingresos tienen naturaleza Acreedora
+        if tipo in ['Activo', 'Costo', 'Gasto']:
+            naturaleza = 'Deudora'
+        elif tipo in ['Pasivo', 'Patrimonio', 'Ingreso']:
+            naturaleza = 'Acreedora'
+
     # Validar que 'tipo' y 'naturaleza' sean valores permitidos
     valid_tipos = [t[0] for t in EmpresaPlanCuenta._meta.get_field("tipo").choices]
     valid_naturalezas = [n[0] for n in EmpresaPlanCuenta._meta.get_field("naturaleza").choices]
@@ -528,15 +552,12 @@ def company_diario(request, empresa_id):
         empresa.comments.filter(section="DI").select_related("author").order_by("-created_at")
     )
     can_edit = (request.user == empresa.owner) or request.user.is_superuser
-    # Obtener cuentas hojas (sin hijos) y activas para usar en asientos
-    from django.db.models import Exists, OuterRef
-
-    cuentas_aux = (
-        EmpresaPlanCuenta.objects.filter(empresa=empresa, activa=True)
-        .annotate(_tiene_hijos=Exists(EmpresaPlanCuenta.objects.filter(padre=OuterRef("pk"))))
-        .exclude(_tiene_hijos=True)
-        .order_by("codigo")
-    )
+    # Obtener solo cuentas transaccionales (es_auxiliar=True) y activas
+    cuentas_aux = EmpresaPlanCuenta.objects.filter(
+        empresa=empresa, 
+        activa=True,
+        es_auxiliar=True
+    ).order_by("codigo")
 
     # Determinar si el usuario es docente
     is_docente = False
@@ -594,8 +615,8 @@ def company_mayor(request, empresa_id):
         except:
             pass
 
-    # Obtener todas las cuentas auxiliares para el selector
-    cuentas_aux = EmpresaPlanCuenta.objects.filter(empresa=empresa, es_auxiliar=True).order_by(
+    # Obtener todas las cuentas principales (NO auxiliares) para el selector
+    cuentas_aux = EmpresaPlanCuenta.objects.filter(empresa=empresa, es_auxiliar=False).order_by(
         "codigo"
     )
 
@@ -674,7 +695,14 @@ def create_journal_entry(request, empresa_id):
                 cuenta_id = int(item.get("cuenta_id"))
             except Exception:
                 raise ValidationError(f"Línea {idx + 1}: cuenta inválida")
-            detalle = (item.get("detalle") or "").strip()
+            
+            # Obtener automáticamente la descripción de la cuenta como detalle
+            try:
+                cuenta = EmpresaPlanCuenta.objects.get(pk=cuenta_id, empresa=empresa)
+                detalle = cuenta.descripcion
+            except EmpresaPlanCuenta.DoesNotExist:
+                raise ValidationError(f"Línea {idx + 1}: cuenta no encontrada")
+            
             debe = str(item.get("debe") or "0")
             haber = str(item.get("haber") or "0")
             lineas.append(
@@ -924,7 +952,14 @@ def company_balance_comprobacion(request, empresa_id):
     )
 
     # Verificar si es docente y supervisor
-    is_docente = request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+    is_docente = False
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile")
+            and request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+        )
+    except Exception:
+        is_docente = False
     is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
 
     context = {
@@ -1010,7 +1045,14 @@ def company_estados_financieros(request, empresa_id):
     )
 
     # Verificar si es docente y supervisor
-    is_docente = request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+    is_docente = False
+    try:
+        is_docente = (
+            hasattr(request.user, "userprofile")
+            and request.user.userprofile.rol == UserProfile.Roles.DOCENTE
+        )
+    except Exception:
+        is_docente = False
     is_supervisor = EmpresaSupervisor.objects.filter(empresa=empresa, docente=request.user).exists()
 
     context = {

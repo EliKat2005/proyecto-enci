@@ -131,8 +131,9 @@ def logout_view(request):
     # Cerrar sesión
     logout(request)
 
-    # Renderizar la página de logout sin mensajes
-    return render(request, "core/logout.html")
+    # Redirigir a home con mensaje de despedida
+    messages.success(request, "¡Has cerrado sesión exitosamente! Hasta pronto.")
+    return redirect("core:home")
 
 
 def registro_view(request):

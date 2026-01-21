@@ -43,7 +43,7 @@ class AnalyticsService:
                         END) as saldo
                     FROM contabilidad_empresa_transaccion t
                     INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
-                    INNER JOIN contabilidad_empresa_plan_cuenta c ON t.cuenta_id = c.id
+                    INNER JOIN contabilidad_empresa_plandecuentas c ON t.cuenta_id = c.id
                     WHERE a.empresa_id = %s
                         AND a.estado = 'Confirmado'
                         AND a.anulado = FALSE
@@ -81,7 +81,7 @@ class AnalyticsService:
                     END) as saldo
                 FROM contabilidad_empresa_transaccion t
                 INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
-                INNER JOIN contabilidad_empresa_plan_cuenta c ON t.cuenta_id = c.id
+                INNER JOIN contabilidad_empresa_plandecuentas c ON t.cuenta_id = c.id
                 WHERE a.empresa_id = %s
                     AND a.estado = 'Confirmado'
                     AND a.anulado = FALSE
@@ -111,9 +111,9 @@ class AnalyticsService:
         num_cuentas_activas = (
             EmpresaPlanCuenta.objects.filter(
                 empresa=self.empresa,
-                transacciones__asiento__fecha__range=(fecha_inicio, fecha_fin),
-                transacciones__asiento__estado="Confirmado",
-                transacciones__asiento__anulado=False,
+                empresatransaccion__asiento__fecha__range=(fecha_inicio, fecha_fin),
+                empresatransaccion__asiento__estado="Confirmado",
+                empresatransaccion__asiento__anulado=False,
             )
             .distinct()
             .count()
@@ -175,7 +175,7 @@ class AnalyticsService:
                         END) as monto
                     FROM contabilidad_empresa_transaccion t
                     INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
-                    INNER JOIN contabilidad_empresa_plan_cuenta c ON t.cuenta_id = c.id
+                    INNER JOIN contabilidad_empresa_plandecuentas c ON t.cuenta_id = c.id
                     WHERE a.empresa_id = %s
                         AND a.estado = 'Confirmado'
                         AND a.anulado = FALSE
@@ -254,7 +254,7 @@ class AnalyticsService:
                     SUM(t.haber) as total_haber,
                     SUM(t.debe + t.haber) as movimiento_total,
                     RANK() OVER (ORDER BY SUM(t.debe + t.haber) DESC) as ranking
-                FROM contabilidad_empresa_plan_cuenta c
+                FROM contabilidad_empresa_plandecuentas c
                 INNER JOIN contabilidad_empresa_transaccion t ON c.id = t.cuenta_id
                 INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
                 WHERE a.empresa_id = %s
@@ -294,7 +294,7 @@ class AnalyticsService:
                         END) as saldo
                     FROM contabilidad_empresa_transaccion t
                     INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
-                    INNER JOIN contabilidad_empresa_plan_cuenta c ON t.cuenta_id = c.id
+                    INNER JOIN contabilidad_empresa_plandecuentas c ON t.cuenta_id = c.id
                     WHERE a.empresa_id = %s
                         AND a.estado = 'Confirmado'
                         AND a.anulado = FALSE
@@ -352,7 +352,7 @@ class AnalyticsService:
                         c.padre_id,
                         1 as nivel,
                         CAST(c.codigo AS CHAR(500)) as ruta
-                    FROM contabilidad_empresa_plan_cuenta c
+                    FROM contabilidad_empresa_plandecuentas c
                     WHERE c.empresa_id = %s AND c.padre_id IS NULL
 
                     UNION ALL
@@ -366,7 +366,7 @@ class AnalyticsService:
                         c.padre_id,
                         j.nivel + 1,
                         CONCAT(j.ruta, ' > ', c.codigo)
-                    FROM contabilidad_empresa_plan_cuenta c
+                    FROM contabilidad_empresa_plandecuentas c
                     INNER JOIN jerarquia j ON c.padre_id = j.id
                     WHERE c.empresa_id = %s
                 )

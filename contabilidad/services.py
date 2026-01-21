@@ -246,6 +246,9 @@ class AsientoService:
     def _validar_bancarizacion(cls, empresa: Empresa, lineas: list[dict], monto_total: Decimal):
         """
         Valida la regla de bancarización: operaciones > $1,000 deben usar banco, no caja.
+        
+        Nota: No aplica a cuentas de Patrimonio (clase 3) ya que los aportes de capital
+        no están sujetos a límites de bancarización.
 
         Raises:
             ValidationError: Si se viola la regla de bancarización
@@ -261,6 +264,11 @@ class AsientoService:
 
         # Verificar múltiples formas de identificar caja
         for cuenta in cuentas:
+            # Excluir cuentas de Patrimonio (clase 3) - los aportes de capital
+            # no están sujetos a límites de bancarización
+            if cuenta.codigo.startswith("3"):
+                continue
+            
             es_caja = (
                 cls.CODIGO_CAJA_PATTERN in cuenta.codigo  # Por código
                 or "caja" in cuenta.descripcion.lower()  # Por descripción

@@ -72,3 +72,6 @@ staticfiles_build/
 
 # Archivos del `uv init` original que no usaremos
 main.py
+
+# Documentos de verificación temporal
+VERIFICACION_PRE_COMMIT.md

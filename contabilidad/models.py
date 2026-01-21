@@ -343,6 +343,24 @@ class EmpresaPlanCuenta(models.Model):
             return "Cuenta"
         return "Subcuenta"
 
+    def get_grupo_principal(self):
+        """Retorna el primer ancestro NO auxiliar (grupo principal).
+        
+        Si la cuenta actual no es auxiliar, se retorna a sí misma.
+        Si no tiene padre, retorna a sí misma.
+        """
+        if not self.es_auxiliar:
+            return self
+        
+        ancestro = self.padre
+        while ancestro:
+            if not ancestro.es_auxiliar:
+                return ancestro
+            ancestro = ancestro.padre
+        
+        # Si no hay padre no auxiliar, retornar la propia cuenta
+        return self
+
 
 class EmpresaTercero(models.Model):
     """

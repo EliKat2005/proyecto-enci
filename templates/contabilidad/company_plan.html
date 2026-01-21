@@ -7,14 +7,21 @@
   <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
 
     {% with current_panel='plan' %}{% include 'contabilidad/_company_header_minimal.html' %}{% endwith %}
-    <!-- Botones eliminados: Vista Compacta y Ocultar Panel se integran en header mínimo -->
 
-    {# navegación integrada en header parcial; se elimina nav redundante #}
+    <!-- Botón para toggle filtros -->
+    <div class="mb-4 flex justify-end">
+      <button id="toggle-filtros-btn" onclick="toggleFiltros()" class="flex items-center gap-2 px-4 py-2 bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg text-sm font-semibold shadow-md transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+        </svg>
+        <span id="filtros-btn-text">Mostrar Filtros</span>
+      </button>
+    </div>
 
-    <!-- Layout Grid Principal: 5 columnas para más espacio en la tabla -->
-    <div id="plan-grid" class="grid gap-4 xl:grid-cols-5 items-start transition-all">
+    <!-- Layout Grid Principal -->
+    <div id="plan-grid" class="grid gap-4 items-start transition-all" style="grid-template-columns: 1fr 3fr 0fr;">
       <!-- Columna izquierda: Formulario Crear Cuenta -->
-      <div id="plan-actions" class="space-y-4 xl:col-span-1 transition-all">
+      <div id="plan-actions" class="space-y-4" style="transition: width 0.3s ease, overflow 0.3s ease;">
         {% if can_edit %}
         <div class="bg-gradient-to-br from-white to-blue-50/30 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-blue-100 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
@@ -28,24 +35,13 @@
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Código *</label>
               <input name="codigo" required class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all" />
+              <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                <span class="font-semibold">Tipo automático:</span> 1=Activo, 2=Pasivo, 3=Patrimonio, 4=Ingreso, 5=Costo, 6=Gasto
+              </p>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Descripción *</label>
               <input name="descripcion" required class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all" />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Tipo</label>
-                <select name="tipo" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
-                  <option>Activo</option><option>Pasivo</option><option>Patrimonio</option><option>Ingreso</option><option>Costo</option><option>Gasto</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Naturaleza</label>
-                <select name="naturaleza" class="w-full px-2 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all">
-                  <option>Deudora</option><option>Acreedora</option>
-                </select>
-              </div>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Cuenta Padre</label>
@@ -54,12 +50,14 @@
                 {% for p in cuentas %}<option value="{{ p.id }}">{{ p.codigo }} — {{ p.descripcion }}</option>{% endfor %}
               </select>
             </div>
-            <div class="bg-slate-50 dark:bg-slate-950 -mx-5 -mb-5 px-5 py-3 rounded-b-xl border-t border-slate-200 dark:border-slate-800">
-              <label class="inline-flex items-center text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                <input type="checkbox" name="es_auxiliar" value="1" class="w-4 h-4 text-blue-600 border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 mr-2">Cuenta Transaccional
+            <div class="pt-1">
+              <label class="flex items-center gap-2 px-3 py-2.5 bg-blue-50/50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-900 rounded-lg cursor-pointer hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-all">
+                <input type="checkbox" name="es_auxiliar" value="1" class="w-4 h-4 text-blue-600 border-slate-300 dark:border-slate-600 dark:bg-slate-700 rounded focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Cuenta Transaccional</span>
               </label>
+              <p class="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400 px-1">Permite registrar movimientos directamente</p>
             </div>
-            <div class="-mx-5 -mb-5 px-5 pb-5">
+            <div class="pt-2">
               <button class="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 hover:from-blue-700 hover:to-blue-800 dark:hover:from-blue-600 dark:hover:to-blue-700 text-white rounded-lg text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200">Crear Cuenta</button>
             </div>
           </form>
@@ -67,8 +65,8 @@
         {% endif %}
       </div>
 
-      <!-- Columna principal: Tabla (ahora ocupa 3 columnas en lugar de 2) -->
-      <div id="plan-main" class="xl:col-span-3 space-y-4 transition-all">
+      <!-- Columna principal: Tabla -->
+      <div id="plan-main" class="space-y-4">
 
     {# Se elimina formulario duplicado; el formulario lateral permanece #}
 
@@ -193,8 +191,8 @@
     </div>
     </div> <!-- fin col principal -->
 
-      <!-- Columna derecha: Filtros -->
-      <div id="plan-sidebar" class="space-y-4 xl:col-span-1 transition-all">
+      <!-- Columna derecha: Filtros (oculto por defecto) -->
+      <div id="plan-sidebar" class="space-y-4" style="width: 0; overflow: hidden; transition: width 0.3s ease;">
         <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-slate-200 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
             <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-600 dark:to-slate-700 rounded-lg flex items-center justify-center shadow-md">
@@ -299,24 +297,36 @@
 
       // Panel toggle button in minimal header
       const panelBtn = document.getElementById('panel-toggle-btn');
+      const grid = document.getElementById('plan-grid');
       const sidebar = document.getElementById('plan-sidebar');
       const actions = document.getElementById('plan-actions');
-      const main = document.getElementById('plan-main');
       let hiddenPanels = false;
       if(panelBtn){
         panelBtn.addEventListener('click',()=>{
           hiddenPanels = !hiddenPanels;
           if(hiddenPanels){
-            sidebar.classList.add('hidden');
-            actions.classList.add('hidden');
-            main.classList.remove('xl:col-span-2');
-            main.classList.add('xl:col-span-4');
+            // Ocultar paneles laterales manteniendo el grid
+            actions.style.width = '0';
+            actions.style.overflow = 'hidden';
+            sidebar.style.width = '0';
+            sidebar.style.overflow = 'hidden';
+            grid.style.gridTemplateColumns = '0fr 1fr 0fr';
             panelBtn.textContent='Mostrar Paneles';
           }else{
-            sidebar.classList.remove('hidden');
-            actions.classList.remove('hidden');
-            main.classList.remove('xl:col-span-4');
-            main.classList.add('xl:col-span-2');
+            // Mostrar paneles laterales
+            actions.style.width = 'auto';
+            actions.style.overflow = 'visible';
+            // Restaurar sidebar según su estado previo
+            const filtrosBtn = document.getElementById('filtros-btn-text');
+            if(filtrosBtn && filtrosBtn.textContent === 'Ocultar Filtros'){
+              sidebar.style.width = 'auto';
+              sidebar.style.overflow = 'visible';
+              grid.style.gridTemplateColumns = '1fr 3fr 1fr';
+            } else {
+              sidebar.style.width = '0';
+              sidebar.style.overflow = 'hidden';
+              grid.style.gridTemplateColumns = '1fr 3fr 0fr';
+            }
             panelBtn.textContent='Ocultar Paneles';
           }
         });
@@ -387,6 +397,27 @@
         });
       });
     })();
+
+    // Toggle de filtros
+    function toggleFiltros() {
+      const sidebar = document.getElementById('plan-sidebar');
+      const grid = document.getElementById('plan-grid');
+      const btnText = document.getElementById('filtros-btn-text');
+      
+      if (sidebar.style.width === '0px' || sidebar.style.width === '') {
+        // Mostrar filtros
+        sidebar.style.width = 'auto';
+        sidebar.style.overflow = 'visible';
+        grid.style.gridTemplateColumns = '1fr 3fr 1fr';
+        btnText.textContent = 'Ocultar Filtros';
+      } else {
+        // Ocultar filtros
+        sidebar.style.width = '0';
+        sidebar.style.overflow = 'hidden';
+        grid.style.gridTemplateColumns = '1fr 3fr 0fr';
+        btnText.textContent = 'Mostrar Filtros';
+      }
+    }
   </script>
   <!-- Compact mode removed -->
 {% endblock %}

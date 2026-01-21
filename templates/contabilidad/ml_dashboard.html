@@ -277,14 +277,16 @@
         const errorEl = document.getElementById('error-metricas');
 
         if (!loadingEl || !errorEl) {
+            console.error('❌ Elementos loading/error no encontrados');
             return;
         }
 
         try {
+            console.log('🔄 Cargando métricas para empresa:', empresaId);
             loadingEl.classList.remove('hidden');
             errorEl.classList.add('hidden');
 
-            const url = `/contabilidad/api/ml/dashboard/${empresaId}/`;
+            const url = `/contabilidad/api/ml/analytics/metricas/${empresaId}/`;
 
             const csrftoken = getCookie('csrftoken');
 
@@ -304,13 +306,14 @@
             }
 
             const data = await response.json();
+            console.log('📊 Datos recibidos de la API:', data);
 
-            // Verificar si hay datos
-            if (data.has_data === false) {
-                mostrarMensajeSinDatos();
-                loadingEl.classList.add('hidden');
-                return;
-            }
+            // Normalizar nombres de campos del serializer (manejar null correctamente)
+            // Convertir a número y usar 0 como fallback
+            const liquidez = parseFloat(data.razon_corriente) || 0;
+            const roa = parseFloat(data.roa) || 0;
+            const endeudamiento = parseFloat(data.razon_endeudamiento) || 0;
+            const margen_neto = parseFloat(data.margen_neto) || 0;
 
             // Actualizar KPIs con colores según el valor
             const liquidezEl = document.getElementById('liquidez-value');
@@ -319,54 +322,58 @@
             const margenEl = document.getElementById('margen-value');
 
             if (liquidezEl) {
-                const valor = data.liquidez.toFixed(2);
+                const valor = liquidez === 0 ? '-' : liquidez.toFixed(2);
                 liquidezEl.textContent = valor;
-                // Verde si >= 1.5, amarillo si >= 1, rojo si < 1
                 liquidezEl.className = 'text-3xl font-bold mt-2 ' +
-                    (data.liquidez >= 1.5 ? 'text-green-600 dark:text-green-400' :
-                     data.liquidez >= 1 ? 'text-yellow-600 dark:text-yellow-400' :
+                    (liquidez === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     liquidez >= 1.5 ? 'text-green-600 dark:text-green-400' :
+                     liquidez >= 1 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
             if (roaEl) {
-                const valor = data.roa.toFixed(2) + '%';
+                const valor = roa === 0 ? '-' : roa.toFixed(2) + '%';
                 roaEl.textContent = valor;
-                // Verde si > 5%, amarillo si > 0%, rojo si <= 0%
                 roaEl.className = 'text-3xl font-bold mt-2 ' +
-                    (data.roa > 5 ? 'text-green-600 dark:text-green-400' :
-                     data.roa > 0 ? 'text-yellow-600 dark:text-yellow-400' :
+                    (roa === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     roa > 5 ? 'text-green-600 dark:text-green-400' :
+                     roa > 0 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
             if (endeudamientoEl) {
-                const valor = data.endeudamiento.toFixed(2) + '%';
+                const valor = endeudamiento === 0 ? '-' : endeudamiento.toFixed(2) + '%';
                 endeudamientoEl.textContent = valor;
-                // Verde si < 50%, amarillo si < 70%, rojo si >= 70%
                 endeudamientoEl.className = 'text-3xl font-bold mt-2 ' +
-                    (data.endeudamiento < 50 ? 'text-green-600 dark:text-green-400' :
-                     data.endeudamiento < 70 ? 'text-yellow-600 dark:text-yellow-400' :
+                    (endeudamiento === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     endeudamiento < 50 ? 'text-green-600 dark:text-green-400' :
+                     endeudamiento < 70 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
             if (margenEl) {
-                const valor = data.margen_neto.toFixed(2) + '%';
+                const valor = margen_neto === 0 ? '-' : margen_neto.toFixed(2) + '%';
                 margenEl.textContent = valor;
-                // Verde si > 10%, amarillo si > 5%, rojo si <= 5%
                 margenEl.className = 'text-3xl font-bold mt-2 ' +
-                    (data.margen_neto > 10 ? 'text-green-600 dark:text-green-400' :
-                     data.margen_neto > 5 ? 'text-yellow-600 dark:text-yellow-400' :
+                    (margen_neto === 0 ? 'text-gray-400 dark:text-gray-500' :
+                     margen_neto > 10 ? 'text-green-600 dark:text-green-400' :
+                     margen_neto > 5 ? 'text-yellow-600 dark:text-yellow-400' :
                      'text-red-600 dark:text-red-400');
             }
 
+            // Crear objeto normalizado para funciones posteriores
+            const metricas = { liquidez, roa, endeudamiento, margen_neto };
+            
+            console.log('📊 Métricas recibidas:', metricas);
 
             // Crear gráfico radar
-            crearGraficoRadar(data);
+            crearGraficoRadar(metricas);
 
             // Crear gráfico de barras
-            crearGraficoBarras(data);
+            crearGraficoBarras(metricas);
 
             // Actualizar semáforo de salud financiera
-            actualizarSemaforo(data);
+            actualizarSemaforo(metricas);
 
             // Generar insights automáticos
-            const insights = generarInsights(data);
+            const insights = generarInsights(metricas);
             const insightsContainer = document.getElementById('insights-container');
             if (insightsContainer) {
                 insightsContainer.innerHTML = insights.map(insight => `
@@ -383,6 +390,7 @@
             loadingEl.classList.add('hidden');
 
         } catch (error) {
+            console.error('❌ Error al cargar métricas:', error);
             loadingEl.classList.add('hidden');
             errorEl.classList.remove('hidden');
             const errorP = errorEl.querySelector('p');
@@ -613,6 +621,12 @@
 
     // Cargar métricas al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Dashboard ML/AI inicializado');
+        // Mostrar loading inmediatamente
+        const loadingEl = document.getElementById('loading-metricas');
+        if (loadingEl) {
+            loadingEl.classList.remove('hidden');
+        }
         cargarDashboard();
     });
 

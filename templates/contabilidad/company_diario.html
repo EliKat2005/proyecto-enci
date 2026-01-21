@@ -2,19 +2,42 @@
 
 {% block title %}Libro Diario - {{ empresa.nombre }} | ECAE{% endblock %}
 
+{% block extra_head %}
+<style>
+  /* Ocultar flechas de inputs tipo number */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+    display: none !important;
+  }
+  input[type=number] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 dark:from-black dark:via-slate-950 dark:to-slate-900 py-6">
   <div class="mx-auto px-4 xl:px-8 max-w-[1600px]">
 
     {% with current_panel='diario' %}{% include 'contabilidad/_company_header_minimal.html' %}{% endwith %}
-    <!-- Botones eliminados: Vista Compacta y Ocultar Panel ahora en header mínimo -->
 
-    {# navegación ya incluida en header; se elimina duplicado #}
+    <!-- Botón para toggle filtros -->
+    <div class="mb-4 flex justify-end">
+      <button id="toggle-filtros-btn" onclick="toggleFiltros()" class="flex items-center gap-2 px-4 py-2 bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg text-sm font-semibold shadow-md transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+        </svg>
+        <span id="filtros-btn-text">Mostrar Filtros</span>
+      </button>
+    </div>
 
     <!-- Grid Superior: Acciones (izq) + Lista (centro) + Filtros (der) -->
-    <div id="diario-grid" class="grid gap-4 xl:grid-cols-4 items-start mb-4">
+    <div id="diario-grid" class="grid gap-4 items-start mb-4 transition-all" style="grid-template-columns: 1fr 2fr 0fr;">
       <!-- Panel Izquierdo: Nuevo Asiento -->
-      <div id="diario-actions" class="xl:col-span-1 space-y-4">
+      <div id="diario-actions" class="space-y-4" style="transition: width 0.3s ease, overflow 0.3s ease;">
         {% if can_edit %}
         <div class="bg-gradient-to-br from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-emerald-100 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
@@ -23,7 +46,7 @@
             </div>
             <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-wide">Nuevo Asiento</h2>
           </div>
-          <form method="post" action="{% url 'contabilidad:create_journal_entry' empresa.id %}" onsubmit="return buildLinesJSON(this)">
+          <form method="post" action="{% url 'contabilidad:create_journal_entry' empresa.id %}">
             {% csrf_token %}
             <div class="space-y-3.5">
               <div>
@@ -34,12 +57,27 @@
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Descripción</label>
                 <input type="text" name="descripcion" placeholder="Descripción general" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-3 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-all" />
               </div>
+              
+              <!-- Filtro por Clase de Cuenta -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Filtrar Cuentas por Clase</label>
+                <select id="filtro-clase-cuenta" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all font-medium">
+                  <option value="">Todas las clases</option>
+                  <option value="1">1 - Activos</option>
+                  <option value="2">2 - Pasivos</option>
+                  <option value="3">3 - Patrimonio</option>
+                  <option value="4">4 - Ingresos</option>
+                  <option value="5">5 - Gastos</option>
+                  <option value="6">6 - Costos</option>
+                </select>
+                <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Las líneas ya agregadas se mantienen al cambiar el filtro</p>
+              </div>
+              
               <div class="overflow-x-auto" id="lineas-wrapper">
                 <table class="min-w-full text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded" id="tabla-lineas">
                   <thead>
                     <tr class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
                       <th class="px-2 py-1 text-left font-semibold">Cuenta</th>
-                      <th class="px-2 py-1 text-left font-semibold">Detalle</th>
                       <th class="px-2 py-1 text-right font-semibold">Debe</th>
                       <th class="px-2 py-1 text-right font-semibold">Haber</th>
                       <th class="px-2 py-1"></th>
@@ -56,9 +94,21 @@
                 </table>
               </div>
               <input type="hidden" name="lineas_json" />
-              <div class="flex items-center gap-2">
-                <button type="submit" class="px-4 py-2 bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-800 text-white rounded-lg text-sm font-semibold">Guardar</button>
-                <span class="text-[11px] text-slate-500 dark:text-slate-400">Debe = Haber</span>
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                  <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-800 text-white rounded-lg text-sm font-semibold">Guardar Asiento</button>
+                  <button type="button" onclick="customConfirm('Se eliminará el borrador guardado y todos los datos del formulario.', '¿Limpiar formulario?', 'Sí, limpiar', 'Cancelar').then(confirmed => { if(confirmed) { clearAsientoDraft(); location.reload(); } })" class="px-3 py-2 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white rounded-lg text-sm font-semibold" title="Limpiar borrador">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+                <div class="flex items-center gap-2 text-[11px]">
+                  <span class="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"></path></svg>
+                    Autoguardado activo
+                  </span>
+                  <span class="text-slate-400">•</span>
+                  <span class="text-slate-500 dark:text-slate-400">Debe = Haber</span>
+                </div>
               </div>
             </div>
           </form>
@@ -67,7 +117,7 @@
       </div>
 
       <!-- Panel Central: Lista de Asientos -->
-      <div id="diario-main" class="xl:col-span-2 space-y-4">
+      <div id="diario-main" class="space-y-4">
         <div class="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
           <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-emerald-200 dark:border-emerald-900">
             <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-lg flex items-center justify-center shadow-md">
@@ -105,7 +155,10 @@
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700 lineas-cuerpo" data-total-lineas="{{ a.lineas.count }}">
                       {% for ln in a.lineas.all %}
                       <tr class="linea {% if forloop.counter > 4 %}hidden extra-linea{% endif %}">
-                        <td class="py-0.5 pr-2"><span class="font-mono text-[11px] text-slate-700 dark:text-slate-300">{{ ln.cuenta.codigo }}</span> <span class="text-slate-500 dark:text-slate-400">— {{ ln.cuenta.descripcion }}</span></td>
+                        <td class="py-0.5 pr-2">
+                          <span class="font-mono text-[11px] text-slate-700 dark:text-slate-300">{{ ln.cuenta.codigo }}</span> 
+                          <span class="text-slate-500 dark:text-slate-400">— {{ ln.cuenta.get_grupo_principal.descripcion }}</span>
+                        </td>
                         <td class="py-0.5 text-right text-slate-700 dark:text-slate-300">{% if ln.debe > 0 %}{{ ln.debe }}{% else %}-{% endif %}</td>
                         <td class="py-0.5 text-right text-slate-700 dark:text-slate-300">{% if ln.haber > 0 %}{{ ln.haber }}{% else %}-{% endif %}</td>
                       </tr>
@@ -149,9 +202,9 @@
         </div>
       </div>
 
-      <!-- Panel Derecho: Filtros -->
-      <div id="diario-sidebar" class="xl:col-span-1 space-y-4">
-        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 sticky top-20">
+      <!-- Panel Derecho: Filtros (oculto por defecto) -->
+      <div id="diario-sidebar" class="space-y-4" style="width: 0; overflow: hidden; transition: width 0.3s ease;">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 sticky top-20">
           <form id="diario-filter-form" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -194,59 +247,257 @@
 <template id="select-cuenta-template">
   <select class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded" name="cuenta_id">
     {% for c in cuentas_aux %}
-      <option value="{{ c.id }}">{{ c.codigo }} — {{ c.descripcion }}</option>
+      <option value="{{ c.id }}" data-clase="{{ c.codigo.0 }}">{{ c.codigo }} — {{ c.descripcion }}</option>
     {% endfor %}
   </select>
 </template>
 
 <script>
-  function addLinea() {
+  function addLinea(skipAutoSave = false) {
     const body = document.getElementById('lineas-body');
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-700';
     const selectHtml = document.getElementById('select-cuenta-template').innerHTML;
     tr.innerHTML = `
       <td class="px-2 py-1">\n        ${selectHtml}\n      </td>
-      <td class="px-2 py-1">
-        <input type="text" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded" name="detalle" placeholder="Detalle opcional" />
+      <td class="px-2 py-1 text-right">
+        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded text-right" name="debe" placeholder="0.00" />
       </td>
       <td class="px-2 py-1 text-right">
-        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded text-right" name="debe" value="0.00" />
+        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded text-right" name="haber" placeholder="0.00" />
       </td>
       <td class="px-2 py-1 text-right">
-        <input type="number" step="0.01" min="0" class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded text-right" name="haber" value="0.00" />
-      </td>
-      <td class="px-2 py-1 text-right">
-        <button type="button" class="px-2 py-1 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded" onclick="this.closest('tr').remove()">Quitar</button>
+        <button type="button" class="px-2 py-1 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded" onclick="this.closest('tr').remove(); saveAsientoDraft();">Quitar</button>
       </td>
     `;
     body.appendChild(tr);
+    
+    // Aplicar el filtro actual a la nueva línea
+    aplicarFiltroClase();
+    
+    // Solo guardar automáticamente si no es una línea inicial
+    if (!skipAutoSave) {
+      saveAsientoDraft();
+    }
+  }
+  
+  // Filtrar cuentas por clase
+  function aplicarFiltroClase() {
+    const filtroSelect = document.getElementById('filtro-clase-cuenta');
+    if (!filtroSelect) return;
+    
+    const claseSeleccionada = filtroSelect.value;
+    const selects = document.querySelectorAll('#lineas-body select[name="cuenta_id"]');
+    
+    selects.forEach(select => {
+      const valorActual = select.value;
+      const options = Array.from(select.options);
+      
+      options.forEach(option => {
+        if (claseSeleccionada === '' || option.dataset.clase === claseSeleccionada) {
+          option.style.display = '';
+        } else {
+          option.style.display = 'none';
+        }
+      });
+      
+      // Si el valor actual ya no es visible, resetear
+      if (valorActual) {
+        const optionActual = select.querySelector(`option[value="${valorActual}"]`);
+        if (optionActual && optionActual.style.display === 'none') {
+          // No resetear, mantener el valor seleccionado
+          // El usuario verá la cuenta seleccionada aunque no esté en el filtro actual
+        }
+      }
+    });
+    
+    console.log('✓ Filtro aplicado: Clase', claseSeleccionada || 'Todas');
   }
 
-  function buildLinesJSON(form) {
+  // Autoguardado en localStorage
+  function saveAsientoDraft() {
+    const form = document.querySelector('form[action*="/diario/add/"]');
+    if (!form) return;
+    
+    const fecha = form.querySelector('input[name="fecha"]').value;
+    const descripcion = form.querySelector('input[name="descripcion"]').value;
     const rows = form.querySelectorAll('#lineas-body tr');
-    const arr = [];
+    const lineas = [];
+    
     rows.forEach(tr => {
       const cuenta_id = tr.querySelector('select[name="cuenta_id"]').value;
-      const detalle = tr.querySelector('input[name="detalle"]').value;
       const debe = tr.querySelector('input[name="debe"]').value || '0';
       const haber = tr.querySelector('input[name="haber"]').value || '0';
-      arr.push({cuenta_id, detalle, debe, haber});
+      lineas.push({cuenta_id, debe, haber});
     });
-    if (arr.length < 2) {
-      openModal('Validación', 'Agrega al menos 2 líneas al asiento (Debe/Haber).', 'warning');
-      return false;
-    }
-    form.querySelector('input[name="lineas_json"]').value = JSON.stringify(arr);
-    return true;
+    
+    const draft = {fecha, descripcion, lineas, timestamp: Date.now()};
+    localStorage.setItem('asiento_draft_{{ empresa.id }}', JSON.stringify(draft));
+    console.log('✓ Borrador guardado:', lineas.length, 'líneas');
   }
 
-  // Inicializar con 2 líneas
-  document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('lineas-body')) {
-      addLinea();
-      addLinea();
+  // Restaurar borrador desde localStorage
+  function restoreAsientoDraft() {
+    const draft = localStorage.getItem('asiento_draft_{{ empresa.id }}');
+    const body = document.getElementById('lineas-body');
+    
+    if (!draft) {
+      // No hay borrador previo, agregar 2 líneas por defecto (sin autoguardar)
+      addLinea(true);
+      addLinea(true);
+      return false;
     }
+    
+    try {
+      const data = JSON.parse(draft);
+      const form = document.querySelector('form[action*="/diario/add/"]');
+      if (!form) return false;
+      
+      // Restaurar fecha y descripción
+      if (data.fecha) form.querySelector('input[name="fecha"]').value = data.fecha;
+      if (data.descripcion) form.querySelector('input[name="descripcion"]').value = data.descripcion;
+      
+      // Restaurar líneas
+      body.innerHTML = ''; // Limpiar líneas existentes
+      
+      if (data.lineas && data.lineas.length > 0) {
+        // Verificar si hay líneas con datos reales (cuenta seleccionada o montos)
+        const hasRealData = data.lineas.some(linea => 
+          (linea.cuenta_id && linea.cuenta_id !== '') || 
+          (linea.debe && parseFloat(linea.debe) !== 0) || 
+          (linea.haber && parseFloat(linea.haber) !== 0)
+        );
+        
+        data.lineas.forEach(linea => {
+          addLinea();
+          const lastRow = body.lastElementChild;
+          if (linea.cuenta_id) lastRow.querySelector('select[name="cuenta_id"]').value = linea.cuenta_id;
+          if (linea.debe) lastRow.querySelector('input[name="debe"]').value = linea.debe;
+          if (linea.haber) lastRow.querySelector('input[name="haber"]').value = linea.haber;
+        });
+        
+        // Solo mostrar indicador si hay datos reales
+        if (hasRealData) {
+          showDraftIndicator('Borrador restaurado');
+          console.log('✓ Borrador restaurado:', data.lineas.length, 'líneas');
+        }
+        return hasRealData;
+      } else {
+        // Si no hay líneas en el borrador, agregar 2 por defecto (sin autoguardar)
+        addLinea(true);
+        addLinea(true);
+        return false;
+      }
+    } catch (e) {
+      console.error('Error al restaurar borrador:', e);
+      // Si hay error, agregar líneas por defecto (sin autoguardar)
+      addLinea(true);
+      addLinea(true);
+      return false;
+    }
+  }
+
+  // Mostrar indicador visual de borrador
+  function showDraftIndicator(message) {
+    const form = document.querySelector('form[action*="/diario/add/"]');
+    if (!form) return;
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'draft-indicator';
+    indicator.className = 'mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg flex items-center gap-2';
+    indicator.innerHTML = `
+      <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span class="text-sm text-amber-800 dark:text-amber-200">${message}</span>
+    `;
+    
+    // Insertar antes del formulario
+    form.parentNode.insertBefore(indicator, form);
+  }
+
+  // Limpiar borrador después de creación exitosa
+  function clearAsientoDraft() {
+    localStorage.removeItem('asiento_draft_{{ empresa.id }}');
+  }
+
+  // Inicializar
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Sistema de asientos cargado');
+    
+    // PRIMERO: Verificar si hay mensaje de éxito y limpiar borrador
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'success' %}
+          clearAsientoDraft();
+          console.log('✓ Borrador limpiado después de crear asiento exitosamente');
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    
+    if (document.getElementById('lineas-body')) {
+      // LUEGO: Intentar restaurar borrador (devuelve true si se restauró)
+      const restored = restoreAsientoDraft();
+      
+      // Conectar filtro de clase
+      const filtroClase = document.getElementById('filtro-clase-cuenta');
+      if (filtroClase) {
+        filtroClase.addEventListener('change', aplicarFiltroClase);
+        console.log('✓ Filtro de clase conectado');
+      }
+      
+      // Guardar automáticamente al modificar campos
+      const form = document.querySelector('form[action*="/diario/add/"]');
+      if (form) {
+        console.log('✓ Formulario encontrado, registrando event listeners');
+        
+        form.querySelector('input[name="fecha"]').addEventListener('change', saveAsientoDraft);
+        form.querySelector('input[name="descripcion"]').addEventListener('input', saveAsientoDraft);
+        
+        // Detectar cambios en las líneas usando delegación de eventos
+        document.getElementById('lineas-body').addEventListener('input', saveAsientoDraft);
+        document.getElementById('lineas-body').addEventListener('change', saveAsientoDraft);
+        
+        // CRÍTICO: Guardar justo antes de enviar el formulario
+        form.addEventListener('submit', function(e) {
+          console.log('📤 Formulario enviado, procesando...');
+          
+          // Construir el JSON de líneas
+          const rows = form.querySelectorAll('#lineas-body tr');
+          const arr = [];
+          rows.forEach(tr => {
+            const cuenta_id = tr.querySelector('select[name="cuenta_id"]').value;
+            const debe = tr.querySelector('input[name="debe"]').value || '0';
+            const haber = tr.querySelector('input[name="haber"]').value || '0';
+            arr.push({cuenta_id, debe, haber});
+          });
+          
+          console.log('📋 Líneas procesadas:', arr.length);
+          
+          // Validar que haya al menos 2 líneas
+          if (arr.length < 2) {
+            e.preventDefault();
+            console.error('❌ Validación fallida: menos de 2 líneas');
+            openModal('Validación', 'Agrega al menos 2 líneas al asiento (Debe/Haber).', 'warning');
+            return false;
+          }
+          
+          // Insertar el JSON en el campo hidden
+          const jsonStr = JSON.stringify(arr);
+          form.querySelector('input[name="lineas_json"]').value = jsonStr;
+          
+          // Guardar el borrador por si hay error de validación en el servidor
+          saveAsientoDraft();
+          console.log('✓ Borrador guardado antes de enviar formulario');
+          console.log('✓ JSON de líneas:', jsonStr);
+          console.log('✓ Número de líneas:', arr.length);
+          
+          // Permitir que el formulario se envíe normalmente
+          return true;
+        });
+      }
+    }
+    
     // Filtro Diario
     const search = document.getElementById('f-search');
     const desde = document.getElementById('f-desde');
@@ -317,29 +568,62 @@
 <script>
   (function(){
     const panelBtn = document.getElementById('panel-toggle-btn');
+    const grid = document.getElementById('diario-grid');
     const sidebar = document.getElementById('diario-sidebar');
     const actions = document.getElementById('diario-actions');
-    const main = document.getElementById('diario-main');
     let hiddenPanels=false;
     if(panelBtn){
       panelBtn.addEventListener('click',()=>{
         hiddenPanels=!hiddenPanels;
         if(hiddenPanels){
-          sidebar.classList.add('hidden');
-          actions.classList.add('hidden');
-          main.classList.remove('xl:col-span-2');
-          main.classList.add('xl:col-span-4');
+          // Ocultar paneles laterales manteniendo el grid
+          actions.style.width = '0';
+          actions.style.overflow = 'hidden';
+          sidebar.style.width = '0';
+          sidebar.style.overflow = 'hidden';
+          grid.style.gridTemplateColumns = '0fr 1fr 0fr';
           panelBtn.textContent='Mostrar Paneles';
         }else{
-          sidebar.classList.remove('hidden');
-          actions.classList.remove('hidden');
-          main.classList.remove('xl:col-span-4');
-          main.classList.add('xl:col-span-2');
+          // Mostrar paneles laterales
+          actions.style.width = 'auto';
+          actions.style.overflow = 'visible';
+          // Restaurar sidebar según su estado previo
+          const filtrosBtn = document.getElementById('filtros-btn-text');
+          if(filtrosBtn && filtrosBtn.textContent === 'Ocultar Filtros'){
+            sidebar.style.width = 'auto';
+            sidebar.style.overflow = 'visible';
+            grid.style.gridTemplateColumns = '1fr 2fr 1fr';
+          } else {
+            sidebar.style.width = '0';
+            sidebar.style.overflow = 'hidden';
+            grid.style.gridTemplateColumns = '1fr 2fr 0fr';
+          }
           panelBtn.textContent='Ocultar Paneles';
         }
       });
     }
   })();
+
+  // Toggle de filtros
+  function toggleFiltros() {
+    const sidebar = document.getElementById('diario-sidebar');
+    const grid = document.getElementById('diario-grid');
+    const btnText = document.getElementById('filtros-btn-text');
+    
+    if (sidebar.style.width === '0px' || sidebar.style.width === '') {
+      // Mostrar filtros
+      sidebar.style.width = 'auto';
+      sidebar.style.overflow = 'visible';
+      grid.style.gridTemplateColumns = '1fr 2fr 1fr';
+      btnText.textContent = 'Ocultar Filtros';
+    } else {
+      // Ocultar filtros
+      sidebar.style.width = '0';
+      sidebar.style.overflow = 'hidden';
+      grid.style.gridTemplateColumns = '1fr 2fr 0fr';
+      btnText.textContent = 'Mostrar Filtros';
+    }
+  }
 </script>
 <!-- Compact mode eliminado -->
 {% endblock %}
