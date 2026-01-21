@@ -245,47 +245,16 @@ class AsientoService:
     @classmethod
     def _validar_bancarizacion(cls, empresa: Empresa, lineas: list[dict], monto_total: Decimal) -> list[str]:
         """
-        Valida la regla de bancarización: operaciones > $1,000 deben usar banco, no caja.
+        Validación de bancarización desactivada.
         
-        Nota: No aplica a cuentas de Patrimonio (clase 3) ya que los aportes de capital
-        no están sujetos a límites de bancarización.
+        Anteriormente validaba que operaciones > $1,000 usen banco en lugar de caja.
+        Esta validación ha sido desactivada para dar más flexibilidad operativa.
 
         Returns:
-            list[str]: Lista de advertencias (vacía si no hay problemas)
+            list[str]: Lista vacía (validación desactivada)
         """
-        advertencias = []
-        
-        if monto_total <= cls.LIMITE_BANCARIZACION:
-            return advertencias  # No aplica bancarización
-
-        # Buscar si se usa cuenta de caja (más flexible)
-        cuenta_ids = [l["cuenta_id"] for l in lineas]
-        cuentas = EmpresaPlanCuenta.objects.filter(
-            id__in=cuenta_ids, empresa=empresa
-        ).select_related("padre")
-
-        # Verificar múltiples formas de identificar caja
-        for cuenta in cuentas:
-            # Excluir cuentas de Patrimonio (clase 3) - los aportes de capital
-            # no están sujetos a límites de bancarización
-            if cuenta.codigo.startswith("3"):
-                continue
-            
-            es_caja = (
-                cuenta.codigo.startswith(cls.CODIGO_CAJA_PATTERN)  # Por código (inicio)
-                or "caja" in cuenta.descripcion.lower()  # Por descripción
-                or "efectivo" in cuenta.descripcion.lower()  # Por descripción alternativa
-                or (cuenta.padre and "caja" in cuenta.padre.descripcion.lower())  # Por padre
-            )
-
-            if es_caja:
-                advertencias.append(
-                    f"⚠️ ADVERTENCIA DE BANCARIZACIÓN: El monto total (${monto_total}) supera los "
-                    f'${cls.LIMITE_BANCARIZACION}. La cuenta "{cuenta.codigo} - {cuenta.descripcion}" '
-                    f"es de caja/efectivo. Se recomienda usar una cuenta bancaria según normativas tributarias."
-                )
-        
-        return advertencias
+        # Validación desactivada - retornar lista vacía sin advertencias
+        return []
 
     @classmethod
     @transaction.atomic
