@@ -157,7 +157,7 @@ class CierrePeriodoTests(TestCase):
         )
 
         # Asiento apertura
-        AsientoService.crear_asiento(
+        _, _ = AsientoService.crear_asiento(
             empresa=self.empresa,
             fecha=date(2025, 1, 1),
             descripcion="Apertura",
@@ -180,7 +180,7 @@ class CierrePeriodoTests(TestCase):
         )
 
         # Venta + costo + gasto
-        AsientoService.crear_asiento(
+        _, _ = AsientoService.crear_asiento(
             empresa=self.empresa,
             fecha=date(2025, 1, 10),
             descripcion="Venta",
@@ -201,7 +201,7 @@ class CierrePeriodoTests(TestCase):
             creado_por=self.user,
             auto_confirmar=True,
         )
-        AsientoService.crear_asiento(
+        _, _ = AsientoService.crear_asiento(
             empresa=self.empresa,
             fecha=date(2025, 1, 10),
             descripcion="Costo",
@@ -222,7 +222,7 @@ class CierrePeriodoTests(TestCase):
             creado_por=self.user,
             auto_confirmar=True,
         )
-        AsientoService.crear_asiento(
+        _, _ = AsientoService.crear_asiento(
             empresa=self.empresa,
             fecha=date(2025, 1, 31),
             descripcion="Gasto",

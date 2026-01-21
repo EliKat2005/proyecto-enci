@@ -721,7 +721,7 @@ def create_journal_entry(request, empresa_id):
         return redirect("contabilidad:company_diario", empresa_id=empresa.id)
 
     try:
-        AsientoService.crear_asiento(
+        asiento, advertencias = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=f,
             descripcion=descripcion or "Asiento contable",
@@ -729,6 +729,11 @@ def create_journal_entry(request, empresa_id):
             creado_por=request.user,
             auto_confirmar=False,  # Crear como BORRADOR por defecto
         )
+        
+        # Mostrar advertencias de bancarización si existen
+        for advertencia in advertencias:
+            messages.warning(request, advertencia)
+        
         messages.success(
             request, "Asiento creado como borrador. Confírmalo para incluirlo en reportes."
         )

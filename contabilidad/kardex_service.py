@@ -385,7 +385,7 @@ class KardexService:
             },
         ]
 
-        asiento = AsientoService.crear_asiento(
+        asiento, _ = AsientoService.crear_asiento(
             empresa=producto.empresa,
             fecha=fecha,
             descripcion=f"Entrada inventario: {producto.sku} - {documento or 'Sin documento'}",
@@ -437,7 +437,7 @@ class KardexService:
             },
         ]
 
-        asiento = AsientoService.crear_asiento(
+        asiento, _ = AsientoService.crear_asiento(
             empresa=producto.empresa,
             fecha=fecha,
             descripcion=f"Salida inventario: {producto.sku} - {documento or 'Sin documento'}",

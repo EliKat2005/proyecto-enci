@@ -115,7 +115,7 @@ class Command(BaseCommand):
 
         # 1) Intentar asiento desbalanceado
         try:
-            AsientoService.crear_asiento(
+            _, _ = AsientoService.crear_asiento(
                 empresa=empresa,
                 fecha=date.today(),
                 descripcion="Asiento desbalanceado (debe != haber)",
@@ -144,7 +144,7 @@ class Command(BaseCommand):
 
         # 2) Intentar usar cuenta NO auxiliar
         try:
-            AsientoService.crear_asiento(
+            _, _ = AsientoService.crear_asiento(
                 empresa=empresa,
                 fecha=date.today(),
                 descripcion="Uso indebido de cuenta no auxiliar",
@@ -173,7 +173,7 @@ class Command(BaseCommand):
 
         # 3) Bancarización: monto > 1000 usando CAJA debe fallar
         try:
-            AsientoService.crear_asiento(
+            _, _ = AsientoService.crear_asiento(
                 empresa=empresa,
                 fecha=date.today(),
                 descripcion="Venta grande en efectivo (debería bloquearse)",
@@ -200,7 +200,7 @@ class Command(BaseCommand):
 
         # 4) Bancarización correcta usando Banco
         try:
-            asiento_ok = AsientoService.crear_asiento(
+            asiento_ok = _, _ = AsientoService.crear_asiento(
                 empresa=empresa,
                 fecha=date.today(),
                 descripcion="Venta grande bancarizada",
@@ -233,7 +233,7 @@ class Command(BaseCommand):
 
         # 5) Crear asiento de gasto pequeño (sin bancarización)
         try:
-            asiento_gasto = AsientoService.crear_asiento(
+            asiento_gasto = _, _ = AsientoService.crear_asiento(
                 empresa=empresa,
                 fecha=date.today(),
                 descripcion="Pago de sueldos menor",

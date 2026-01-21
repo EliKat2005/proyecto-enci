@@ -42,7 +42,7 @@ class AsientoService:
         lineas: list[dict],
         creado_por,
         auto_confirmar: bool = False,
-    ) -> EmpresaAsiento:
+    ) -> tuple[EmpresaAsiento, list[str]]:
         """
         Crea un asiento contable con validaciones completas.
 
@@ -65,7 +65,7 @@ class AsientoService:
             auto_confirmar: Si debe confirmarse automáticamente
 
         Returns:
-            EmpresaAsiento creado
+            tuple: (EmpresaAsiento creado, lista de advertencias)
 
         Raises:
             ValidationError: Si las validaciones fallan
@@ -134,8 +134,8 @@ class AsientoService:
         # 2. Validar periodo contable abierto
         cls._validar_periodo_abierto(empresa, fecha)
 
-        # 3. Validar bancarización
-        cls._validar_bancarizacion(empresa, lineas, total_debe)
+        # 3. Validar bancarización (retorna advertencias, no bloquea)
+        advertencias = cls._validar_bancarizacion(empresa, lineas, total_debe)
 
         # 3. Crear asiento
         asiento = EmpresaAsiento(
@@ -210,7 +210,7 @@ class AsientoService:
         if not asiento.esta_balanceado:
             raise ValidationError("Error interno: el asiento no quedó balanceado.")
 
-        return asiento
+        return asiento, advertencias
 
     @classmethod
     def _validar_periodo_abierto(cls, empresa: Empresa, fecha: date):
@@ -243,18 +243,20 @@ class AsientoService:
             )
 
     @classmethod
-    def _validar_bancarizacion(cls, empresa: Empresa, lineas: list[dict], monto_total: Decimal):
+    def _validar_bancarizacion(cls, empresa: Empresa, lineas: list[dict], monto_total: Decimal) -> list[str]:
         """
         Valida la regla de bancarización: operaciones > $1,000 deben usar banco, no caja.
         
         Nota: No aplica a cuentas de Patrimonio (clase 3) ya que los aportes de capital
         no están sujetos a límites de bancarización.
 
-        Raises:
-            ValidationError: Si se viola la regla de bancarización
+        Returns:
+            list[str]: Lista de advertencias (vacía si no hay problemas)
         """
+        advertencias = []
+        
         if monto_total <= cls.LIMITE_BANCARIZACION:
-            return  # No aplica bancarización
+            return advertencias  # No aplica bancarización
 
         # Buscar si se usa cuenta de caja (más flexible)
         cuenta_ids = [l["cuenta_id"] for l in lineas]
@@ -277,12 +279,13 @@ class AsientoService:
             )
 
             if es_caja:
-                raise ValidationError(
-                    f"ALERTA DE BANCARIZACIÓN: El monto total (${monto_total}) supera los "
+                advertencias.append(
+                    f"⚠️ ADVERTENCIA DE BANCARIZACIÓN: El monto total (${monto_total}) supera los "
                     f'${cls.LIMITE_BANCARIZACION}. La cuenta "{cuenta.codigo} - {cuenta.descripcion}" '
-                    f"parece ser de caja. Debe usar una cuenta bancaria en lugar de caja. "
-                    f"Esto es requerido por normativas tributarias."
+                    f"es de caja/efectivo. Se recomienda usar una cuenta bancaria según normativas tributarias."
                 )
+        
+        return advertencias
 
     @classmethod
     @transaction.atomic
@@ -684,7 +687,7 @@ class EstadosFinancierosService:
             )
 
         # Crear asiento de cierre
-        asiento_cierre = AsientoService.crear_asiento(
+        asiento_cierre, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=fecha_cierre,
             descripcion=f"ASIENTO DE CIERRE DEL EJERCICIO {fecha_cierre.year}",

@@ -379,7 +379,7 @@ class Command(BaseCommand):
         asientos = []
 
         # 1. Asiento de Apertura - Capital Inicial
-        asiento1 = AsientoService.crear_asiento(
+        asiento1, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 1),
             descripcion="ASIENTO DE APERTURA - Capital inicial",
@@ -403,7 +403,7 @@ class Command(BaseCommand):
         asientos.append(asiento1)
 
         # 2. Compra de Inventario
-        asiento2 = AsientoService.crear_asiento(
+        asiento2, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 5),
             descripcion="Compra de mercadería según factura #001",
@@ -427,7 +427,7 @@ class Command(BaseCommand):
         asientos.append(asiento2)
 
         # 3. Venta de Mercadería (mayor a $1,000 - bancarización)
-        asiento3 = AsientoService.crear_asiento(
+        asiento3, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 10),
             descripcion="Venta de mercadería según factura #001",
@@ -451,7 +451,7 @@ class Command(BaseCommand):
         asientos.append(asiento3)
 
         # 4. Registro del Costo de Venta
-        asiento4 = AsientoService.crear_asiento(
+        asiento4, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 10),
             descripcion="Costo de mercadería vendida",
@@ -475,7 +475,7 @@ class Command(BaseCommand):
         asientos.append(asiento4)
 
         # 5. Pago a Proveedor
-        asiento5 = AsientoService.crear_asiento(
+        asiento5, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 15),
             descripcion="Pago parcial a proveedor ABC",
@@ -499,7 +499,7 @@ class Command(BaseCommand):
         asientos.append(asiento5)
 
         # 6. Pago de Arriendo (menor a $1,000 - puede usar caja)
-        asiento6 = AsientoService.crear_asiento(
+        asiento6, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 31),
             descripcion="Pago arriendo de local - Enero 2025",
@@ -523,7 +523,7 @@ class Command(BaseCommand):
         asientos.append(asiento6)
 
         # 7. Pago de Sueldos (mayor a $1,000 - debe usar banco)
-        asiento7 = AsientoService.crear_asiento(
+        asiento7, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 31),
             descripcion="Pago de sueldos - Enero 2025",
@@ -547,7 +547,7 @@ class Command(BaseCommand):
         asientos.append(asiento7)
 
         # 8. Servicios Básicos
-        asiento8 = AsientoService.crear_asiento(
+        asiento8, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 1, 31),
             descripcion="Pago servicios básicos - Enero 2025",
@@ -571,7 +571,7 @@ class Command(BaseCommand):
         asientos.append(asiento8)
 
         # 9. Venta a Crédito
-        asiento9 = AsientoService.crear_asiento(
+        asiento9, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 2, 5),
             descripcion="Venta a crédito según factura #002",
@@ -595,7 +595,7 @@ class Command(BaseCommand):
         asientos.append(asiento9)
 
         # 10. Costo de Venta a Crédito
-        asiento10 = AsientoService.crear_asiento(
+        asiento10, _ = AsientoService.crear_asiento(
             empresa=empresa,
             fecha=date(2025, 2, 5),
             descripcion="Costo de mercadería vendida a crédito",
