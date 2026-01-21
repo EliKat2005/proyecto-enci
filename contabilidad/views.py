@@ -1015,10 +1015,16 @@ def company_estados_financieros(request, empresa_id):
     fecha_inicio_str = request.GET.get("fecha_inicio")
     fecha_fin_str = request.GET.get("fecha_fin")
 
-    # Valores por defecto
+    # Valores por defecto: desde el primer asiento hasta hoy
     hoy = date.today()
+    primer_asiento = empresa.asientos.filter(anulado=False).order_by("fecha").first()
+    
+    if primer_asiento:
+        fecha_inicio = primer_asiento.fecha
+    else:
+        fecha_inicio = date(hoy.year, 1, 1)
+    
     fecha_corte = hoy
-    fecha_inicio = date(hoy.year, 1, 1)
     fecha_fin = hoy
 
     if fecha_str:
