@@ -14,6 +14,10 @@ Se agregó `db_constraint=False` a **TODOS** los ForeignKey que apuntan a `setti
 
 Esto previene que Django intente crear constraints de base de datos reales, evitando el error 150.
 
+### Correcciones adicionales (commit 8b2c390):
+- **Error de logout**: Cambiar `redirect("core:home")` a `redirect("home")` - core no tiene namespace registrado
+- **Rol de registro**: Cambiar widget de campo `role` de `RadioSelect` a `HiddenInput` para capturar correctamente el parámetro `?role=docente` de la URL
+
 ## 📋 Pasos para Recuperar el Servidor
 
 ### 1. Conectarse al servidor Azure
@@ -165,6 +169,9 @@ Si los pasos anteriores no funcionan:
 
 ---
 
-**Commit de la solución:** 98a2380  
+**Commits de la solución:**  
+- 98a2380: Agregar db_constraint=False a todos los ForeignKey a user  
+- 8b2c390: Corregir error logout y captura de rol en registro
+
 **Fecha:** 2026-01-20  
 **Autor:** GitHub Copilot
