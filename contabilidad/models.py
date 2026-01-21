@@ -84,7 +84,7 @@ class Empresa(models.Model):
     logo = models.ImageField(upload_to="empresas/logos/", blank=True, null=True)
     eslogan = models.CharField(max_length=255, blank=True)
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="empresas"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="empresas", db_constraint=False
     )
     is_template = models.BooleanField(default=False)
     join_code = models.CharField(max_length=64, blank=True, null=True, unique=True)
@@ -401,7 +401,7 @@ class EmpresaTercero(models.Model):
 
     # Auditoría
     creado_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="terceros_creados"
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="terceros_creados", db_constraint=False
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
@@ -469,7 +469,7 @@ class EmpresaAsiento(models.Model):
     # ===== AUDITORÍA COMPLETA =====
     # Creación
     creado_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="asientos_creados"
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="asientos_creados", db_constraint=False
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     ip_address_creacion = models.GenericIPAddressField(
@@ -483,6 +483,7 @@ class EmpresaAsiento(models.Model):
         null=True,
         blank=True,
         related_name="asientos_modificados",
+        db_constraint=False
     )
     fecha_modificacion = models.DateTimeField(auto_now=True)
     ip_address_modificacion = models.GenericIPAddressField(
@@ -497,6 +498,7 @@ class EmpresaAsiento(models.Model):
         null=True,
         blank=True,
         related_name="asientos_anulados",
+        db_constraint=False
     )
     fecha_anulacion = models.DateTimeField(null=True, blank=True)
     motivo_anulacion = models.TextField(blank=True)
@@ -643,6 +645,7 @@ class EmpresaTransaccion(models.Model):
         null=True,
         blank=True,
         related_name="transacciones_creadas",
+        db_constraint=False
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
@@ -730,6 +733,7 @@ class PeriodoContable(models.Model):
         null=True,
         blank=True,
         related_name="periodos_cerrados",
+        db_constraint=False
     )
     fecha_cierre = models.DateTimeField(null=True, blank=True)
     notas = models.TextField(blank=True, help_text="Observaciones del cierre")
@@ -809,7 +813,7 @@ class EmpresaSupervisor(models.Model):
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="supervisores")
     docente = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="supervisiones"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="supervisiones", db_constraint=False
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -835,7 +839,7 @@ class EmpresaComment(models.Model):
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="comments")
     section = models.CharField(max_length=2, choices=SECTION_CHOICES)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_constraint=False)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -876,6 +880,7 @@ class EmpresaCierrePeriodo(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         help_text="Usuario que ejecutó el cierre",
+        db_constraint=False
     )
     fecha_registro = models.DateTimeField(
         auto_now_add=True, help_text="Timestamp de cuando se registró el cierre en el sistema"
@@ -1031,6 +1036,7 @@ class ProductoInventario(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="productos_creados",
+        db_constraint=False
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
@@ -1165,7 +1171,7 @@ class MovimientoKardex(models.Model):
     observaciones = models.TextField(blank=True)
 
     # Auditoría
-    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, db_constraint=False)
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1445,6 +1451,7 @@ class AnomaliaDetectada(models.Model):
         null=True,
         blank=True,
         related_name="anomalias_revisadas",
+        db_constraint=False
     )
     fecha_revision = models.DateTimeField(null=True, blank=True)
 

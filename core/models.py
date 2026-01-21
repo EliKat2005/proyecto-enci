@@ -20,6 +20,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        db_constraint=False,
         # 'user_id' es el nombre de la columna en la BD, Django lo maneja.
     )
 
@@ -54,6 +55,7 @@ class AuditLog(models.Model):
         null=True,
         blank=True,
         related_name="audit_actions",
+        db_constraint=False,
     )
     target_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -61,6 +63,7 @@ class AuditLog(models.Model):
         null=True,
         blank=True,
         related_name="audit_targets",
+        db_constraint=False,
     )
     action = models.CharField(max_length=50)
     description = models.TextField(blank=True)
@@ -85,7 +88,7 @@ class Grupo(models.Model):
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
     docente = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="grupos"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="grupos", db_constraint=False
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -119,7 +122,7 @@ class Invitation(models.Model):
         Grupo, on_delete=models.CASCADE, related_name="invitations", null=True, blank=True
     )
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="invitations"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="invitations", db_constraint=False
     )
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
@@ -166,13 +169,13 @@ class Referral(models.Model):
     """
 
     student = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="referrals"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="referrals", db_constraint=False
     )
     grupo = models.ForeignKey(
         Grupo, on_delete=models.CASCADE, related_name="referrals", null=True, blank=True
     )
     docente = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="referred_students"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="referred_students", db_constraint=False
     )
     invitation = models.ForeignKey(Invitation, null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -203,7 +206,7 @@ class Notification(models.Model):
     """
 
     recipient = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications", db_constraint=False
     )
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -211,6 +214,7 @@ class Notification(models.Model):
         null=True,
         blank=True,
         related_name="actor_notifications",
+        db_constraint=False,
     )
     verb = models.CharField(max_length=100)
     target_user = models.ForeignKey(
@@ -219,6 +223,7 @@ class Notification(models.Model):
         null=True,
         blank=True,
         related_name="target_notifications",
+        db_constraint=False,
     )
     empresa = models.ForeignKey(
         "contabilidad.Empresa",
