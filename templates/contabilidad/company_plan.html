@@ -332,70 +332,71 @@
         });
       }
 
-      // Toggle status con customConfirm
-      document.querySelectorAll('.toggle-form').forEach(form => {
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const action = form.dataset.action;
-          const codigo = form.dataset.codigo;
-          const confirmed = await customConfirm(
-            `Esta acción ${action === 'desactivar' ? 'ocultará' : 'mostrará'} la cuenta en el sistema.`,
-            `¿${action.charAt(0).toUpperCase() + action.slice(1)} cuenta ${codigo}?`,
-            action === 'desactivar' ? 'Desactivar' : 'Activar'
-          );
-          if (confirmed) {
-            form.submit();
+      // Toggle status con customConfirm (delegación de eventos)
+      const tableBody = document.querySelector('#tabla-plan tbody');
+      if (tableBody) {
+        tableBody.addEventListener('submit', async (e) => {
+          if (e.target.classList.contains('toggle-form')) {
+            e.preventDefault();
+            const form = e.target;
+            const action = form.dataset.action;
+            const codigo = form.dataset.codigo;
+            const confirmed = await customConfirm(
+              `Esta acción ${action === 'desactivar' ? 'ocultará' : 'mostrará'} la cuenta en el sistema.`,
+              `¿${action.charAt(0).toUpperCase() + action.slice(1)} cuenta ${codigo}?`,
+              action === 'desactivar' ? 'Desactivar' : 'Activar'
+            );
+            if (confirmed) {
+              form.submit();
+            }
+          } else if (e.target.classList.contains('delete-form')) {
+            e.preventDefault();
+            const form = e.target;
+            const codigo = form.dataset.codigo;
+            const confirmed = await customConfirm(
+              `Esta acción es permanente y no se puede deshacer. Solo es posible si la cuenta no tiene transacciones ni subcuentas.`,
+              `¿Eliminar cuenta ${codigo}?`,
+              'Eliminar',
+              'Cancelar'
+            );
+            if (confirmed) {
+              form.submit();
+            }
           }
         });
-      });
 
-      // Eliminar con customConfirm
-      document.querySelectorAll('.delete-form').forEach(form => {
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const codigo = form.dataset.codigo;
-          const confirmed = await customConfirm(
-            `Esta acción es permanente y no se puede deshacer. Solo es posible si la cuenta no tiene transacciones ni subcuentas.`,
-            `¿Eliminar cuenta ${codigo}?`,
-            'Eliminar',
-            'Cancelar'
-          );
-          if (confirmed) {
-            form.submit();
+        // Editar descripción con customPrompt (delegación de eventos)
+        tableBody.addEventListener('click', async (e) => {
+          const btn = e.target.closest('.edit-desc-btn');
+          if (btn) {
+            const id = btn.dataset.id;
+            const codigo = btn.dataset.codigo;
+            const currentDesc = document.getElementById(`desc-${id}`).textContent.trim();
+            const newDesc = await customPrompt(`Cuenta ${codigo}`, currentDesc, 'Editar Descripción');
+
+            if (newDesc !== null && newDesc.trim() !== '' && newDesc.trim() !== currentDesc) {
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = `/contabilidad/{{ empresa.id }}/plan/${id}/edit-description/`;
+
+              const csrf = document.createElement('input');
+              csrf.type = 'hidden';
+              csrf.name = 'csrfmiddlewaretoken';
+              csrf.value = '{{ csrf_token }}';
+
+              const descInput = document.createElement('input');
+              descInput.type = 'hidden';
+              descInput.name = 'descripcion';
+              descInput.value = newDesc.trim();
+
+              form.appendChild(csrf);
+              form.appendChild(descInput);
+              document.body.appendChild(form);
+              form.submit();
+            }
           }
         });
-      });
-
-      // Editar descripción con customPrompt
-      document.querySelectorAll('.edit-desc-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          const codigo = btn.dataset.codigo;
-          const currentDesc = document.getElementById(`desc-${id}`).textContent.trim();
-          const newDesc = await customPrompt(`Cuenta ${codigo}`, currentDesc, 'Editar Descripción');
-
-          if (newDesc !== null && newDesc.trim() !== '' && newDesc.trim() !== currentDesc) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/contabilidad/{{ empresa.id }}/plan/${id}/edit-description/`;
-
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = 'csrfmiddlewaretoken';
-            csrf.value = '{{ csrf_token }}';
-
-            const descInput = document.createElement('input');
-            descInput.type = 'hidden';
-            descInput.name = 'descripcion';
-            descInput.value = newDesc.trim();
-
-            form.appendChild(csrf);
-            form.appendChild(descInput);
-            document.body.appendChild(form);
-            form.submit();
-          }
-        });
-      });
+      }
     })();
 
     // Toggle de filtros

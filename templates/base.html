@@ -261,18 +261,18 @@
 
         <!-- Modal Global -->
         <div id="app-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
-            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-            <div class="relative max-w-lg mx-auto mt-32 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-slide">
-                <div class="p-5 border-b border-slate-200 flex items-start gap-3" id="app-modal-header">
+            <div class="absolute inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm"></div>
+            <div class="relative max-w-lg mx-auto mt-32 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-slide">
+                <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-start gap-3" id="app-modal-header">
                     <div id="app-modal-icon" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600"></div>
-                    <h3 id="app-modal-title" class="text-lg font-bold text-slate-800">Título</h3>
+                    <h3 id="app-modal-title" class="text-lg font-bold text-slate-800 dark:text-slate-100">Título</h3>
                 </div>
                 <div class="p-5" id="app-modal-body">
-                    <p class="text-sm text-slate-700" id="app-modal-message">Mensaje</p>
+                    <p class="text-sm text-slate-700 dark:text-slate-300" id="app-modal-message">Mensaje</p>
                 </div>
-                <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3" id="app-modal-actions">
-                    <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700" onclick="closeModal()">Cerrar</button>
-                    <button type="button" id="app-modal-primary" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white hidden"></button>
+                <div class="px-5 py-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3" id="app-modal-actions">
+                    <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200" onclick="closeModal()">Cerrar</button>
+                    <button type="button" id="app-modal-primary" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white hidden"></button>
                 </div>
             </div>
         </div>
@@ -327,14 +327,14 @@
                     titleEl.textContent = title;
                     msgEl.textContent = message;
 
-                    // Estilo de advertencia
-                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg bg-amber-100 text-amber-600';
+                    // Estilo de advertencia con dark mode
+                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400';
                     icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
 
-                    // Botones personalizados
+                    // Botones personalizados con dark mode
                     actionsDiv.innerHTML = `
-                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors" id="modal-cancel-btn">${cancelText}</button>
-                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors" id="modal-confirm-btn">${confirmText}</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors" id="modal-cancel-btn">${cancelText}</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 dark:bg-amber-700 hover:bg-amber-700 dark:hover:bg-amber-600 text-white transition-colors" id="modal-confirm-btn">${confirmText}</button>
                     `;
 
                     document.getElementById('modal-cancel-btn').onclick = function() {
@@ -362,20 +362,20 @@
 
                     titleEl.textContent = title;
 
-                    // Estilo de edición
-                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600';
+                    // Estilo de edición con dark mode
+                    icon.className = 'w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400';
                     icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>';
 
-                    // Input personalizado
+                    // Input personalizado con dark mode
                     bodyDiv.innerHTML = `
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">${message}</label>
-                        <input type="text" id="modal-prompt-input" value="${defaultValue}" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-sm" autofocus />
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">${message}</label>
+                        <input type="text" id="modal-prompt-input" value="${defaultValue}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 focus:border-blue-500 dark:focus:border-blue-400 text-sm" autofocus />
                     `;
 
-                    // Botones personalizados
+                    // Botones personalizados con dark mode
                     actionsDiv.innerHTML = `
-                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors" id="modal-cancel-btn">Cancelar</button>
-                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors" id="modal-save-btn">Guardar</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors" id="modal-cancel-btn">Cancelar</button>
+                        <button type="button" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white transition-colors" id="modal-save-btn">Guardar</button>
                     `;
 
                     document.getElementById('modal-cancel-btn').onclick = function() {
