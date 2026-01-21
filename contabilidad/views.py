@@ -390,8 +390,7 @@ def add_account(request, empresa_id):
             '6': 'Gasto',
         }
         tipo = tipo_auto_map.get(primer_digito)
-        if tipo:
-            messages.info(request, f"Tipo '{tipo}' asignado automáticamente por código {codigo}.")
+        # Notificación eliminada - automatización silenciosa
     
     # AUTOMATIZACIÓN: Detectar naturaleza basándose en el tipo
     if tipo and not naturaleza:
