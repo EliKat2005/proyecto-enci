@@ -133,16 +133,13 @@ def logout_view(request):
 
     # Redirigir a home con mensaje de despedida
     messages.success(request, "¡Has cerrado sesión exitosamente! Hasta pronto.")
-    return redirect("core:home")
+    return redirect("home")
 
 
 def registro_view(request):
     """
     Vista para el registro de nuevos usuarios.
     """
-    # Determinar rol preseleccionado (viene como ?role=estudiante|docente desde login)
-    role = request.GET.get("role", "estudiante")
-
     if request.method == "POST":
         # El template envía un campo oculto 'role' para que el form lo reciba
         form = RegistroForm(request.POST)
@@ -154,13 +151,17 @@ def registro_view(request):
                 "Registro completado. Tu cuenta está pendiente de activación.",
             )
             return redirect("login")
+        # Si hay errores, mantener el rol seleccionado
+        selected_role = request.POST.get("role", "estudiante")
     else:
+        # Determinar rol preseleccionado (viene como ?role=estudiante|docente desde login)
+        selected_role = request.GET.get("role", "estudiante")
         # Preconfiguramos el formulario con el role seleccionado (no se muestra en UI)
-        form = RegistroForm(initial={"role": role})
+        form = RegistroForm(initial={"role": selected_role})
 
     contexto = {
         "form": form,
-        "selected_role": role,
+        "selected_role": selected_role,
     }
     return render(request, "core/registro.html", contexto)
 

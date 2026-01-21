@@ -30,7 +30,7 @@ class RegistroForm(forms.ModelForm):
     role = forms.ChoiceField(
         label="¿Eres estudiante o docente?",
         choices=(("estudiante", "Soy estudiante"), ("docente", "Soy docente")),
-        widget=forms.RadioSelect,
+        widget=forms.HiddenInput,
         initial="estudiante",
     )
     codigo_invite = forms.CharField(label="Código de invitación (si aplica)", required=False)
