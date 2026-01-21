@@ -14,9 +14,9 @@
     <a href="{% url 'contabilidad:company_estados_financieros' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
       {% if current_panel == 'estados' %}bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-400{% endif %}">Estados</a>
     <a href="{% url 'contabilidad:kardex_lista_productos' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
-      {% if current_panel == 'kardex' %}bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-700 dark:hover:text-cyan-400{% endif %}">📦 Kardex</a>
+      {% if current_panel == 'kardex' %}bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-700 dark:hover:text-cyan-400{% endif %}">Kardex</a>
     <a href="{% url 'contabilidad:ml_dashboard' empresa.id %}" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
-      {% if current_panel == 'ml_dashboard' %}bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-teal-950/50 hover:text-teal-700 dark:hover:text-teal-400{% endif %}">🤖 ML/AI</a>
+      {% if current_panel == 'ml_dashboard' %}bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md{% else %}text-slate-700 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-teal-950/50 hover:text-teal-700 dark:hover:text-teal-400{% endif %}">AI</a>
 
     <!-- Botón de Exportación Centralizado -->
     <a href="{% url 'contabilidad:export_empresa_completo' empresa.id %}"

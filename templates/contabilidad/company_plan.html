@@ -19,9 +19,9 @@
     </div>
 
     <!-- Layout Grid Principal -->
-    <div id="plan-grid" class="grid gap-4 items-start transition-all" style="grid-template-columns: 1fr 3fr;">
+    <div id="plan-grid" class="grid gap-4 items-start transition-all" style="grid-template-columns: 1fr 3fr 0fr;">
       <!-- Columna izquierda: Formulario Crear Cuenta -->
-      <div id="plan-actions" class="space-y-4">
+      <div id="plan-actions" class="space-y-4" style="transition: width 0.3s ease, overflow 0.3s ease;">
         {% if can_edit %}
         <div class="bg-gradient-to-br from-white to-blue-50/30 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-blue-100 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
@@ -192,7 +192,7 @@
     </div> <!-- fin col principal -->
 
       <!-- Columna derecha: Filtros (oculto por defecto) -->
-      <div id="plan-sidebar" class="space-y-4 hidden">
+      <div id="plan-sidebar" class="space-y-4" style="width: 0; overflow: hidden; transition: width 0.3s ease;">
         <div class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-slate-200 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
             <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-600 dark:to-slate-700 rounded-lg flex items-center justify-center shadow-md">
@@ -297,24 +297,36 @@
 
       // Panel toggle button in minimal header
       const panelBtn = document.getElementById('panel-toggle-btn');
+      const grid = document.getElementById('plan-grid');
       const sidebar = document.getElementById('plan-sidebar');
       const actions = document.getElementById('plan-actions');
-      const main = document.getElementById('plan-main');
       let hiddenPanels = false;
       if(panelBtn){
         panelBtn.addEventListener('click',()=>{
           hiddenPanels = !hiddenPanels;
           if(hiddenPanels){
-            sidebar.classList.add('hidden');
-            actions.classList.add('hidden');
-            main.classList.remove('xl:col-span-2');
-            main.classList.add('xl:col-span-4');
+            // Ocultar paneles laterales manteniendo el grid
+            actions.style.width = '0';
+            actions.style.overflow = 'hidden';
+            sidebar.style.width = '0';
+            sidebar.style.overflow = 'hidden';
+            grid.style.gridTemplateColumns = '0fr 1fr 0fr';
             panelBtn.textContent='Mostrar Paneles';
           }else{
-            sidebar.classList.remove('hidden');
-            actions.classList.remove('hidden');
-            main.classList.remove('xl:col-span-4');
-            main.classList.add('xl:col-span-2');
+            // Mostrar paneles laterales
+            actions.style.width = 'auto';
+            actions.style.overflow = 'visible';
+            // Restaurar sidebar según su estado previo
+            const filtrosBtn = document.getElementById('filtros-btn-text');
+            if(filtrosBtn && filtrosBtn.textContent === 'Ocultar Filtros'){
+              sidebar.style.width = 'auto';
+              sidebar.style.overflow = 'visible';
+              grid.style.gridTemplateColumns = '1fr 3fr 1fr';
+            } else {
+              sidebar.style.width = '0';
+              sidebar.style.overflow = 'hidden';
+              grid.style.gridTemplateColumns = '1fr 3fr 0fr';
+            }
             panelBtn.textContent='Ocultar Paneles';
           }
         });
@@ -392,15 +404,17 @@
       const grid = document.getElementById('plan-grid');
       const btnText = document.getElementById('filtros-btn-text');
       
-      if (sidebar.classList.contains('hidden')) {
+      if (sidebar.style.width === '0px' || sidebar.style.width === '') {
         // Mostrar filtros
-        sidebar.classList.remove('hidden');
+        sidebar.style.width = 'auto';
+        sidebar.style.overflow = 'visible';
         grid.style.gridTemplateColumns = '1fr 3fr 1fr';
         btnText.textContent = 'Ocultar Filtros';
       } else {
         // Ocultar filtros
-        sidebar.classList.add('hidden');
-        grid.style.gridTemplateColumns = '1fr 3fr';
+        sidebar.style.width = '0';
+        sidebar.style.overflow = 'hidden';
+        grid.style.gridTemplateColumns = '1fr 3fr 0fr';
         btnText.textContent = 'Mostrar Filtros';
       }
     }

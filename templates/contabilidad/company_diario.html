@@ -35,9 +35,9 @@
     </div>
 
     <!-- Grid Superior: Acciones (izq) + Lista (centro) + Filtros (der) -->
-    <div id="diario-grid" class="grid gap-4 items-start mb-4 transition-all" style="grid-template-columns: 1fr 2fr;">
+    <div id="diario-grid" class="grid gap-4 items-start mb-4 transition-all" style="grid-template-columns: 1fr 2fr 0fr;">
       <!-- Panel Izquierdo: Nuevo Asiento -->
-      <div id="diario-actions" class="space-y-4">
+      <div id="diario-actions" class="space-y-4" style="transition: width 0.3s ease, overflow 0.3s ease;">
         {% if can_edit %}
         <div class="bg-gradient-to-br from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-950 p-5 rounded-xl shadow-lg border-2 border-emerald-100 dark:border-slate-800 sticky top-20">
           <div class="flex items-center gap-2 mb-4">
@@ -57,6 +57,22 @@
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Descripción</label>
                 <input type="text" name="descripcion" placeholder="Descripción general" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg text-sm focus:border-emerald-500 dark:focus:border-emerald-600 focus:ring-3 focus:ring-emerald-100 dark:focus:ring-emerald-900 transition-all" />
               </div>
+              
+              <!-- Filtro por Clase de Cuenta -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Filtrar Cuentas por Clase</label>
+                <select id="filtro-clase-cuenta" class="w-full px-3 py-2.5 border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:border-blue-500 dark:focus:border-blue-600 focus:ring-3 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all font-medium">
+                  <option value="">Todas las clases</option>
+                  <option value="1">1 - Activos</option>
+                  <option value="2">2 - Pasivos</option>
+                  <option value="3">3 - Patrimonio</option>
+                  <option value="4">4 - Ingresos</option>
+                  <option value="5">5 - Gastos</option>
+                  <option value="6">6 - Costos</option>
+                </select>
+                <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Las líneas ya agregadas se mantienen al cambiar el filtro</p>
+              </div>
+              
               <div class="overflow-x-auto" id="lineas-wrapper">
                 <table class="min-w-full text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded" id="tabla-lineas">
                   <thead>
@@ -187,7 +203,7 @@
       </div>
 
       <!-- Panel Derecho: Filtros (oculto por defecto) -->
-      <div id="diario-sidebar" class="space-y-4 hidden">
+      <div id="diario-sidebar" class="space-y-4" style="width: 0; overflow: hidden; transition: width 0.3s ease;">
         <div class="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 sticky top-20">
           <form id="diario-filter-form" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
@@ -231,7 +247,7 @@
 <template id="select-cuenta-template">
   <select class="w-full px-2 py-1 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded" name="cuenta_id">
     {% for c in cuentas_aux %}
-      <option value="{{ c.id }}">{{ c.codigo }} — {{ c.descripcion }}</option>
+      <option value="{{ c.id }}" data-clase="{{ c.codigo.0 }}">{{ c.codigo }} — {{ c.descripcion }}</option>
     {% endfor %}
   </select>
 </template>
@@ -256,10 +272,46 @@
     `;
     body.appendChild(tr);
     
+    // Aplicar el filtro actual a la nueva línea
+    aplicarFiltroClase();
+    
     // Solo guardar automáticamente si no es una línea inicial
     if (!skipAutoSave) {
       saveAsientoDraft();
     }
+  }
+  
+  // Filtrar cuentas por clase
+  function aplicarFiltroClase() {
+    const filtroSelect = document.getElementById('filtro-clase-cuenta');
+    if (!filtroSelect) return;
+    
+    const claseSeleccionada = filtroSelect.value;
+    const selects = document.querySelectorAll('#lineas-body select[name="cuenta_id"]');
+    
+    selects.forEach(select => {
+      const valorActual = select.value;
+      const options = Array.from(select.options);
+      
+      options.forEach(option => {
+        if (claseSeleccionada === '' || option.dataset.clase === claseSeleccionada) {
+          option.style.display = '';
+        } else {
+          option.style.display = 'none';
+        }
+      });
+      
+      // Si el valor actual ya no es visible, resetear
+      if (valorActual) {
+        const optionActual = select.querySelector(`option[value="${valorActual}"]`);
+        if (optionActual && optionActual.style.display === 'none') {
+          // No resetear, mantener el valor seleccionado
+          // El usuario verá la cuenta seleccionada aunque no esté en el filtro actual
+        }
+      }
+    });
+    
+    console.log('✓ Filtro aplicado: Clase', claseSeleccionada || 'Todas');
   }
 
   // Autoguardado en localStorage
@@ -387,6 +439,13 @@
       // LUEGO: Intentar restaurar borrador (devuelve true si se restauró)
       const restored = restoreAsientoDraft();
       
+      // Conectar filtro de clase
+      const filtroClase = document.getElementById('filtro-clase-cuenta');
+      if (filtroClase) {
+        filtroClase.addEventListener('change', aplicarFiltroClase);
+        console.log('✓ Filtro de clase conectado');
+      }
+      
       // Guardar automáticamente al modificar campos
       const form = document.querySelector('form[action*="/diario/add/"]');
       if (form) {
@@ -509,24 +568,36 @@
 <script>
   (function(){
     const panelBtn = document.getElementById('panel-toggle-btn');
+    const grid = document.getElementById('diario-grid');
     const sidebar = document.getElementById('diario-sidebar');
     const actions = document.getElementById('diario-actions');
-    const main = document.getElementById('diario-main');
     let hiddenPanels=false;
     if(panelBtn){
       panelBtn.addEventListener('click',()=>{
         hiddenPanels=!hiddenPanels;
         if(hiddenPanels){
-          sidebar.classList.add('hidden');
-          actions.classList.add('hidden');
-          main.classList.remove('xl:col-span-2');
-          main.classList.add('xl:col-span-4');
+          // Ocultar paneles laterales manteniendo el grid
+          actions.style.width = '0';
+          actions.style.overflow = 'hidden';
+          sidebar.style.width = '0';
+          sidebar.style.overflow = 'hidden';
+          grid.style.gridTemplateColumns = '0fr 1fr 0fr';
           panelBtn.textContent='Mostrar Paneles';
         }else{
-          sidebar.classList.remove('hidden');
-          actions.classList.remove('hidden');
-          main.classList.remove('xl:col-span-4');
-          main.classList.add('xl:col-span-2');
+          // Mostrar paneles laterales
+          actions.style.width = 'auto';
+          actions.style.overflow = 'visible';
+          // Restaurar sidebar según su estado previo
+          const filtrosBtn = document.getElementById('filtros-btn-text');
+          if(filtrosBtn && filtrosBtn.textContent === 'Ocultar Filtros'){
+            sidebar.style.width = 'auto';
+            sidebar.style.overflow = 'visible';
+            grid.style.gridTemplateColumns = '1fr 2fr 1fr';
+          } else {
+            sidebar.style.width = '0';
+            sidebar.style.overflow = 'hidden';
+            grid.style.gridTemplateColumns = '1fr 2fr 0fr';
+          }
           panelBtn.textContent='Ocultar Paneles';
         }
       });
@@ -539,15 +610,17 @@
     const grid = document.getElementById('diario-grid');
     const btnText = document.getElementById('filtros-btn-text');
     
-    if (sidebar.classList.contains('hidden')) {
+    if (sidebar.style.width === '0px' || sidebar.style.width === '') {
       // Mostrar filtros
-      sidebar.classList.remove('hidden');
+      sidebar.style.width = 'auto';
+      sidebar.style.overflow = 'visible';
       grid.style.gridTemplateColumns = '1fr 2fr 1fr';
       btnText.textContent = 'Ocultar Filtros';
     } else {
       // Ocultar filtros
-      sidebar.classList.add('hidden');
-      grid.style.gridTemplateColumns = '1fr 2fr';
+      sidebar.style.width = '0';
+      sidebar.style.overflow = 'hidden';
+      grid.style.gridTemplateColumns = '1fr 2fr 0fr';
       btnText.textContent = 'Mostrar Filtros';
     }
   }
