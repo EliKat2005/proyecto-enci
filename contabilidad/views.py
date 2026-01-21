@@ -876,11 +876,17 @@ def company_balance_comprobacion(request, empresa_id):
     fecha_inicio_str = request.GET.get("fecha_inicio")
     fecha_fin_str = request.GET.get("fecha_fin")
 
-    # Valores por defecto: primer y último día del año actual
+    # Valores por defecto: desde el asiento más antiguo hasta hoy
     from datetime import datetime
 
     hoy = date.today()
-    fecha_inicio = date(hoy.year, 1, 1)
+    primer_asiento = empresa.asientos.filter(anulado=False).order_by("fecha").first()
+    
+    if primer_asiento:
+        fecha_inicio = primer_asiento.fecha
+    else:
+        fecha_inicio = date(hoy.year, 1, 1)
+    
     fecha_fin = hoy
 
     if fecha_inicio_str:
