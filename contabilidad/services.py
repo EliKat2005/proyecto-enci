@@ -29,8 +29,8 @@ class AsientoService:
     LIMITE_BANCARIZACION = Decimal("1000.00")
 
     # Códigos de cuentas especiales (ajustar según plan de cuentas)
-    CODIGO_CAJA_PATTERN = "1.1.01"  # Patrón para identificar cuentas de Caja
-    CODIGO_BANCO_PATTERN = "1.1.02"  # Patrón para identificar cuentas de Bancos
+    CODIGO_CAJA_PATTERN = "1.1.1.01"  # Patrón para identificar cuentas de Caja/Efectivo
+    CODIGO_BANCO_PATTERN = "1.1.1.03"  # Patrón para identificar cuentas de Bancos
 
     @classmethod
     @transaction.atomic
@@ -270,8 +270,9 @@ class AsientoService:
                 continue
             
             es_caja = (
-                cls.CODIGO_CAJA_PATTERN in cuenta.codigo  # Por código
+                cuenta.codigo.startswith(cls.CODIGO_CAJA_PATTERN)  # Por código (inicio)
                 or "caja" in cuenta.descripcion.lower()  # Por descripción
+                or "efectivo" in cuenta.descripcion.lower()  # Por descripción alternativa
                 or (cuenta.padre and "caja" in cuenta.padre.descripcion.lower())  # Por padre
             )
 
