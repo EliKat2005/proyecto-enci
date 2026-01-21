@@ -84,9 +84,15 @@ class AnalyticsViewSet(viewsets.ViewSet):
         fecha_fin = request.query_params.get("fecha_fin", date.today().isoformat())
 
         if not fecha_inicio:
-            # Por defecto último mes
-            fecha_fin_date = date.fromisoformat(fecha_fin)
-            fecha_inicio = (fecha_fin_date - timedelta(days=30)).isoformat()
+            # Usar fecha del primer asiento como inicio inteligente
+            from contabilidad.models import EmpresaAsiento
+            primer_asiento = empresa.asientos.filter(anulado=False).order_by('fecha').first()
+            if primer_asiento:
+                fecha_inicio = primer_asiento.fecha.isoformat()
+            else:
+                # Fallback: último mes si no hay asientos
+                fecha_fin_date = date.fromisoformat(fecha_fin)
+                fecha_inicio = (fecha_fin_date - timedelta(days=30)).isoformat()
 
         service = AnalyticsService(empresa)
         metrica = service.calcular_metricas_periodo(fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
@@ -139,6 +145,20 @@ class AnalyticsViewSet(viewsets.ViewSet):
         limit = int(request.query_params.get("limit", 10))
         fecha_inicio = request.query_params.get("fecha_inicio")
         fecha_fin = request.query_params.get("fecha_fin")
+
+        # Aplicar fechas inteligentes si no se especifican
+        if not fecha_inicio or not fecha_fin:
+            from contabilidad.models import EmpresaAsiento
+            if not fecha_fin:
+                fecha_fin = date.today().isoformat()
+            if not fecha_inicio:
+                primer_asiento = empresa.asientos.filter(anulado=False).order_by('fecha').first()
+                if primer_asiento:
+                    fecha_inicio = primer_asiento.fecha.isoformat()
+                else:
+                    # Fallback: último mes
+                    fecha_fin_date = date.fromisoformat(fecha_fin) if isinstance(fecha_fin, str) else fecha_fin
+                    fecha_inicio = (fecha_fin_date - timedelta(days=30)).isoformat()
 
         service = AnalyticsService(empresa)
         top = service.get_top_cuentas_movimiento(
