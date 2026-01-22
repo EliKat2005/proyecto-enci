@@ -547,6 +547,29 @@ def company_diario(request, empresa_id):
         .prefetch_related("lineas__cuenta")
         .order_by("-fecha")
     )
+    
+    # Procesar cada asiento para agregar información de cuentas agrupadas
+    from collections import defaultdict
+    from decimal import Decimal
+    
+    for asiento in asientos:
+        # Agrupar líneas por cuenta padre
+        grupos = defaultdict(lambda: {'lineas': [], 'total_debe': Decimal('0'), 'total_haber': Decimal('0'), 'cuenta_padre': None})
+        
+        for linea in asiento.lineas.all():
+            cuenta_padre = linea.cuenta.get_grupo_principal()
+            key = cuenta_padre.id
+            
+            if grupos[key]['cuenta_padre'] is None:
+                grupos[key]['cuenta_padre'] = cuenta_padre
+            
+            grupos[key]['lineas'].append(linea)
+            grupos[key]['total_debe'] += linea.debe
+            grupos[key]['total_haber'] += linea.haber
+        
+        # Convertir a lista ordenada
+        asiento.lineas_agrupadas = sorted(grupos.values(), key=lambda x: x['cuenta_padre'].codigo)
+    
     comments = (
         empresa.comments.filter(section="DI").select_related("author").order_by("-created_at")
     )
