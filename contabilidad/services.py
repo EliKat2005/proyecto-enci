@@ -318,7 +318,18 @@ class LibroMayorService:
                 - movimientos: QuerySet de transacciones
         """
         # Filtro base de transacciones
-        filtro = Q(cuenta=cuenta)
+        # Si es cuenta padre (no auxiliar), incluir todas sus cuentas hijas
+        if cuenta.es_auxiliar:
+            # Cuenta auxiliar: solo sus propias transacciones
+            filtro = Q(cuenta=cuenta)
+        else:
+            # Cuenta padre: incluir transacciones de todas las cuentas que empiezan con su código
+            # Esto incluye la cuenta misma y todas sus subcuentas
+            cuentas_relacionadas = EmpresaPlanCuenta.objects.filter(
+                empresa=cuenta.empresa,
+                codigo__startswith=cuenta.codigo
+            )
+            filtro = Q(cuenta__in=cuentas_relacionadas)
 
         # Estados permitidos
         if incluir_borradores:
