@@ -98,7 +98,7 @@
                 <div class="flex flex-wrap gap-2">
                     {% if sugerencias %}
                         {% for sugerencia in sugerencias %}
-                        <button onclick="searchSuggestion('{{ sugerencia.texto }}')"
+                        <button onclick="searchSuggestion('{{ sugerencia.texto_completo }}')"
                                 title="{{ sugerencia.codigo }} - {{ sugerencia.texto_completo }}"
                                 class="group relative px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-slate-700 dark:text-slate-200 rounded-lg hover:from-blue-100 hover:to-purple-100 dark:hover:from-blue-800/30 dark:hover:to-purple-800/30 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-md hover:scale-105">
                             {{ sugerencia.emoji }} {{ sugerencia.texto }}
