@@ -614,9 +614,9 @@ def company_mayor(request, empresa_id):
         except:
             pass
 
-    # Obtener todas las cuentas transaccionales (auxiliares) para el selector
+    # Obtener todas las cuentas padre (no auxiliares) para el selector
     cuentas_aux = EmpresaPlanCuenta.objects.filter(
-        empresa=empresa, es_auxiliar=True, activa=True
+        empresa=empresa, es_auxiliar=False, activa=True
     ).order_by("codigo")
 
     # Calcular saldos si hay cuenta seleccionada
