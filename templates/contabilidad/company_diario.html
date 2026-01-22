@@ -224,6 +224,12 @@
                         ✓ Confirmar
                       </button>
                     </form>
+                    <form method="post" action="{% url 'contabilidad:eliminar_asiento' empresa.id a.id %}" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar el asiento #{{ a.numero_asiento }}?');">
+                      {% csrf_token %}
+                      <button type="submit" class="px-3 py-1.5 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg text-xs font-semibold transition-colors">
+                        🗑️ Eliminar
+                      </button>
+                    </form>
                     {% elif a.estado == 'Confirmado' and not a.anulado %}
                     <button onclick="anularAsiento({{ empresa.id }}, {{ a.id }}, {{ a.numero_asiento }})" class="px-3 py-1.5 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg text-xs font-semibold transition-colors">
                       ✗ Anular

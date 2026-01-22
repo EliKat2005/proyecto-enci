@@ -23,6 +23,7 @@ from .models import (
     EmpresaPlanCuenta,
     EmpresaSupervisor,
     EmpresaTransaccion,
+    EstadoAsiento,
     ProductoInventario,
     TipoMovimientoKardex,
 )
@@ -814,6 +815,27 @@ def anular_asiento(request, empresa_id, asiento_id):
     except Exception as e:
         messages.error(request, f"Error al anular el asiento: {e}")
 
+    return redirect("contabilidad:company_diario", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def eliminar_asiento(request, empresa_id, asiento_id):
+    """Eliminar un asiento en estado borrador."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not (request.user == empresa.owner or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    asiento = get_object_or_404(EmpresaAsiento, pk=asiento_id, empresa=empresa)
+
+    if asiento.estado != EstadoAsiento.BORRADOR:
+        messages.error(request, "Solo se pueden eliminar asientos en estado borrador.")
+        return redirect("contabilidad:company_diario", empresa_id=empresa.id)
+
+    numero_eliminado = asiento.numero_asiento
+    asiento.delete()
+
+    messages.success(request, f"Asiento #{numero_eliminado} eliminado correctamente.")
     return redirect("contabilidad:company_diario", empresa_id=empresa.id)
 
 
