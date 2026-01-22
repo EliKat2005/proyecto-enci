@@ -100,10 +100,10 @@
                   </td>
                   <td class="px-3 {% if c.level == 0 %}py-3{% else %}py-2{% endif %}">
                     <div class="flex items-center">
-                      <button type="button" class="mr-2 {% if c.level == 0 %}text-blue-700 dark:text-blue-400{% else %}text-slate-500 dark:text-slate-400{% endif %} hover:text-slate-900 dark:hover:text-slate-100 {% if c.level == 0 %}text-sm font-bold{% else %}text-xs font-semibold{% endif %} toggle-children" data-codigo="{{ c.codigo }}" aria-label="Toggle">
+                      <button type="button" class="mr-2 {% if c.level == 0 %}text-blue-700 dark:text-blue-400{% else %}text-slate-500 dark:text-slate-400{% endif %} hover:text-slate-900 dark:hover:text-slate-100 {% if c.level == 0 %}text-sm font-bold{% else %}text-xs font-semibold{% endif %} toggle-children flex-shrink-0" data-codigo="{{ c.codigo }}" aria-label="Toggle">
                         {% if c.tiene_hijas %}<span class="inline-block w-4 text-center">+</span>{% else %}<span class="inline-block w-4"></span>{% endif %}
                       </button>
-                      <span class="block {% if c.level == 0 %}text-sm font-bold text-blue-900 dark:text-blue-400 uppercase tracking-wide{% else %}text-xs text-slate-800 dark:text-slate-200{% endif %} truncate {% if c.level == 1 %}ml-2{% elif c.level == 2 %}ml-4{% elif c.level == 3 %}ml-6{% elif c.level > 3 %}ml-8{% endif %}" id="desc-{{ c.id }}">{{ c.descripcion }}</span>
+                      <span class="block {% if c.level == 0 %}text-sm font-bold text-blue-900 dark:text-blue-400 uppercase tracking-wide{% else %}text-xs text-slate-800 dark:text-slate-200{% endif %} truncate {% if c.level == 1 %}ml-4{% elif c.level == 2 %}ml-8{% elif c.level == 3 %}ml-12{% elif c.level == 4 %}ml-16{% elif c.level > 4 %}ml-20{% endif %}" id="desc-{{ c.id }}">{{ c.descripcion }}</span>
                     </div>
                   </td>
                   <td class="px-3 {% if c.level == 0 %}py-3.5{% else %}py-2.5{% endif %}">
@@ -249,6 +249,8 @@
       const tipo = document.getElementById('plan-tipo');
       const naturaleza = document.getElementById('plan-naturaleza');
       const rows = Array.from(document.querySelectorAll('#tabla-plan tbody tr'));
+      
+      // Aplicar filtros
       function aplicarFiltro(){
         const q = (search.value || '').trim().toLowerCase();
         const t = tipo.value;
@@ -267,33 +269,74 @@
       }
       [search, tipo, naturaleza].forEach(el => el && el.addEventListener('input', aplicarFiltro));
 
-      const toggleButtons = document.querySelectorAll('.toggle-children');
-      toggleButtons.forEach(btn => {
-        if (!btn.querySelector('span') || btn.querySelector('span').textContent.trim() !== '+') return;
-        btn.addEventListener('click', () => {
-          const prefix = btn.dataset.codigo + '.';
-          const isExpanding = btn.dataset.state !== 'open';
-          rows.forEach(r => {
-            if (r.dataset.codigo.startsWith(prefix)) {
-              r.style.display = isExpanding ? '' : 'none';
+      // ==================== TOGGLE BUTTONS (+/-) ====================
+      // Usar event delegation en el document para evitar conflictos
+      document.addEventListener('click', function(e) {
+        const toggleBtn = e.target.closest('.toggle-children');
+        if (!toggleBtn) return;
+        
+        const span = toggleBtn.querySelector('span');
+        if (!span || span.textContent.trim() === '') return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Inicializar estado si no existe
+        if (!toggleBtn.dataset.state) {
+          toggleBtn.dataset.state = 'closed';
+        }
+        
+        const prefix = toggleBtn.dataset.codigo + '.';
+        const isExpanding = toggleBtn.dataset.state !== 'open';
+        
+        rows.forEach(r => {
+          if (r.dataset.codigo.startsWith(prefix)) {
+            r.style.display = isExpanding ? '' : 'none';
+          }
+        });
+        
+        toggleBtn.dataset.state = isExpanding ? 'open' : 'closed';
+        span.textContent = isExpanding ? '−' : '+';
+        
+        return false;
+      }, true); // true = usar capture phase
+      
+      // Botones de expandir/colapsar todos
+      const btnExpandTodos = document.getElementById('btn-expand-todos');
+      const btnColapsarTodos = document.getElementById('btn-colapsar-todos');
+      
+      if (btnExpandTodos) {
+        btnExpandTodos.addEventListener('click', (e) => {
+          e.preventDefault();
+          rows.forEach(r => r.style.display='');
+          document.querySelectorAll('.toggle-children').forEach(b => {
+            const span = b.querySelector('span');
+            if (b.dataset.codigo && span && span.textContent.trim()) {
+              b.dataset.state='open';
+              span.textContent='−';
             }
           });
-          btn.dataset.state = isExpanding ? 'open' : 'closed';
-          btn.querySelector('span').textContent = isExpanding ? '−' : '+';
         });
-      });
-      document.getElementById('btn-expand-todos').addEventListener('click', () => {
-        rows.forEach(r => r.style.display='');
-        toggleButtons.forEach(b => { if (b.dataset.codigo){ b.dataset.state='open'; if (b.querySelector('span')) b.querySelector('span').textContent='−'; }});
-      });
-      document.getElementById('btn-colapsar-todos').addEventListener('click', () => {
-        rows.forEach(r => {
-          const code = r.dataset.codigo;
-          const level = (code.match(/\./g) || []).length;
-          r.style.display = level <= 1 ? '' : 'none';
+      }
+      
+      if (btnColapsarTodos) {
+        btnColapsarTodos.addEventListener('click', (e) => {
+          e.preventDefault();
+          rows.forEach(r => {
+            const code = r.dataset.codigo;
+            const level = (code.match(/\./g) || []).length;
+            r.style.display = level === 0 ? '' : 'none';
+          });
+          document.querySelectorAll('.toggle-children').forEach(b => {
+            const span = b.querySelector('span');
+            if (b.dataset.codigo && span && span.textContent.trim()) {
+              b.dataset.state='closed';
+              span.textContent='+';
+            }
+          });
         });
-        toggleButtons.forEach(b => { if (b.dataset.codigo){ b.dataset.state='closed'; if (b.querySelector('span')) b.querySelector('span').textContent='+'; }});
-      });
+      }
 
       // Panel toggle button in minimal header
       const panelBtn = document.getElementById('panel-toggle-btn');
@@ -305,7 +348,6 @@
         panelBtn.addEventListener('click',()=>{
           hiddenPanels = !hiddenPanels;
           if(hiddenPanels){
-            // Ocultar paneles laterales manteniendo el grid
             actions.style.width = '0';
             actions.style.overflow = 'hidden';
             sidebar.style.width = '0';
@@ -313,10 +355,8 @@
             grid.style.gridTemplateColumns = '0fr 1fr 0fr';
             panelBtn.textContent='Mostrar Paneles';
           }else{
-            // Mostrar paneles laterales
             actions.style.width = 'auto';
             actions.style.overflow = 'visible';
-            // Restaurar sidebar según su estado previo
             const filtrosBtn = document.getElementById('filtros-btn-text');
             if(filtrosBtn && filtrosBtn.textContent === 'Ocultar Filtros'){
               sidebar.style.width = 'auto';
@@ -332,15 +372,73 @@
         });
       }
 
-      // Toggle status con customConfirm (delegación de eventos)
-      const tableBody = document.querySelector('#tabla-plan tbody');
-      if (tableBody) {
-        tableBody.addEventListener('submit', async (e) => {
-          if (e.target.classList.contains('toggle-form')) {
-            e.preventDefault();
-            const form = e.target;
-            const action = form.dataset.action;
-            const codigo = form.dataset.codigo;
+      // ==================== BOTONES DE ACCIÓN ====================
+      const tablaBody = document.querySelector('#tabla-plan tbody');
+      if (!tablaBody) return;
+      
+      // Manejador para EDITAR DESCRIPCIÓN (solo en tbody, no en toda la tabla)
+      tablaBody.addEventListener('click', async function(e) {
+        // IGNORAR toggle buttons
+        if (e.target.closest('.toggle-children')) return;
+        
+        // IGNORAR botones de formularios (submit buttons)
+        if (e.target.closest('button[type="submit"]')) return;
+        
+        // SOLO procesar si es el botón de editar
+        const editBtn = e.target.closest('.edit-desc-btn');
+        if (!editBtn) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const id = editBtn.dataset.id;
+        const codigo = editBtn.dataset.codigo;
+        const descEl = document.getElementById(`desc-${id}`);
+        if (!descEl) return;
+        
+        const currentDesc = descEl.textContent.trim();
+        
+        try {
+          const newDesc = await customPrompt(`Cuenta ${codigo}`, currentDesc, 'Editar Descripción');
+          
+          if (newDesc !== null && newDesc.trim() !== '' && newDesc.trim() !== currentDesc) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/contabilidad/{{ empresa.id }}/plan/${id}/edit-description/`;
+            
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrfmiddlewaretoken';
+            csrf.value = '{{ csrf_token }}';
+            
+            const descInput = document.createElement('input');
+            descInput.type = 'hidden';
+            descInput.name = 'descripcion';
+            descInput.value = newDesc.trim();
+            
+            form.appendChild(csrf);
+            form.appendChild(descInput);
+            document.body.appendChild(form);
+            form.submit();
+          }
+        } catch (error) {
+          console.error('Error en customPrompt:', error);
+        }
+      });
+      
+      // Manejador para FORMULARIOS (toggle status y delete)
+      tablaBody.addEventListener('submit', async function(e) {
+        const form = e.target;
+        
+        // Toggle activa/inactiva
+        if (form.classList.contains('toggle-form')) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const action = form.dataset.action;
+          const codigo = form.dataset.codigo;
+          
+          try {
             const confirmed = await customConfirm(
               `Esta acción ${action === 'desactivar' ? 'ocultará' : 'mostrará'} la cuenta en el sistema.`,
               `¿${action.charAt(0).toUpperCase() + action.slice(1)} cuenta ${codigo}?`,
@@ -349,10 +447,19 @@
             if (confirmed) {
               form.submit();
             }
-          } else if (e.target.classList.contains('delete-form')) {
-            e.preventDefault();
-            const form = e.target;
-            const codigo = form.dataset.codigo;
+          } catch (error) {
+            console.error('Error en customConfirm:', error);
+          }
+        }
+        
+        // Eliminar cuenta
+        else if (form.classList.contains('delete-form')) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const codigo = form.dataset.codigo;
+          
+          try {
             const confirmed = await customConfirm(
               `Esta acción es permanente y no se puede deshacer. Solo es posible si la cuenta no tiene transacciones ni subcuentas.`,
               `¿Eliminar cuenta ${codigo}?`,
@@ -362,41 +469,11 @@
             if (confirmed) {
               form.submit();
             }
+          } catch (error) {
+            console.error('Error en customConfirm:', error);
           }
-        });
-
-        // Editar descripción con customPrompt (delegación de eventos)
-        tableBody.addEventListener('click', async (e) => {
-          const btn = e.target.closest('.edit-desc-btn');
-          if (btn) {
-            const id = btn.dataset.id;
-            const codigo = btn.dataset.codigo;
-            const currentDesc = document.getElementById(`desc-${id}`).textContent.trim();
-            const newDesc = await customPrompt(`Cuenta ${codigo}`, currentDesc, 'Editar Descripción');
-
-            if (newDesc !== null && newDesc.trim() !== '' && newDesc.trim() !== currentDesc) {
-              const form = document.createElement('form');
-              form.method = 'POST';
-              form.action = `/contabilidad/{{ empresa.id }}/plan/${id}/edit-description/`;
-
-              const csrf = document.createElement('input');
-              csrf.type = 'hidden';
-              csrf.name = 'csrfmiddlewaretoken';
-              csrf.value = '{{ csrf_token }}';
-
-              const descInput = document.createElement('input');
-              descInput.type = 'hidden';
-              descInput.name = 'descripcion';
-              descInput.value = newDesc.trim();
-
-              form.appendChild(csrf);
-              form.appendChild(descInput);
-              document.body.appendChild(form);
-              form.submit();
-            }
-          }
-        });
-      }
+        }
+      });
     })();
 
     // Toggle de filtros

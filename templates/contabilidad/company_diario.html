@@ -144,7 +144,9 @@
                     <span>Debe: <strong class="text-slate-800 dark:text-slate-200">{{ a.total_debe }}</strong></span>
                     <span>Haber: <strong class="text-slate-800 dark:text-slate-200">{{ a.total_haber }}</strong></span>
                   </div>
-                  <table class="w-full text-[11px] mt-2">
+                  
+                  {# Vista resumida por defecto: solo cuentas padre con totales #}
+                  <table class="w-full text-[11px] mt-2 tabla-resumen-{{ a.id }}">
                     <thead>
                       <tr class="text-slate-600 dark:text-slate-400">
                         <th class="text-left font-semibold">Cuenta</th>
@@ -152,26 +154,69 @@
                         <th class="text-right font-semibold">Haber</th>
                       </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700 lineas-cuerpo" data-total-lineas="{{ a.lineas.count }}">
-                      {% for ln in a.lineas.all %}
-                      <tr class="linea {% if forloop.counter > 4 %}hidden extra-linea{% endif %}">
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                      {% for grupo in a.lineas_agrupadas %}
+                      <tr>
                         <td class="py-0.5 pr-2">
-                          <span class="font-mono text-[11px] text-slate-700 dark:text-slate-300">{{ ln.cuenta.get_grupo_principal.codigo }}</span> 
-                          <span class="text-slate-500 dark:text-slate-400">— {{ ln.cuenta.get_grupo_principal.descripcion }}</span>
+                          <span class="font-mono text-[11px] text-slate-700 dark:text-slate-300 font-bold">{{ grupo.cuenta_padre.codigo }}</span> 
+                          <span class="text-slate-500 dark:text-slate-400">— {{ grupo.cuenta_padre.descripcion }}</span>
                         </td>
-                        <td class="py-0.5 text-right text-slate-700 dark:text-slate-300">{% if ln.debe > 0 %}{{ ln.debe }}{% else %}-{% endif %}</td>
-                        <td class="py-0.5 text-right text-slate-700 dark:text-slate-300">{% if ln.haber > 0 %}{{ ln.haber }}{% else %}-{% endif %}</td>
+                        <td class="py-0.5 text-right text-slate-700 dark:text-slate-300 font-semibold">
+                          {% if grupo.total_debe > 0 %}{{ grupo.total_debe|floatformat:2 }}{% else %}-{% endif %}
+                        </td>
+                        <td class="py-0.5 text-right text-slate-700 dark:text-slate-300 font-semibold">
+                          {% if grupo.total_haber > 0 %}{{ grupo.total_haber|floatformat:2 }}{% else %}-{% endif %}
+                        </td>
                       </tr>
                       {% endfor %}
                     </tbody>
                   </table>
-                  {% if a.lineas.count > 4 %}
-                  <button type="button" class="mt-2 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 toggle-lineas" data-open="0">Ver todas ({{ a.lineas.count }})</button>
-                  {% endif %}
+                  
+                  {# Vista detallada: oculta por defecto #}
+                  <table class="w-full text-[11px] mt-2 tabla-detalle-{{ a.id }} hidden">
+                    <thead>
+                      <tr class="text-slate-600 dark:text-slate-400">
+                        <th class="text-left font-semibold">Cuenta</th>
+                        <th class="text-right font-semibold">Debe</th>
+                        <th class="text-right font-semibold">Haber</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                      {% for grupo in a.lineas_agrupadas %}
+                      {# Mostrar cuenta padre primero #}
+                      <tr class="bg-slate-50 dark:bg-slate-800/50">
+                        <td class="py-0.5 pr-2">
+                          <span class="font-mono text-[11px] text-slate-700 dark:text-slate-300 font-bold">{{ grupo.cuenta_padre.codigo }}</span> 
+                          <span class="text-slate-500 dark:text-slate-400 font-semibold">— {{ grupo.cuenta_padre.descripcion }}</span>
+                        </td>
+                        <td class="py-0.5 text-right text-slate-700 dark:text-slate-300 font-semibold">
+                          {% if grupo.total_debe > 0 %}{{ grupo.total_debe|floatformat:2 }}{% else %}-{% endif %}
+                        </td>
+                        <td class="py-0.5 text-right text-slate-700 dark:text-slate-300 font-semibold">
+                          {% if grupo.total_haber > 0 %}{{ grupo.total_haber|floatformat:2 }}{% else %}-{% endif %}
+                        </td>
+                      </tr>
+                      {# Mostrar cuentas hijas indentadas #}
+                      {% for ln in grupo.lineas %}
+                      <tr>
+                        <td class="py-0.5 pr-2 pl-4">
+                          <span class="font-mono text-[11px] text-slate-600 dark:text-slate-400">{{ ln.cuenta.codigo }}</span> 
+                          <span class="text-slate-500 dark:text-slate-400 text-[10px]">— {{ ln.cuenta.descripcion }}</span>
+                        </td>
+                        <td class="py-0.5 text-right text-slate-600 dark:text-slate-400">{% if ln.debe > 0 %}{{ ln.debe|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td class="py-0.5 text-right text-slate-600 dark:text-slate-400">{% if ln.haber > 0 %}{{ ln.haber|floatformat:2 }}{% else %}-{% endif %}</td>
+                      </tr>
+                      {% endfor %}
+                      {% endfor %}
+                    </tbody>
+                  </table>
 
                   {# Botones de acción según estado #}
                   {% if can_edit %}
                   <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex gap-2">
+                    <button type="button" class="px-3 py-1.5 bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg text-xs font-semibold transition-colors toggle-detalle-btn" data-asiento-id="{{ a.id }}">
+                      👁 Ver detalles
+                    </button>
                     {% if a.estado == 'Borrador' %}
                     <form method="post" action="{% url 'contabilidad:confirmar_asiento' empresa.id a.id %}" class="inline">
                       {% csrf_token %}
@@ -184,6 +229,12 @@
                       ✗ Anular
                     </button>
                     {% endif %}
+                  </div>
+                  {% else %}
+                  <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" class="px-3 py-1.5 bg-slate-600 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg text-xs font-semibold transition-colors toggle-detalle-btn" data-asiento-id="{{ a.id }}">
+                      👁 Ver detalles
+                    </button>
                   </div>
                   {% endif %}
                 </div>
@@ -523,7 +574,33 @@
       });
     }
     [search, desde, hasta, estado].forEach(el => el && el.addEventListener('input', aplicarFiltro));
-    // Toggle líneas extra
+    
+    // Toggle entre vista resumen y vista detallada
+    document.querySelectorAll('.toggle-detalle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const asientoId = btn.getAttribute('data-asiento-id');
+        const tablaResumen = document.querySelector(`.tabla-resumen-${asientoId}`);
+        const tablaDetalle = document.querySelector(`.tabla-detalle-${asientoId}`);
+        
+        if (tablaResumen && tablaDetalle) {
+          const estaDetallada = tablaDetalle.classList.contains('hidden');
+          
+          if (estaDetallada) {
+            // Mostrar detalle, ocultar resumen
+            tablaResumen.classList.add('hidden');
+            tablaDetalle.classList.remove('hidden');
+            btn.textContent = '👁 Ver resumen';
+          } else {
+            // Mostrar resumen, ocultar detalle
+            tablaDetalle.classList.add('hidden');
+            tablaResumen.classList.remove('hidden');
+            btn.textContent = '👁 Ver detalles';
+          }
+        }
+      });
+    });
+    
+    // Toggle líneas extra (ya no se usa, pero mantengo por compatibilidad)
     document.querySelectorAll('.toggle-lineas').forEach(btn => {
       btn.addEventListener('click', () => {
         const open = btn.getAttribute('data-open') === '1';
