@@ -576,6 +576,11 @@ class EmpresaAsiento(models.Model):
         """Monto total del asiento (debe o haber, son iguales si está balanceado)."""
         return self.total_debe
 
+    @property
+    def es_contra_asiento(self):
+        """Verifica si este asiento es un contra-asiento de anulación."""
+        return self.anula_a.exists()
+
     def anular(self, usuario, motivo):
         """Anula el asiento creando un contra-asiento."""
         from django.db import transaction
@@ -587,11 +592,11 @@ class EmpresaAsiento(models.Model):
             raise ValidationError("Este asiento ya está anulado.")
 
         with transaction.atomic():
-            # Crear contra-asiento
+            # Crear contra-asiento con referencia al asiento original
             contra_asiento = EmpresaAsiento.objects.create(
                 empresa=self.empresa,
                 fecha=timezone.now().date(),
-                descripcion_general=f"ANULACIÓN: {self.descripcion_general}",
+                descripcion_general=f"ANULACIÓN del Asiento #{self.numero_asiento}: {self.descripcion_general}",
                 estado=EstadoAsiento.CONFIRMADO,
                 creado_por=usuario,
             )
