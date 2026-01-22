@@ -53,6 +53,11 @@ urlpatterns = [
         views.eliminar_asiento,
         name="eliminar_asiento",
     ),
+    path(
+        "<int:empresa_id>/diario/renumerar/",
+        views.renumerar_asientos,
+        name="renumerar_asientos",
+    ),
     path("<int:empresa_id>/mayor/", views.company_mayor, name="company_mayor"),
     path("<int:empresa_id>/libro-mayor/", views.company_libro_mayor, name="company_libro_mayor"),
     path(
