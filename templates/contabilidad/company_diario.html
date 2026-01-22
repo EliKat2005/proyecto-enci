@@ -119,11 +119,21 @@
       <!-- Panel Central: Lista de Asientos -->
       <div id="diario-main" class="space-y-4">
         <div class="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-emerald-200 dark:border-emerald-900">
-            <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-lg flex items-center justify-center shadow-md">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          <div class="flex items-center justify-between gap-2 mb-4 pb-3 border-b-2 border-emerald-200 dark:border-emerald-900">
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-700 dark:to-emerald-800 rounded-lg flex items-center justify-center shadow-md">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              </div>
+              <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Asientos Contables</h2>
             </div>
-            <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Asientos Contables</h2>
+            {% if can_edit %}
+            <form method="post" action="{% url 'contabilidad:renumerar_asientos' empresa.id %}" id="form-renumerar-asientos" class="inline">
+              {% csrf_token %}
+              <button type="button" onclick="renumerarAsientos()" class="px-3 py-1.5 bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-800 text-white rounded-lg text-xs font-semibold transition-colors">
+                🔢 Renumerar
+              </button>
+            </form>
+            {% endif %}
           </div>
           {% if asientos %}
             <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -224,9 +234,9 @@
                         ✓ Confirmar
                       </button>
                     </form>
-                    <form method="post" action="{% url 'contabilidad:eliminar_asiento' empresa.id a.id %}" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar el asiento #{{ a.numero_asiento }}?');">
+                    <form method="post" action="{% url 'contabilidad:eliminar_asiento' empresa.id a.id %}" class="inline form-eliminar-asiento" data-numero="{{ a.numero_asiento }}">
                       {% csrf_token %}
-                      <button type="submit" class="px-3 py-1.5 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg text-xs font-semibold transition-colors">
+                      <button type="button" onclick="eliminarAsiento(this)" class="px-3 py-1.5 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg text-xs font-semibold transition-colors">
                         🗑️ Eliminar
                       </button>
                     </form>
@@ -705,6 +715,45 @@
       sidebar.style.overflow = 'hidden';
       grid.style.gridTemplateColumns = '1fr 2fr 0fr';
       btnText.textContent = 'Mostrar Filtros';
+    }
+  }
+
+  // Función para renumerar asientos con modal personalizado
+  async function renumerarAsientos() {
+    try {
+      const confirmed = await customConfirm(
+        'Se renumerarán todos los asientos secuencialmente desde 1, eliminando cualquier hueco en la numeración.',
+        '¿Renumerar asientos?',
+        'Sí, renumerar',
+        'Cancelar'
+      );
+      
+      if (confirmed) {
+        document.getElementById('form-renumerar-asientos').submit();
+      }
+    } catch (error) {
+      console.error('Error en customConfirm:', error);
+    }
+  }
+
+  // Función para eliminar asiento con modal personalizado
+  async function eliminarAsiento(button) {
+    try {
+      const form = button.closest('form');
+      const numero = form.getAttribute('data-numero');
+      
+      const confirmed = await customConfirm(
+        `El asiento #${numero} se eliminará permanentemente y los asientos posteriores se renumerarán.`,
+        `¿Eliminar asiento #${numero}?`,
+        'Sí, eliminar',
+        'Cancelar'
+      );
+      
+      if (confirmed) {
+        form.submit();
+      }
+    } catch (error) {
+      console.error('Error en customConfirm:', error);
     }
   }
 </script>
