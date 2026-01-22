@@ -337,8 +337,8 @@ class LibroMayorService:
         else:
             filtro &= Q(asiento__estado=EstadoAsiento.CONFIRMADO)
         
-        # Siempre excluir asientos anulados
-        filtro &= Q(asiento__anulado=False)
+        # Siempre excluir asientos anulados y contra-asientos (asientos que anulan a otros)
+        filtro &= Q(asiento__anulado=False) & Q(asiento__anula_a__isnull=True)
 
         # Calcular saldo inicial (antes de fecha_inicio)
         saldo_inicial = Decimal("0.00")

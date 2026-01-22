@@ -1304,6 +1304,7 @@ def company_libro_mayor(request, empresa_id):
                     asiento__fecha__gte=fecha_inicio,
                     asiento__fecha__lte=fecha_fin,
                     asiento__anulado=False,
+                    asiento__anula_a__isnull=True,
                 )
                 .select_related("asiento", "cuenta")
                 .order_by("asiento__fecha", "asiento__id")

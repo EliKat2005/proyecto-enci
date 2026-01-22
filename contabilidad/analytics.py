@@ -106,6 +106,7 @@ class AnalyticsService:
             asiento__fecha__range=(fecha_inicio, fecha_fin),
             asiento__estado="Confirmado",
             asiento__anulado=False,
+            asiento__anula_a__isnull=True,
         ).count()
 
         num_cuentas_activas = (
@@ -114,6 +115,7 @@ class AnalyticsService:
                 empresatransaccion__asiento__fecha__range=(fecha_inicio, fecha_fin),
                 empresatransaccion__asiento__estado="Confirmado",
                 empresatransaccion__asiento__anulado=False,
+                empresatransaccion__asiento__anula_a__isnull=True,
             )
             .distinct()
             .count()

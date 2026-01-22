@@ -37,7 +37,8 @@ class MLAnalyticsService:
         tiene_asientos = EmpresaTransaccion.objects.filter(
             asiento__empresa=self.empresa,
             asiento__estado=EstadoAsiento.CONFIRMADO,
-            asiento__anulado=False
+            asiento__anulado=False,
+            asiento__anula_a__isnull=True
         ).exists()
 
         if not tiene_asientos:
@@ -130,6 +131,7 @@ class MLAnalyticsService:
             asiento__fecha__gte=fecha_inicio,
             asiento__estado=EstadoAsiento.CONFIRMADO,
             asiento__anulado=False,
+            asiento__anula_a__isnull=True,
         ).select_related("cuenta", "asiento")
 
         # Agrupar por mes
@@ -210,6 +212,7 @@ class MLAnalyticsService:
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
                 asiento__anulado=False,
+                asiento__anula_a__isnull=True,
                 cuenta__tipo=tipo_enum,
             )
             .values("asiento__fecha")
@@ -287,6 +290,7 @@ class MLAnalyticsService:
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
                 asiento__anulado=False,
+                asiento__anula_a__isnull=True,
                 cuenta__tipo=TipoCuenta.INGRESO,
             )
             .values("asiento__fecha")
@@ -301,6 +305,7 @@ class MLAnalyticsService:
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
                 asiento__anulado=False,
+                asiento__anula_a__isnull=True,
                 cuenta__tipo=TipoCuenta.GASTO,
             )
             .values("asiento__fecha")
@@ -315,6 +320,7 @@ class MLAnalyticsService:
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
                 asiento__anulado=False,
+                asiento__anula_a__isnull=True,
                 cuenta__tipo=TipoCuenta.COSTO,
             )
             .values("asiento__fecha")
@@ -413,6 +419,7 @@ class MLAnalyticsService:
             asiento__fecha__gte=fecha_inicio,
             asiento__estado=EstadoAsiento.CONFIRMADO,
             asiento__anulado=False,
+            asiento__anula_a__isnull=True,
         ).select_related("cuenta", "asiento", "tercero")
 
         # Calcular estadísticas por tipo de cuenta
@@ -557,6 +564,7 @@ class MLAnalyticsService:
             asiento__empresa=self.empresa,
             asiento__estado=EstadoAsiento.CONFIRMADO,
             asiento__anulado=False,
+            asiento__anula_a__isnull=True,
             cuenta__tipo=tipo,
         ).aggregate(
             total_debe=Sum("debe"),
