@@ -545,7 +545,7 @@ def company_diario(request, empresa_id):
         EmpresaAsiento.objects.filter(empresa=empresa)
         .select_related("creado_por")
         .prefetch_related("lineas__cuenta")
-        .order_by("-fecha")
+        .order_by("-numero_asiento")
     )
     
     # Procesar cada asiento para agregar información de cuentas agrupadas
