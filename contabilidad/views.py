@@ -568,8 +568,15 @@ def company_diario(request, empresa_id):
             grupos[key]['total_debe'] += linea.debe
             grupos[key]['total_haber'] += linea.haber
         
-        # Convertir a lista ordenada
-        asiento.lineas_agrupadas = sorted(grupos.values(), key=lambda x: x['cuenta_padre'].codigo)
+        # Ordenar líneas dentro de cada grupo: primero debe, luego haber
+        for grupo in grupos.values():
+            grupo['lineas'].sort(key=lambda ln: (ln.debe == 0, ln.cuenta.codigo))
+        
+        # Convertir a lista ordenada: primero grupos con debe, luego con haber
+        asiento.lineas_agrupadas = sorted(
+            grupos.values(), 
+            key=lambda x: (x['total_debe'] == 0, x['cuenta_padre'].codigo)
+        )
     
     comments = (
         empresa.comments.filter(section="DI").select_related("author").order_by("-created_at")
@@ -821,7 +828,7 @@ def anular_asiento(request, empresa_id, asiento_id):
 @login_required
 @require_POST
 def eliminar_asiento(request, empresa_id, asiento_id):
-    """Eliminar un asiento en estado borrador."""
+    """Eliminar un asiento en estado borrador y renumerar los posteriores."""
     empresa = get_object_or_404(Empresa, pk=empresa_id)
     if not (request.user == empresa.owner or request.user.is_superuser):
         return HttpResponseForbidden("No autorizado")
@@ -833,9 +840,45 @@ def eliminar_asiento(request, empresa_id, asiento_id):
         return redirect("contabilidad:company_diario", empresa_id=empresa.id)
 
     numero_eliminado = asiento.numero_asiento
-    asiento.delete()
+    
+    # Usar transacción para asegurar consistencia
+    with transaction.atomic():
+        # Eliminar el asiento
+        asiento.delete()
+        
+        # Renumerar todos los asientos posteriores
+        asientos_posteriores = EmpresaAsiento.objects.filter(
+            empresa=empresa,
+            numero_asiento__gt=numero_eliminado
+        ).order_by('numero_asiento')
+        
+        for asiento_posterior in asientos_posteriores:
+            asiento_posterior.numero_asiento -= 1
+            asiento_posterior.save(update_fields=['numero_asiento'])
 
-    messages.success(request, f"Asiento #{numero_eliminado} eliminado correctamente.")
+    messages.success(request, f"Asiento #{numero_eliminado} eliminado y asientos renumerados correctamente.")
+    return redirect("contabilidad:company_diario", empresa_id=empresa.id)
+
+
+@login_required
+@require_POST
+def renumerar_asientos(request, empresa_id):
+    """Renumerar todos los asientos de la empresa para eliminar huecos."""
+    empresa = get_object_or_404(Empresa, pk=empresa_id)
+    if not (request.user == empresa.owner or request.user.is_superuser):
+        return HttpResponseForbidden("No autorizado")
+
+    with transaction.atomic():
+        # Obtener todos los asientos ordenados por número actual
+        asientos = EmpresaAsiento.objects.filter(empresa=empresa).order_by('numero_asiento')
+        
+        # Renumerar secuencialmente desde 1
+        for indice, asiento in enumerate(asientos, start=1):
+            if asiento.numero_asiento != indice:
+                asiento.numero_asiento = indice
+                asiento.save(update_fields=['numero_asiento'])
+
+    messages.success(request, "Asientos renumerados correctamente.")
     return redirect("contabilidad:company_diario", empresa_id=empresa.id)
 
 
