@@ -33,9 +33,11 @@ class MLAnalyticsService:
         Returns:
             dict con liquidez, ROA, endeudamiento, margen_neto y has_data flag
         """
-        # Verificar si hay asientos confirmados
+        # Verificar si hay asientos confirmados (excluir anulados)
         tiene_asientos = EmpresaTransaccion.objects.filter(
-            asiento__empresa=self.empresa, asiento__estado=EstadoAsiento.CONFIRMADO
+            asiento__empresa=self.empresa,
+            asiento__estado=EstadoAsiento.CONFIRMADO,
+            asiento__anulado=False
         ).exists()
 
         if not tiene_asientos:
@@ -122,11 +124,12 @@ class MLAnalyticsService:
         """
         fecha_inicio = date.today() - timedelta(days=30 * meses)
 
-        # Obtener transacciones agrupadas por mes y tipo
+        # Obtener transacciones agrupadas por mes y tipo (excluir anulados)
         transacciones = EmpresaTransaccion.objects.filter(
             asiento__empresa=self.empresa,
             asiento__fecha__gte=fecha_inicio,
             asiento__estado=EstadoAsiento.CONFIRMADO,
+            asiento__anulado=False,
         ).select_related("cuenta", "asiento")
 
         # Agrupar por mes
@@ -200,12 +203,13 @@ class MLAnalyticsService:
             # Si no existe, default a INGRESO
             tipo_enum = TipoCuenta.INGRESO
 
-        # Obtener transacciones del tipo
+        # Obtener transacciones del tipo (excluir anulados)
         transacciones = (
             EmpresaTransaccion.objects.filter(
                 asiento__empresa=self.empresa,
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
                 cuenta__tipo=tipo_enum,
             )
             .values("asiento__fecha")
@@ -276,12 +280,13 @@ class MLAnalyticsService:
         Returns:
             dict con predicciones de flujo
         """
-        # Obtener ingresos
+        # Obtener ingresos (excluir anulados)
         ingresos_trans = (
             EmpresaTransaccion.objects.filter(
                 asiento__empresa=self.empresa,
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
                 cuenta__tipo=TipoCuenta.INGRESO,
             )
             .values("asiento__fecha")
@@ -289,12 +294,13 @@ class MLAnalyticsService:
             .order_by("asiento__fecha")
         )
 
-        # Obtener gastos
+        # Obtener gastos (excluir anulados)
         gastos_trans = (
             EmpresaTransaccion.objects.filter(
                 asiento__empresa=self.empresa,
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
                 cuenta__tipo=TipoCuenta.GASTO,
             )
             .values("asiento__fecha")
@@ -302,12 +308,13 @@ class MLAnalyticsService:
             .order_by("asiento__fecha")
         )
 
-        # Obtener costos
+        # Obtener costos (excluir anulados)
         costos_trans = (
             EmpresaTransaccion.objects.filter(
                 asiento__empresa=self.empresa,
                 asiento__fecha__gte=fecha_inicio,
                 asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
                 cuenta__tipo=TipoCuenta.COSTO,
             )
             .values("asiento__fecha")
@@ -400,11 +407,12 @@ class MLAnalyticsService:
         """
         fecha_inicio = date.today() - timedelta(days=30 * meses)
 
-        # Obtener todas las transacciones
+        # Obtener todas las transacciones (excluir anulados)
         transacciones = EmpresaTransaccion.objects.filter(
             asiento__empresa=self.empresa,
             asiento__fecha__gte=fecha_inicio,
             asiento__estado=EstadoAsiento.CONFIRMADO,
+            asiento__anulado=False,
         ).select_related("cuenta", "asiento", "tercero")
 
         # Calcular estadísticas por tipo de cuenta
@@ -548,6 +556,7 @@ class MLAnalyticsService:
         transacciones = EmpresaTransaccion.objects.filter(
             asiento__empresa=self.empresa,
             asiento__estado=EstadoAsiento.CONFIRMADO,
+            asiento__anulado=False,
             cuenta__tipo=tipo,
         ).aggregate(
             total_debe=Sum("debe"),
