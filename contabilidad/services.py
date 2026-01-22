@@ -331,11 +331,14 @@ class LibroMayorService:
             )
             filtro = Q(cuenta__in=cuentas_relacionadas)
 
-        # Estados permitidos
+        # Estados permitidos (excluir anulados)
         if incluir_borradores:
             filtro &= Q(asiento__estado__in=[EstadoAsiento.BORRADOR, EstadoAsiento.CONFIRMADO])
         else:
             filtro &= Q(asiento__estado=EstadoAsiento.CONFIRMADO)
+        
+        # Siempre excluir asientos anulados
+        filtro &= Q(asiento__anulado=False)
 
         # Calcular saldo inicial (antes de fecha_inicio)
         saldo_inicial = Decimal("0.00")
