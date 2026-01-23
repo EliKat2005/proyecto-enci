@@ -439,6 +439,48 @@ class LibroMayorService:
 class EstadosFinancierosService:
     """Servicio para generar Estados Financieros."""
 
+    @staticmethod
+    def _agrupar_por_cuenta_padre(detalle_cuentas):
+        """
+        Agrupa cuentas auxiliares por su cuenta padre.
+        
+        Args:
+            detalle_cuentas: Lista de dict con 'cuenta' y 'monto' o 'saldo'
+            
+        Returns:
+            Lista de dict con:
+                - cuenta_padre: EmpresaPlanCuenta
+                - total: Decimal
+                - cuentas_hijas: List[Dict]
+        """
+        from collections import defaultdict
+        
+        grupos = defaultdict(lambda: {'cuentas_hijas': [], 'total': Decimal('0.00'), 'cuenta_padre': None})
+        
+        for item in detalle_cuentas:
+            cuenta = item['cuenta']
+            monto = item.get('monto') or item.get('saldo', Decimal('0.00'))
+            cuenta_padre = cuenta.get_grupo_principal()
+            
+            key = cuenta_padre.id
+            
+            if grupos[key]['cuenta_padre'] is None:
+                grupos[key]['cuenta_padre'] = cuenta_padre
+            
+            grupos[key]['cuentas_hijas'].append({
+                'cuenta': cuenta,
+                'monto': monto
+            })
+            grupos[key]['total'] += monto
+        
+        # Convertir a lista y ordenar por código de cuenta padre
+        resultado = sorted(
+            grupos.values(),
+            key=lambda x: x['cuenta_padre'].codigo
+        )
+        
+        return resultado
+
     @classmethod
     def estado_de_resultados(cls, empresa: Empresa, fecha_inicio: date, fecha_fin: date) -> dict:
         """
@@ -559,6 +601,11 @@ class EstadosFinancierosService:
         utilidad_bruta = total_ingresos - total_costos
         utilidad_neta = utilidad_bruta - total_gastos
 
+        # Agrupar por cuenta padre
+        ingresos_agrupados = cls._agrupar_por_cuenta_padre(ingresos_detalle)
+        costos_agrupados = cls._agrupar_por_cuenta_padre(costos_detalle)
+        gastos_agrupados = cls._agrupar_por_cuenta_padre(gastos_detalle)
+
         return {
             "ingresos": total_ingresos,
             "costos": total_costos,
@@ -568,6 +615,9 @@ class EstadosFinancierosService:
             "detalle_ingresos": ingresos_detalle,
             "detalle_costos": costos_detalle,
             "detalle_gastos": gastos_detalle,
+            "ingresos_agrupados": ingresos_agrupados,
+            "costos_agrupados": costos_agrupados,
+            "gastos_agrupados": gastos_agrupados,
             "periodo": f"{fecha_inicio.strftime('%d/%m/%Y')} - {fecha_fin.strftime('%d/%m/%Y')}",
         }
 
@@ -633,6 +683,11 @@ class EstadosFinancierosService:
                 f"Revise los asientos contables y corrija los errores."
             )
 
+        # Agrupar por cuenta padre
+        activos_agrupados = cls._agrupar_por_cuenta_padre(activos_detalle)
+        pasivos_agrupados = cls._agrupar_por_cuenta_padre(pasivos_detalle)
+        patrimonio_agrupados = cls._agrupar_por_cuenta_padre(patrimonio_detalle)
+
         return {
             "activos": total_activos,
             "pasivos": total_pasivos,
@@ -641,6 +696,9 @@ class EstadosFinancierosService:
             "detalle_activos": activos_detalle,
             "detalle_pasivos": pasivos_detalle,
             "detalle_patrimonio": patrimonio_detalle,
+            "activos_agrupados": activos_agrupados,
+            "pasivos_agrupados": pasivos_agrupados,
+            "patrimonio_agrupados": patrimonio_agrupados,
             "balanceado": balanceado,
             "fecha_corte": fecha_corte.strftime("%d/%m/%Y"),
             "diferencia": diferencia,

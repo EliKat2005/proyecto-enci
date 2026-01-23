@@ -80,17 +80,45 @@
 
         {# Activos #}
         <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-          <div class="bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 font-bold text-sm">ACTIVOS</div>
-          <div class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
-            {% for item in balance_general.detalle_activos %}
+          <div class="bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 font-bold text-sm flex items-center justify-between">
+            <span>ACTIVOS</span>
+            <button type="button" onclick="toggleDetalleSeccion('activos')" class="px-2 py-1 bg-blue-700 dark:bg-blue-800 hover:bg-blue-800 dark:hover:bg-blue-900 rounded text-xs transition-colors">
+              <span id="btn-activos">👁 Ver detalles</span>
+            </button>
+          </div>
+          
+          {# Vista resumida: solo cuentas padre #}
+          <div id="activos-resumido" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
+            {% for grupo in balance_general.activos_agrupados %}
             <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
-              <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-              <span class="font-mono font-semibold dark:text-gray-100">${{ item.saldo|floatformat:2 }}</span>
+              <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+              <span class="font-mono font-semibold dark:text-gray-100">${{ grupo.total|floatformat:2 }}</span>
             </div>
             {% empty %}
             <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
             {% endfor %}
           </div>
+          
+          {# Vista detallada: con cuentas hijas #}
+          <div id="activos-detallado" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900 hidden">
+            {% for grupo in balance_general.activos_agrupados %}
+            <div class="bg-slate-50 dark:bg-slate-800/50">
+              <div class="px-3 py-1.5 flex justify-between text-sm font-semibold">
+                <span class="text-slate-800 dark:text-slate-200">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                <span class="font-mono text-slate-800 dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
+              </div>
+              {% for hija in grupo.cuentas_hijas %}
+              <div class="px-6 py-1 flex justify-between text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                <span class="text-slate-600 dark:text-slate-400 text-xs">{{ hija.cuenta.codigo }} — {{ hija.cuenta.descripcion }}</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${{ hija.monto|floatformat:2 }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% empty %}
+            <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
+            {% endfor %}
+          </div>
+          
           <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-gray-100">
             <span>TOTAL ACTIVOS</span>
             <span class="font-mono">${{ balance_general.activos|floatformat:2 }}</span>
@@ -102,17 +130,45 @@
 
           {# Pasivos #}
           <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-            <div class="bg-red-600 dark:bg-red-700 text-white px-3 py-2 font-bold text-sm">PASIVOS</div>
-            <div class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
-              {% for item in balance_general.detalle_pasivos %}
+            <div class="bg-red-600 dark:bg-red-700 text-white px-3 py-2 font-bold text-sm flex items-center justify-between">
+              <span>PASIVOS</span>
+              <button type="button" onclick="toggleDetalleSeccion('pasivos')" class="px-2 py-1 bg-red-700 dark:bg-red-800 hover:bg-red-800 dark:hover:bg-red-900 rounded text-xs transition-colors">
+                <span id="btn-pasivos">👁 Ver detalles</span>
+              </button>
+            </div>
+            
+            {# Vista resumida #}
+            <div id="pasivos-resumido" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
+              {% for grupo in balance_general.pasivos_agrupados %}
               <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
-                <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-                <span class="font-mono font-semibold dark:text-gray-100">${{ item.saldo|floatformat:2 }}</span>
+                <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                <span class="font-mono font-semibold dark:text-gray-100">${{ grupo.total|floatformat:2 }}</span>
               </div>
               {% empty %}
               <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
               {% endfor %}
             </div>
+            
+            {# Vista detallada #}
+            <div id="pasivos-detallado" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900 hidden">
+              {% for grupo in balance_general.pasivos_agrupados %}
+              <div class="bg-slate-50 dark:bg-slate-800/50">
+                <div class="px-3 py-1.5 flex justify-between text-sm font-semibold">
+                  <span class="text-slate-800 dark:text-slate-200">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                  <span class="font-mono text-slate-800 dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
+                </div>
+                {% for hija in grupo.cuentas_hijas %}
+                <div class="px-6 py-1 flex justify-between text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400 text-xs">{{ hija.cuenta.codigo }} — {{ hija.cuenta.descripcion }}</span>
+                  <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${{ hija.monto|floatformat:2 }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              {% empty %}
+              <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
+              {% endfor %}
+            </div>
+            
             <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-gray-100">
               <span>TOTAL PASIVOS</span>
               <span class="font-mono">${{ balance_general.pasivos|floatformat:2 }}</span>
@@ -121,17 +177,45 @@
 
           {# Patrimonio #}
           <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-            <div class="bg-green-600 dark:bg-green-700 text-white px-3 py-2 font-bold text-sm">PATRIMONIO</div>
-            <div class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
-              {% for item in balance_general.detalle_patrimonio %}
+            <div class="bg-green-600 dark:bg-green-700 text-white px-3 py-2 font-bold text-sm flex items-center justify-between">
+              <span>PATRIMONIO</span>
+              <button type="button" onclick="toggleDetalleSeccion('patrimonio')" class="px-2 py-1 bg-green-700 dark:bg-green-800 hover:bg-green-800 dark:hover:bg-green-900 rounded text-xs transition-colors">
+                <span id="btn-patrimonio">👁 Ver detalles</span>
+              </button>
+            </div>
+            
+            {# Vista resumida #}
+            <div id="patrimonio-resumido" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
+              {% for grupo in balance_general.patrimonio_agrupados %}
               <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
-                <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-                <span class="font-mono font-semibold dark:text-slate-100">${{ item.saldo|floatformat:2 }}</span>
+                <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                <span class="font-mono font-semibold dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
               </div>
               {% empty %}
               <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
               {% endfor %}
             </div>
+            
+            {# Vista detallada #}
+            <div id="patrimonio-detallado" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900 hidden">
+              {% for grupo in balance_general.patrimonio_agrupados %}
+              <div class="bg-slate-50 dark:bg-slate-800/50">
+                <div class="px-3 py-1.5 flex justify-between text-sm font-semibold">
+                  <span class="text-slate-800 dark:text-slate-200">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                  <span class="font-mono text-slate-800 dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
+                </div>
+                {% for hija in grupo.cuentas_hijas %}
+                <div class="px-6 py-1 flex justify-between text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <span class="text-slate-600 dark:text-slate-400 text-xs">{{ hija.cuenta.codigo }} — {{ hija.cuenta.descripcion }}</span>
+                  <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${{ hija.monto|floatformat:2 }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              {% empty %}
+              <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin movimientos</div>
+              {% endfor %}
+            </div>
+            
             <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-slate-100">
               <span>TOTAL PATRIMONIO</span>
               <span class="font-mono">${{ balance_general.patrimonio|floatformat:2 }}</span>
@@ -211,17 +295,45 @@
 
         {# Ingresos #}
         <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden mb-3">
-          <div class="bg-green-600 dark:bg-green-700 text-white px-3 py-2 font-bold text-sm">INGRESOS</div>
-          <div class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
-            {% for item in estado_resultados.detalle_ingresos %}
+          <div class="bg-green-600 dark:bg-green-700 text-white px-3 py-2 font-bold text-sm flex items-center justify-between">
+            <span>INGRESOS</span>
+            <button type="button" onclick="toggleDetalleSeccion('ingresos')" class="px-2 py-1 bg-green-700 dark:bg-green-800 hover:bg-green-800 dark:hover:bg-green-900 rounded text-xs transition-colors">
+              <span id="btn-ingresos">👁 Ver detalles</span>
+            </button>
+          </div>
+          
+          {# Vista resumida #}
+          <div id="ingresos-resumido" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
+            {% for grupo in estado_resultados.ingresos_agrupados %}
             <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
-              <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-              <span class="font-mono font-semibold dark:text-gray-100">${{ item.monto|floatformat:2 }}</span>
+              <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+              <span class="font-mono font-semibold dark:text-gray-100">${{ grupo.total|floatformat:2 }}</span>
             </div>
             {% empty %}
             <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin ingresos registrados</div>
             {% endfor %}
           </div>
+          
+          {# Vista detallada #}
+          <div id="ingresos-detallado" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900 hidden">
+            {% for grupo in estado_resultados.ingresos_agrupados %}
+            <div class="bg-slate-50 dark:bg-slate-800/50">
+              <div class="px-3 py-1.5 flex justify-between text-sm font-semibold">
+                <span class="text-slate-800 dark:text-slate-200">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                <span class="font-mono text-slate-800 dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
+              </div>
+              {% for hija in grupo.cuentas_hijas %}
+              <div class="px-6 py-1 flex justify-between text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                <span class="text-slate-600 dark:text-slate-400 text-xs">{{ hija.cuenta.codigo }} — {{ hija.cuenta.descripcion }}</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${{ hija.monto|floatformat:2 }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% empty %}
+            <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin ingresos registrados</div>
+            {% endfor %}
+          </div>
+          
           <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-gray-100">
             <span>TOTAL INGRESOS</span>
             <span class="font-mono">${{ estado_resultados.ingresos|floatformat:2 }}</span>
@@ -230,17 +342,45 @@
 
         {# Costos #}
         <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden mb-3">
-          <div class="bg-orange-600 dark:bg-orange-700 text-white px-3 py-2 font-bold text-sm">COSTOS DE VENTAS</div>
-          <div class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
-            {% for item in estado_resultados.detalle_costos %}
+          <div class="bg-orange-600 dark:bg-orange-700 text-white px-3 py-2 font-bold text-sm flex items-center justify-between">
+            <span>COSTOS DE VENTAS</span>
+            <button type="button" onclick="toggleDetalleSeccion('costos')" class="px-2 py-1 bg-orange-700 dark:bg-orange-800 hover:bg-orange-800 dark:hover:bg-orange-900 rounded text-xs transition-colors">
+              <span id="btn-costos">👁 Ver detalles</span>
+            </button>
+          </div>
+          
+          {# Vista resumida #}
+          <div id="costos-resumido" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
+            {% for grupo in estado_resultados.costos_agrupados %}
             <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
-              <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-                <span class="font-mono font-semibold dark:text-slate-100">${{ item.monto|floatformat:2 }}</span>
+              <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+              <span class="font-mono font-semibold dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
             </div>
             {% empty %}
             <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin costos registrados</div>
             {% endfor %}
           </div>
+          
+          {# Vista detallada #}
+          <div id="costos-detallado" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900 hidden">
+            {% for grupo in estado_resultados.costos_agrupados %}
+            <div class="bg-slate-50 dark:bg-slate-800/50">
+              <div class="px-3 py-1.5 flex justify-between text-sm font-semibold">
+                <span class="text-slate-800 dark:text-slate-200">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                <span class="font-mono text-slate-800 dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
+              </div>
+              {% for hija in grupo.cuentas_hijas %}
+              <div class="px-6 py-1 flex justify-between text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                <span class="text-slate-600 dark:text-slate-400 text-xs">{{ hija.cuenta.codigo }} — {{ hija.cuenta.descripcion }}</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${{ hija.monto|floatformat:2 }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% empty %}
+            <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin costos registrados</div>
+            {% endfor %}
+          </div>
+          
           <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-gray-100">
             <span>TOTAL COSTOS</span>
             <span class="font-mono">-${{ estado_resultados.costos|floatformat:2 }}</span>
@@ -257,17 +397,45 @@
 
         {# Gastos #}
         <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden mb-3">
-          <div class="bg-red-600 dark:bg-red-700 text-white px-3 py-2 font-bold text-sm">GASTOS OPERACIONALES</div>
-          <div class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
-            {% for item in estado_resultados.detalle_gastos %}
+          <div class="bg-red-600 dark:bg-red-700 text-white px-3 py-2 font-bold text-sm flex items-center justify-between">
+            <span>GASTOS OPERACIONALES</span>
+            <button type="button" onclick="toggleDetalleSeccion('gastos')" class="px-2 py-1 bg-red-700 dark:bg-red-800 hover:bg-red-800 dark:hover:bg-red-900 rounded text-xs transition-colors">
+              <span id="btn-gastos">👁 Ver detalles</span>
+            </button>
+          </div>
+          
+          {# Vista resumida #}
+          <div id="gastos-resumido" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900">
+            {% for grupo in estado_resultados.gastos_agrupados %}
             <div class="px-3 py-1.5 flex justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 text-sm">
-              <span class="text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }} - {{ item.cuenta.descripcion }}</span>
-              <span class="font-mono font-semibold dark:text-slate-100">${{ item.monto|floatformat:2 }}</span>
+              <span class="text-slate-700 dark:text-slate-300 font-semibold">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+              <span class="font-mono font-semibold dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
             </div>
             {% empty %}
             <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin gastos registrados</div>
             {% endfor %}
           </div>
+          
+          {# Vista detallada #}
+          <div id="gastos-detallado" class="divide-y divide-slate-200 dark:divide-slate-800 dark:bg-slate-900 hidden">
+            {% for grupo in estado_resultados.gastos_agrupados %}
+            <div class="bg-slate-50 dark:bg-slate-800/50">
+              <div class="px-3 py-1.5 flex justify-between text-sm font-semibold">
+                <span class="text-slate-800 dark:text-slate-200">{{ grupo.cuenta_padre.codigo }} — {{ grupo.cuenta_padre.descripcion }}</span>
+                <span class="font-mono text-slate-800 dark:text-slate-100">${{ grupo.total|floatformat:2 }}</span>
+              </div>
+              {% for hija in grupo.cuentas_hijas %}
+              <div class="px-6 py-1 flex justify-between text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+                <span class="text-slate-600 dark:text-slate-400 text-xs">{{ hija.cuenta.codigo }} — {{ hija.cuenta.descripcion }}</span>
+                <span class="font-mono text-slate-600 dark:text-slate-300 text-xs">${{ hija.monto|floatformat:2 }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% empty %}
+            <div class="px-3 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">Sin gastos registrados</div>
+            {% endfor %}
+          </div>
+          
           <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between font-bold border-t-2 border-slate-300 dark:border-slate-700 text-sm dark:text-slate-100">
             <span>TOTAL GASTOS</span>
             <span class="font-mono">-${{ estado_resultados.gastos|floatformat:2 }}</span>
@@ -327,4 +495,24 @@
   }
 }
 </style>
+
+<script>
+function toggleDetalleSeccion(seccion) {
+  const resumido = document.getElementById(`${seccion}-resumido`);
+  const detallado = document.getElementById(`${seccion}-detallado`);
+  const btn = document.getElementById(`btn-${seccion}`);
+  
+  if (detallado.classList.contains('hidden')) {
+    // Mostrar detalle
+    resumido.classList.add('hidden');
+    detallado.classList.remove('hidden');
+    btn.textContent = '👁 Ocultar detalles';
+  } else {
+    // Mostrar resumido
+    detallado.classList.add('hidden');
+    resumido.classList.remove('hidden');
+    btn.textContent = '👁 Ver detalles';
+  }
+}
+</script>
 {% endblock %}
