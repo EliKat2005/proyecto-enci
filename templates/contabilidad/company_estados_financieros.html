@@ -442,9 +442,9 @@
           </div>
         </div>
 
-        {# Utilidad Neta #}
+        {# Utilidad Antes de Impuestos #}
         <div class="p-4 flex justify-between font-bold bg-slate-800 dark:bg-slate-950 text-white rounded-lg text-base">
-          <span>UTILIDAD NETA</span>
+          <span>UTILIDAD ANTES DE IMPUESTOS</span>
           <span class="font-mono {% if estado_resultados.utilidad_neta >= 0 %}text-green-300 dark:text-green-400{% else %}text-red-300 dark:text-red-400{% endif %}">
             ${{ estado_resultados.utilidad_neta|floatformat:2 }}
           </span>
