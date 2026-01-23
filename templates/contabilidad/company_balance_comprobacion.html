@@ -36,21 +36,11 @@
 
     <!-- Panel de resumen compacto -->
     <div class="mt-4 bg-slate-900 dark:bg-slate-950 text-white rounded-xl shadow-sm p-4 max-w-md">
-      <div class="space-y-2">
-        <div class="flex items-center justify-between text-sm">
-          <span class="font-semibold text-slate-200">Totales</span>
-          <div class="flex gap-4 font-mono">
-            <span>${{ total_movimientos.debe|floatformat:2 }}</span>
-            <span>${{ total_movimientos.haber|floatformat:2 }}</span>
-          </div>
-        </div>
-        <div class="pt-2 border-t border-white/20 flex items-center justify-between text-sm">
-          <span class="font-semibold text-slate-200">Verificación</span>
-          {% if cuadra_movimientos %}
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-100 text-xs font-semibold">✓ Cuadra</span>
-          {% else %}
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-100 text-xs font-semibold">✗ Descuadrado</span>
-          {% endif %}
+      <div class="flex items-center justify-between text-sm">
+        <span class="font-semibold text-slate-200">Totales</span>
+        <div class="flex gap-4 font-mono">
+          <span>${{ total_movimientos.debe|floatformat:2 }}</span>
+          <span>${{ total_movimientos.haber|floatformat:2 }}</span>
         </div>
       </div>
     </div>
