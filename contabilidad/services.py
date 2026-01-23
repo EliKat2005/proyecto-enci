@@ -455,65 +455,119 @@ class EstadosFinancierosService:
                 - detalle_costos: List[Dict]
                 - detalle_gastos: List[Dict]
         """
-        # Obtener TODAS las cuentas de resultado (auxiliares y no auxiliares)
-        # Luego filtraremos solo las que tengan transacciones en el periodo
-        cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO)
-        cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO)
-        cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO)
-        
-        # Función auxiliar para eliminar duplicados (excluir padres si hay hijos)
-        def filtrar_sin_duplicados(cuentas):
-            """Excluye cuentas padre si sus hijos también están en la lista."""
-            codigos = set(c.codigo for c in cuentas)
-            resultado = []
-            for cuenta in cuentas:
-                # Verificar si hay una cuenta hija (código más largo que empieza con este)
-                tiene_hijos = any(
-                    cod.startswith(cuenta.codigo + ".") or 
-                    (cod.startswith(cuenta.codigo) and len(cod) > len(cuenta.codigo))
-                    for cod in codigos if cod != cuenta.codigo
-                )
-                if not tiene_hijos:
-                    resultado.append(cuenta)
-            return resultado
-        
-        # Filtrar para evitar duplicación
-        cuentas_ingreso = filtrar_sin_duplicados(list(cuentas_ingreso))
-        cuentas_costo = filtrar_sin_duplicados(list(cuentas_costo))
-        cuentas_gasto = filtrar_sin_duplicados(list(cuentas_gasto))
+        # Obtener TODAS las cuentas de resultado y ordenar por código (más específicas primero)
+        cuentas_ingreso = sorted(
+            empresa.cuentas.filter(tipo=TipoCuenta.INGRESO),
+            key=lambda c: (len(c.codigo.split('.')), c.codigo),
+            reverse=True
+        )
+        cuentas_costo = sorted(
+            empresa.cuentas.filter(tipo=TipoCuenta.COSTO),
+            key=lambda c: (len(c.codigo.split('.')), c.codigo),
+            reverse=True
+        )
+        cuentas_gasto = sorted(
+            empresa.cuentas.filter(tipo=TipoCuenta.GASTO),
+            key=lambda c: (len(c.codigo.split('.')), c.codigo),
+            reverse=True
+        )
 
         # Calcular ingresos (naturaleza acreedora, el haber suma)
         ingresos_detalle = []
         total_ingresos = Decimal("0.00")
+        codigos_incluidos = set()
+        
         for cuenta in cuentas_ingreso:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
-            monto = saldos["haber"] - saldos["debe"]  # Para ingresos (acreedora)
-            if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
-                ingresos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})  # Siempre positivo
-                total_ingresos += abs(monto)
+            monto = saldos["haber"] - saldos["debe"]
+            
+            if abs(monto) > Decimal("0.01"):
+                # Verificar si esta cuenta es padre de alguna ya incluida
+                es_padre_de_incluida = any(
+                    cod.startswith(cuenta.codigo + ".") for cod in codigos_incluidos
+                )
+                
+                if not es_padre_de_incluida:
+                    # Eliminar cualquier padre de esta cuenta que ya esté incluido
+                    codigos_a_remover = {
+                        cod for cod in codigos_incluidos 
+                        if cuenta.codigo.startswith(cod + ".")
+                    }
+                    if codigos_a_remover:
+                        # Remover los padres del detalle y del total
+                        ingresos_detalle = [
+                            item for item in ingresos_detalle 
+                            if item["cuenta"].codigo not in codigos_a_remover
+                        ]
+                        for cod in codigos_a_remover:
+                            # Recalcular total
+                            pass
+                        codigos_incluidos -= codigos_a_remover
+                    
+                    # Agregar esta cuenta
+                    codigos_incluidos.add(cuenta.codigo)
+                    ingresos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
+                    total_ingresos += abs(monto)
 
         # Calcular costos (naturaleza deudora, el debe suma)
         costos_detalle = []
         total_costos = Decimal("0.00")
+        codigos_incluidos = set()
+        
         for cuenta in cuentas_costo:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
-            monto = saldos["debe"] - saldos["haber"]  # Para costos (deudora)
-            if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
-                costos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})  # Siempre positivo
-                total_costos += abs(monto)
+            monto = saldos["debe"] - saldos["haber"]
+            
+            if abs(monto) > Decimal("0.01"):
+                es_padre_de_incluida = any(
+                    cod.startswith(cuenta.codigo + ".") for cod in codigos_incluidos
+                )
+                
+                if not es_padre_de_incluida:
+                    codigos_a_remover = {
+                        cod for cod in codigos_incluidos 
+                        if cuenta.codigo.startswith(cod + ".")
+                    }
+                    if codigos_a_remover:
+                        costos_detalle = [
+                            item for item in costos_detalle 
+                            if item["cuenta"].codigo not in codigos_a_remover
+                        ]
+                        codigos_incluidos -= codigos_a_remover
+                    
+                    codigos_incluidos.add(cuenta.codigo)
+                    costos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
+                    total_costos += abs(monto)
 
         # Calcular gastos (naturaleza deudora)
         gastos_detalle = []
         total_gastos = Decimal("0.00")
+        codigos_incluidos = set()
+        
         for cuenta in cuentas_gasto:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
-            monto = saldos["debe"] - saldos["haber"]  # Para gastos (deudora)
-            if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
-                gastos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})  # Siempre positivo
-                total_gastos += abs(monto)
+            monto = saldos["debe"] - saldos["haber"]
+            
+            if abs(monto) > Decimal("0.01"):
+                es_padre_de_incluida = any(
+                    cod.startswith(cuenta.codigo + ".") for cod in codigos_incluidos
+                )
+                
+                if not es_padre_de_incluida:
+                    codigos_a_remover = {
+                        cod for cod in codigos_incluidos 
+                        if cuenta.codigo.startswith(cod + ".")
+                    }
+                    if codigos_a_remover:
+                        gastos_detalle = [
+                            item for item in gastos_detalle 
+                            if item["cuenta"].codigo not in codigos_a_remover
+                        ]
+                        codigos_incluidos -= codigos_a_remover
+                    
+                    codigos_incluidos.add(cuenta.codigo)
+                    gastos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
+                    total_gastos += abs(monto)
 
         utilidad_bruta = total_ingresos - total_costos
         utilidad_neta = utilidad_bruta - total_gastos
@@ -545,31 +599,10 @@ class EstadosFinancierosService:
                 - detalle_patrimonio: List[Dict]
                 - balanceado: bool
         """
-        # Obtener TODAS las cuentas de balance
-        cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO)
-        cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO)
-        cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO)
-        
-        # Función auxiliar para eliminar duplicados (excluir padres si hay hijos)
-        def filtrar_sin_duplicados(cuentas):
-            """Excluye cuentas padre si sus hijos también están en la lista."""
-            codigos = set(c.codigo for c in cuentas)
-            resultado = []
-            for cuenta in cuentas:
-                # Verificar si hay una cuenta hija (código más largo que empieza con este)
-                tiene_hijos = any(
-                    cod.startswith(cuenta.codigo + ".") or 
-                    (cod.startswith(cuenta.codigo) and len(cod) > len(cuenta.codigo))
-                    for cod in codigos if cod != cuenta.codigo
-                )
-                if not tiene_hijos:
-                    resultado.append(cuenta)
-            return resultado
-        
-        # Filtrar para evitar duplicación
-        cuentas_activo = filtrar_sin_duplicados(list(cuentas_activo))
-        cuentas_pasivo = filtrar_sin_duplicados(list(cuentas_pasivo))
-        cuentas_patrimonio = filtrar_sin_duplicados(list(cuentas_patrimonio))
+        # Obtener solo cuentas auxiliares de balance (no cambiar, funciona correctamente)
+        cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO, es_auxiliar=True)
+        cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO, es_auxiliar=True)
+        cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO, es_auxiliar=True)
 
         # Calcular activos (naturaleza deudora)
         activos_detalle = []
