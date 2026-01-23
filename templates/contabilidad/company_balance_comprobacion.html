@@ -34,63 +34,70 @@
       </div>
     </div>
 
-    <div class="mt-4 grid gap-4 lg:grid-cols-3">
-      <div class="lg:col-span-2">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-4">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                <tr>
-                  <th class="px-3 py-2 text-left font-semibold">Código</th>
-                  <th class="px-3 py-2 text-left font-semibold">Cuenta</th>
-                  <th class="px-3 py-2 text-right font-semibold" colspan="2">Movimientos</th>
-                </tr>
-                <tr class="bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-                  <th></th><th></th>
-                  <th class="px-3 py-1.5 text-right">Debe</th>
-                  <th class="px-3 py-1.5 text-right">Haber</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                {% for item in cuentas %}
-                <tr class="hover:bg-amber-50/40 dark:hover:bg-slate-800/50">
-                  <td class="px-3 py-1.5 font-mono text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }}</td>
-                  <td class="px-3 py-1.5 text-slate-900 dark:text-slate-100">{{ item.cuenta.descripcion }}</td>
-                  <td class="px-3 py-1.5 text-right font-mono">{% if item.debe > 0 %}${{ item.debe|floatformat:2 }}{% else %}-{% endif %}</td>
-                  <td class="px-3 py-1.5 text-right font-mono">{% if item.haber > 0 %}${{ item.haber|floatformat:2 }}{% else %}-{% endif %}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="4" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">No hay movimientos en el período seleccionado</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-              <tfoot class="bg-slate-800 text-white font-semibold">
-                <tr>
-                  <td colspan="2" class="px-3 py-2">Totales</td>
-                  <td class="px-3 py-2 text-right">${{ total_movimientos.debe|floatformat:2 }}</td>
-                  <td class="px-3 py-2 text-right">${{ total_movimientos.haber|floatformat:2 }}</td>
-                </tr>
-                <tr class="bg-slate-900 text-xs">
-                  <td colspan="2" class="px-3 py-1.5 text-slate-200">Verificación</td>
-                  <td colspan="2" class="px-3 py-1.5 text-center">{% if cuadra_movimientos %}<span class="text-emerald-200">✓ Cuadra</span>{% else %}<span class="text-red-200">✗ Descuadrado</span>{% endif %}</td>
-                </tr>
-              </tfoot>
-            </table>
+    <!-- Panel de resumen compacto -->
+    <div class="mt-4 bg-slate-900 dark:bg-slate-950 text-white rounded-xl shadow-sm p-4 max-w-md">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-sm">
+          <span class="font-semibold text-slate-200">Totales</span>
+          <div class="flex gap-4 font-mono">
+            <span>${{ total_movimientos.debe|floatformat:2 }}</span>
+            <span>${{ total_movimientos.haber|floatformat:2 }}</span>
           </div>
         </div>
-      </div>
-      <div class="bg-slate-900 dark:bg-slate-950 text-white rounded-xl shadow-sm p-5 flex flex-col gap-2">
-        <div class="flex items-center justify-between text-sm font-semibold">
-          <span>Movimientos (D/H)</span>
-          <span>${{ total_movimientos.debe|floatformat:2 }} / ${{ total_movimientos.haber|floatformat:2 }}</span>
-        </div>
-        <div class="pt-2 border-t border-white/20 text-sm">
+        <div class="pt-2 border-t border-white/20 flex items-center justify-between text-sm">
+          <span class="font-semibold text-slate-200">Verificación</span>
           {% if cuadra_movimientos %}
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-100 dark:text-emerald-300">✓ Cuadra</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-100 text-xs font-semibold">✓ Cuadra</span>
           {% else %}
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-100 dark:text-red-300">✗ Descuadrado</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 text-red-100 text-xs font-semibold">✗ Descuadrado</span>
           {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla principal -->
+    <div class="mt-4">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Código</th>
+                <th class="px-3 py-2 text-left font-semibold">Cuenta</th>
+                <th class="px-3 py-2 text-right font-semibold" colspan="2">Movimientos</th>
+              </tr>
+              <tr class="bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+                <th></th><th></th>
+                <th class="px-3 py-1.5 text-right">Debe</th>
+                <th class="px-3 py-1.5 text-right">Haber</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              {% for item in cuentas %}
+              <tr class="hover:bg-amber-50/40 dark:hover:bg-slate-800/50">
+                <td class="px-3 py-1.5 font-mono text-slate-700 dark:text-slate-300">{{ item.cuenta.codigo }}</td>
+                <td class="px-3 py-1.5 text-slate-900 dark:text-slate-100">{{ item.cuenta.descripcion }}</td>
+                <td class="px-3 py-1.5 text-right font-mono">{% if item.debe > 0 %}${{ item.debe|floatformat:2 }}{% else %}-{% endif %}</td>
+                <td class="px-3 py-1.5 text-right font-mono">{% if item.haber > 0 %}${{ item.haber|floatformat:2 }}{% else %}-{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">No hay movimientos en el período seleccionado</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="bg-slate-800 text-white font-semibold">
+              <tr>
+                <td colspan="2" class="px-3 py-2">Totales</td>
+                <td class="px-3 py-2 text-right">${{ total_movimientos.debe|floatformat:2 }}</td>
+                <td class="px-3 py-2 text-right">${{ total_movimientos.haber|floatformat:2 }}</td>
+              </tr>
+              <tr class="bg-slate-900 text-xs">
+                <td colspan="2" class="px-3 py-1.5 text-slate-200">Verificación</td>
+                <td colspan="2" class="px-3 py-1.5 text-center">{% if cuadra_movimientos %}<span class="text-emerald-200">✓ Cuadra</span>{% else %}<span class="text-red-200">✗ Descuadrado</span>{% endif %}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </div>
