@@ -385,7 +385,7 @@ function mostrarPredicciones(data) {
         const rangoPromedio = predicciones.reduce((sum, p) =>
             sum + (p.upper - p.lower), 0) / predicciones.length;
         document.getElementById('accuracy-value').textContent =
-            '±' + new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(rangoPromedio / 2);
+            '±' + new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(rangoPromedio / 2);
 
         // Análisis de predicción con escenarios
         const cambio = ((last.valor - first.valor) / Math.abs(first.valor)) * 100;
@@ -394,11 +394,11 @@ function mostrarPredicciones(data) {
 
         let analisisTexto = '';
         if (Math.abs(cambio) < 5) {
-            analisisTexto = `📊 Se espera estabilidad con cambios menores al 5%. Escenario optimista: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(optimistaValor)}, pesimista: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(pesimistaValor)}.`;
+            analisisTexto = `📊 Se espera estabilidad con cambios menores al 5%. Escenario optimista: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(optimistaValor)}, pesimista: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(pesimistaValor)}.`;
         } else if (cambio > 0) {
-            analisisTexto = `📈 Crecimiento proyectado del ${cambio.toFixed(1)}%. En escenario optimista alcanzaría ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(optimistaValor)}.`;
+            analisisTexto = `📈 Crecimiento proyectado del ${cambio.toFixed(1)}%. En escenario optimista alcanzaría ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(optimistaValor)}.`;
         } else {
-            analisisTexto = `📉 Disminución anticipada del ${Math.abs(cambio).toFixed(1)}%. En escenario pesimista podría llegar a ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(pesimistaValor)}.`;
+            analisisTexto = `📉 Disminución anticipada del ${Math.abs(cambio).toFixed(1)}%. En escenario pesimista podría llegar a ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(pesimistaValor)}.`;
         }
         document.getElementById('prediction-text').textContent = analisisTexto;
 
@@ -440,16 +440,16 @@ function mostrarPredicciones(data) {
         row.innerHTML = `
             <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-50">${pred.periodo}</td>
             <td class="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400 font-semibold">
-                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(optimista)}
+                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(optimista)}
             </td>
             <td class="px-4 py-3 text-sm text-right text-blue-600 dark:text-blue-400 font-bold">
                 ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(pred.valor)}
             </td>
             <td class="px-4 py-3 text-sm text-right text-red-600 dark:text-red-400 font-semibold">
-                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(pesimista)}
+                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(pesimista)}
             </td>
             <td class="px-4 py-3 text-xs text-center text-slate-600 dark:text-slate-300">
-                ±${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, notation: 'compact' }).format(rango / 2)}
+                ±${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(rango / 2)}
             </td>
             <td class="px-4 py-3 text-sm">
                 <div class="flex items-center justify-center">
@@ -512,11 +512,11 @@ function actualizarAnalisisRiesgo(predicciones, confianzaPromedio) {
 
     let recomendacion = '';
     if (confianzaPromedio > 80) {
-        recomendacion = `Predicción confiable para planificación. Considere reserva de ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(diferencia)} para cubrir el rango entre escenarios.`;
+        recomendacion = `Predicción confiable para planificación. Considere reserva de ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(diferencia)} para cubrir el rango entre escenarios.`;
     } else if (confianzaPromedio > 60) {
-        recomendacion = `Predicción moderada. Planifique con el escenario pesimista (${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(escPesimista)}) como base segura.`;
+        recomendacion = `Predicción moderada. Planifique con el escenario pesimista (${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(escPesimista)}) como base segura.`;
     } else {
-        recomendacion = `Alta incertidumbre. Prepare contingencias para el rango completo: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(escPesimista)} - ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', notation: 'compact'}).format(escOptimista)}.`;
+        recomendacion = `Alta incertidumbre. Prepare contingencias para el rango completo: ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(escPesimista)} - ${new Intl.NumberFormat('es-CO', {style: 'currency', currency: 'COP', minimumFractionDigits: 0}).format(escOptimista)}.`;
     }
     document.getElementById('recommendation').textContent = recomendacion;
 }
