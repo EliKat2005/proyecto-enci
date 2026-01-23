@@ -455,21 +455,11 @@ class EstadosFinancierosService:
                 - detalle_costos: List[Dict]
                 - detalle_gastos: List[Dict]
         """
-        # Obtener cuentas de resultado
-        # Solo incluimos cuentas auxiliares para evitar duplicación
-        # (las cuentas padre ya incluyen el saldo de sus hijos en calcular_saldos_cuenta)
+        # Obtener solo cuentas auxiliares de resultado (hojas del árbol)
+        # Las cuentas auxiliares son las únicas que pueden tener transacciones directas
         cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO, es_auxiliar=True)
         cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO, es_auxiliar=True)
         cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO, es_auxiliar=True)
-        
-        # Si no hay cuentas auxiliares, incluir todas las cuentas (incluso padres)
-        # Esto permite mostrar resultados aunque las cuentas no estén bien configuradas
-        if not cuentas_ingreso.exists():
-            cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO)
-        if not cuentas_costo.exists():
-            cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO)
-        if not cuentas_gasto.exists():
-            cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO)
 
         # Calcular ingresos (naturaleza acreedora, el haber suma)
         ingresos_detalle = []
@@ -478,7 +468,7 @@ class EstadosFinancierosService:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
             # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
             monto = saldos["haber"] - saldos["debe"]  # Para ingresos (acreedora)
-            if monto != 0:
+            if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
                 ingresos_detalle.append({"cuenta": cuenta, "monto": monto})
                 total_ingresos += monto
 
@@ -489,7 +479,7 @@ class EstadosFinancierosService:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
             # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
             monto = saldos["debe"] - saldos["haber"]  # Para costos (deudora)
-            if monto != 0:
+            if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
                 costos_detalle.append({"cuenta": cuenta, "monto": monto})
                 total_costos += monto
 
@@ -500,7 +490,7 @@ class EstadosFinancierosService:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
             # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
             monto = saldos["debe"] - saldos["haber"]  # Para gastos (deudora)
-            if monto != 0:
+            if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
                 gastos_detalle.append({"cuenta": cuenta, "monto": monto})
                 total_gastos += monto
 
@@ -534,19 +524,11 @@ class EstadosFinancierosService:
                 - detalle_patrimonio: List[Dict]
                 - balanceado: bool
         """
-        # Obtener cuentas de balance
-        # Solo incluimos cuentas auxiliares para evitar duplicación
+        # Obtener todas las cuentas de balance
+        # Filtrar para mostrar solo cuentas auxiliares (hojas del árbol)
         cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO, es_auxiliar=True)
         cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO, es_auxiliar=True)
         cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO, es_auxiliar=True)
-        
-        # Si no hay cuentas auxiliares, incluir todas las cuentas
-        if not cuentas_activo.exists():
-            cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO)
-        if not cuentas_pasivo.exists():
-            cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO)
-        if not cuentas_patrimonio.exists():
-            cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO)
 
         # Calcular activos (naturaleza deudora)
         activos_detalle = []
