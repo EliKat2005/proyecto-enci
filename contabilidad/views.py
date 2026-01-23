@@ -229,6 +229,15 @@ def delete_company(request, empresa_id):
         return HttpResponseForbidden("No autorizado para eliminar esta empresa")
 
     if request.method == "POST":
+        # Validar que el usuario haya escrito "ELIMINAR" para confirmar
+        confirm_text = request.POST.get("confirm_text", "").strip()
+        if confirm_text != "ELIMINAR":
+            messages.error(
+                request,
+                'Debes escribir exactamente "ELIMINAR" para confirmar la eliminación de la empresa.',
+            )
+            return render(request, "contabilidad/delete_company_confirm.html", {"empresa": empresa})
+
         nombre = empresa.nombre
         try:
             with transaction.atomic():
