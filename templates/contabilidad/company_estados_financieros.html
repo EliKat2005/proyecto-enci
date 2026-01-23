@@ -480,14 +480,38 @@
       {% include 'contabilidad/_comments_section.html' with comments=comments section_code='EF' section_name='Estados Financieros' %}
     {% endif %}
 
+    <!-- Líneas de firma (solo visible al imprimir) -->
+    <div class="print-only mt-20 pt-8">
+      <div class="flex justify-between items-center px-8">
+        <div class="text-center">
+          <div class="border-t-2 border-slate-800 dark:border-slate-300 pt-2 px-12">
+            <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Firma Gerente</p>
+          </div>
+        </div>
+        <div class="text-center">
+          <div class="border-t-2 border-slate-800 dark:border-slate-300 pt-2 px-12">
+            <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Firma Contador</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>
 
 <style>
+/* Ocultar en pantalla, mostrar solo al imprimir */
+.print-only {
+  display: none;
+}
+
 @media print {
   .no-print {
     display: none !important;
+  }
+  .print-only {
+    display: block !important;
   }
   body {
     print-color-adjust: exact;
