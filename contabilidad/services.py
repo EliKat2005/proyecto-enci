@@ -607,20 +607,15 @@ class EstadosFinancierosService:
         gastos_agrupados = cls._agrupar_por_cuenta_padre(gastos_detalle)
 
         # Calcular impuestos y utilidad del ejercicio (solo si hay utilidad)
-        participacion_trabajadores = Decimal("0.00")
-        base_imponible = Decimal("0.00")
+        # Para Sociedades Anónimas: solo 25% Impuesto a la Renta
         impuesto_renta = Decimal("0.00")
         utilidad_ejercicio = utilidad_neta
         
         if utilidad_neta > 0:
-            # 15% Participación trabajadores
-            participacion_trabajadores = utilidad_neta * Decimal("0.15")
-            # Base imponible = Utilidad - Participación trabajadores
-            base_imponible = utilidad_neta - participacion_trabajadores
-            # 25% Impuesto a la renta sobre base imponible
-            impuesto_renta = base_imponible * Decimal("0.25")
-            # Utilidad del ejercicio = Base imponible - Impuesto a la renta
-            utilidad_ejercicio = base_imponible - impuesto_renta
+            # 25% Impuesto a la renta directo sobre utilidad antes de impuestos
+            impuesto_renta = utilidad_neta * Decimal("0.25")
+            # Utilidad del ejercicio = Utilidad antes de impuestos - Impuesto a la renta
+            utilidad_ejercicio = utilidad_neta - impuesto_renta
 
         return {
             "ingresos": total_ingresos,
@@ -628,8 +623,6 @@ class EstadosFinancierosService:
             "gastos": total_gastos,
             "utilidad_bruta": utilidad_bruta,
             "utilidad_neta": utilidad_neta,
-            "participacion_trabajadores": participacion_trabajadores,
-            "base_imponible": base_imponible,
             "impuesto_renta": impuesto_renta,
             "utilidad_ejercicio": utilidad_ejercicio,
             "detalle_ingresos": ingresos_detalle,

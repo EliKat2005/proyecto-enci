@@ -454,19 +454,7 @@
         {# Cálculo de Impuestos y Utilidad del Ejercicio #}
         {% if estado_resultados.utilidad_neta > 0 %}
         <div class="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
-          {# 15% Participación Trabajadores #}
-          <div class="flex justify-between text-sm px-4">
-            <span class="text-slate-700 dark:text-slate-300">(-) 15% Participación Trabajadores</span>
-            <span class="font-mono text-red-600 dark:text-red-400">-${{ estado_resultados.participacion_trabajadores|floatformat:2 }}</span>
-          </div>
-          
-          {# Base Imponible #}
-          <div class="flex justify-between text-sm px-4 font-medium">
-            <span class="text-slate-700 dark:text-slate-300">Base Imponible</span>
-            <span class="font-mono">${{ estado_resultados.base_imponible|floatformat:2 }}</span>
-          </div>
-          
-          {# 25% Impuesto a la Renta #}
+          {# 25% Impuesto a la Renta (Sociedad Anónima) #}
           <div class="flex justify-between text-sm px-4">
             <span class="text-slate-700 dark:text-slate-300">(-) 25% Impuesto a la Renta</span>
             <span class="font-mono text-red-600 dark:text-red-400">-${{ estado_resultados.impuesto_renta|floatformat:2 }}</span>
