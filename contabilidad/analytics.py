@@ -29,7 +29,8 @@ class AnalyticsService:
         Aprovecha Window Functions y CTEs de MariaDB para cálculos eficientes.
         """
 
-        # Obtener saldos por tipo de cuenta usando CTE y agregaciones
+        # Obtener saldos acumulados por tipo de cuenta (desde inicio hasta fecha_fin)
+        # Para Balance General: necesitamos saldos acumulados
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -47,7 +48,7 @@ class AnalyticsService:
                     WHERE a.empresa_id = %s
                         AND a.estado = 'Confirmado'
                         AND a.anulado = FALSE
-                        AND a.fecha BETWEEN %s AND %s
+                        AND a.fecha <= %s
                     GROUP BY c.tipo, c.naturaleza
                 )
                 SELECT
@@ -56,7 +57,7 @@ class AnalyticsService:
                 FROM saldos_cuentas
                 GROUP BY tipo
             """,
-                [self.empresa.id, fecha_inicio, fecha_fin],
+                [self.empresa.id, fecha_fin],
             )
 
             saldos = {row[0]: Decimal(str(row[1] or 0)) for row in cursor.fetchall()}
@@ -65,9 +66,35 @@ class AnalyticsService:
         activos = saldos.get(TipoCuenta.ACTIVO, Decimal("0"))
         pasivos = saldos.get(TipoCuenta.PASIVO, Decimal("0"))
         patrimonio = saldos.get(TipoCuenta.PATRIMONIO, Decimal("0"))
-        ingresos = saldos.get(TipoCuenta.INGRESO, Decimal("0"))
-        gastos = saldos.get(TipoCuenta.GASTO, Decimal("0"))
-        costos = saldos.get(TipoCuenta.COSTO, Decimal("0"))
+        
+        # Para Estado de Resultados: ingresos, gastos y costos del período
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    c.tipo,
+                    SUM(CASE
+                        WHEN c.naturaleza = 'Deudora' THEN t.debe - t.haber
+                        ELSE t.haber - t.debe
+                    END) as saldo
+                FROM contabilidad_empresa_transaccion t
+                INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
+                INNER JOIN contabilidad_empresa_plandecuentas c ON t.cuenta_id = c.id
+                WHERE a.empresa_id = %s
+                    AND a.estado = 'Confirmado'
+                    AND a.anulado = FALSE
+                    AND a.fecha BETWEEN %s AND %s
+                    AND c.tipo IN ('Ingreso', 'Gasto', 'Costo')
+                GROUP BY c.tipo
+            """,
+                [self.empresa.id, fecha_inicio, fecha_fin],
+            )
+
+            saldos_resultados = {row[0]: Decimal(str(row[1] or 0)) for row in cursor.fetchall()}
+        
+        ingresos = abs(saldos_resultados.get(TipoCuenta.INGRESO, Decimal("0")))
+        gastos = abs(saldos_resultados.get(TipoCuenta.GASTO, Decimal("0")))
+        costos = abs(saldos_resultados.get(TipoCuenta.COSTO, Decimal("0")))
 
         # Calcular activo y pasivo corriente (simplificado: primeros 2 dígitos del código)
         with connection.cursor() as cursor:
@@ -85,14 +112,14 @@ class AnalyticsService:
                 WHERE a.empresa_id = %s
                     AND a.estado = 'Confirmado'
                     AND a.anulado = FALSE
-                    AND a.fecha BETWEEN %s AND %s
+                    AND a.fecha <= %s
                     AND (
                         (c.tipo = 'Activo' AND LEFT(c.codigo, 2) IN ('11', '12', '13'))
                         OR (c.tipo = 'Pasivo' AND LEFT(c.codigo, 2) IN ('21', '22', '23'))
                     )
                 GROUP BY c.tipo
             """,
-                [self.empresa.id, fecha_inicio, fecha_fin],
+                [self.empresa.id, fecha_fin],
             )
 
             corrientes = {row[0]: Decimal(str(row[1] or 0)) for row in cursor.fetchall()}
