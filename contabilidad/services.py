@@ -476,7 +476,7 @@ class EstadosFinancierosService:
         total_ingresos = Decimal("0.00")
         for cuenta in cuentas_ingreso:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            monto = saldos["haber"] - saldos["debe"]  # Para ingresos (acreedora)
+            monto = saldos["saldo_final"]  # Usar saldo_final que ya considera naturaleza
             if monto != 0:
                 ingresos_detalle.append({"cuenta": cuenta, "monto": monto})
                 total_ingresos += monto
@@ -486,7 +486,7 @@ class EstadosFinancierosService:
         total_costos = Decimal("0.00")
         for cuenta in cuentas_costo:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            monto = saldos["debe"] - saldos["haber"]  # Para costos (deudora)
+            monto = saldos["saldo_final"]  # Usar saldo_final que ya considera naturaleza
             if monto != 0:
                 costos_detalle.append({"cuenta": cuenta, "monto": monto})
                 total_costos += monto
@@ -496,7 +496,7 @@ class EstadosFinancierosService:
         total_gastos = Decimal("0.00")
         for cuenta in cuentas_gasto:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            monto = saldos["debe"] - saldos["haber"]  # Para gastos (deudora)
+            monto = saldos["saldo_final"]  # Usar saldo_final que ya considera naturaleza
             if monto != 0:
                 gastos_detalle.append({"cuenta": cuenta, "monto": monto})
                 total_gastos += monto
