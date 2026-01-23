@@ -456,9 +456,20 @@ class EstadosFinancierosService:
                 - detalle_gastos: List[Dict]
         """
         # Obtener cuentas de resultado
+        # Solo incluimos cuentas auxiliares para evitar duplicación
+        # (las cuentas padre ya incluyen el saldo de sus hijos en calcular_saldos_cuenta)
         cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO, es_auxiliar=True)
         cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO, es_auxiliar=True)
         cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO, es_auxiliar=True)
+        
+        # Si no hay cuentas auxiliares, incluir todas las cuentas (incluso padres)
+        # Esto permite mostrar resultados aunque las cuentas no estén bien configuradas
+        if not cuentas_ingreso.exists():
+            cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO)
+        if not cuentas_costo.exists():
+            cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO)
+        if not cuentas_gasto.exists():
+            cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO)
 
         # Calcular ingresos (naturaleza acreedora, el haber suma)
         ingresos_detalle = []
@@ -521,9 +532,18 @@ class EstadosFinancierosService:
                 - balanceado: bool
         """
         # Obtener cuentas de balance
+        # Solo incluimos cuentas auxiliares para evitar duplicación
         cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO, es_auxiliar=True)
         cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO, es_auxiliar=True)
         cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO, es_auxiliar=True)
+        
+        # Si no hay cuentas auxiliares, incluir todas las cuentas
+        if not cuentas_activo.exists():
+            cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO)
+        if not cuentas_pasivo.exists():
+            cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO)
+        if not cuentas_patrimonio.exists():
+            cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO)
 
         # Calcular activos (naturaleza deudora)
         activos_detalle = []
