@@ -553,7 +553,8 @@ class EstadosFinancierosService:
                 total_patrimonio += saldos["saldo_final"]
 
         # Calcular diferencia y validación de ecuación contable
-        diferencia = total_activos - (total_pasivos + total_patrimonio)
+        pasivos_mas_patrimonio = total_pasivos + total_patrimonio
+        diferencia = total_activos - pasivos_mas_patrimonio
         balanceado = abs(diferencia) < Decimal("0.01")
 
         # Mensaje de advertencia si no cuadra
@@ -562,7 +563,7 @@ class EstadosFinancierosService:
             mensaje_balance = (
                 f"⚠️ ADVERTENCIA: El Balance General NO cuadra. "
                 f"Diferencia: {diferencia:,.2f} "
-                f"(Activos: {total_activos:,.2f} ≠ Pasivos + Patrimonio: {total_pasivos + total_patrimonio:,.2f}). "
+                f"(Activos: {total_activos:,.2f} ≠ Pasivos + Patrimonio: {pasivos_mas_patrimonio:,.2f}). "
                 f"Revise los asientos contables y corrija los errores."
             )
 
@@ -570,6 +571,7 @@ class EstadosFinancierosService:
             "activos": total_activos,
             "pasivos": total_pasivos,
             "patrimonio": total_patrimonio,
+            "pasivos_mas_patrimonio": pasivos_mas_patrimonio,
             "detalle_activos": activos_detalle,
             "detalle_pasivos": pasivos_detalle,
             "detalle_patrimonio": patrimonio_detalle,
