@@ -469,8 +469,8 @@ class EstadosFinancierosService:
             # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
             monto = saldos["haber"] - saldos["debe"]  # Para ingresos (acreedora)
             if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
-                ingresos_detalle.append({"cuenta": cuenta, "monto": monto})
-                total_ingresos += monto
+                ingresos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})  # Siempre positivo
+                total_ingresos += abs(monto)
 
         # Calcular costos (naturaleza deudora, el debe suma)
         costos_detalle = []
@@ -480,8 +480,8 @@ class EstadosFinancierosService:
             # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
             monto = saldos["debe"] - saldos["haber"]  # Para costos (deudora)
             if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
-                costos_detalle.append({"cuenta": cuenta, "monto": monto})
-                total_costos += monto
+                costos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})  # Siempre positivo
+                total_costos += abs(monto)
 
         # Calcular gastos (naturaleza deudora)
         gastos_detalle = []
@@ -491,8 +491,8 @@ class EstadosFinancierosService:
             # Para Estado de Resultados: solo movimientos del periodo, no saldo acumulado
             monto = saldos["debe"] - saldos["haber"]  # Para gastos (deudora)
             if abs(monto) > Decimal("0.01"):  # Usar tolerancia para evitar redondeos
-                gastos_detalle.append({"cuenta": cuenta, "monto": monto})
-                total_gastos += monto
+                gastos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})  # Siempre positivo
+                total_gastos += abs(monto)
 
         utilidad_bruta = total_ingresos - total_costos
         utilidad_neta = utilidad_bruta - total_gastos
