@@ -685,8 +685,7 @@ function crearGraficoPredicciones(data) {
                                 return 'Rango escenarios: ' + new Intl.NumberFormat('es-CO', {
                                     style: 'currency',
                                     currency: 'COP',
-                                    minimumFractionDigits: 0,
-                                    notation: 'compact'
+                                    minimumFractionDigits: 0
                                 }).format(rango);
                             }
                             return '';
@@ -711,9 +710,7 @@ function crearGraficoPredicciones(data) {
                             return new Intl.NumberFormat('es-CO', {
                                 style: 'currency',
                                 currency: 'COP',
-                                minimumFractionDigits: 0,
-                                notation: 'compact',
-                                compactDisplay: 'short'
+                                minimumFractionDigits: 0
                             }).format(value);
                         }
                     }
