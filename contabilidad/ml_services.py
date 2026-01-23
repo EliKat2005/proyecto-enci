@@ -553,6 +553,9 @@ class MLAnalyticsService:
     def _get_saldo_por_tipo(self, tipo: TipoCuenta) -> Decimal:
         """
         Calcula el saldo total para un tipo de cuenta.
+        
+        Balance Sheet (Activos, Pasivos, Patrimonio): acumulado hasta hoy
+        Income Statement (Ingresos, Gastos, Costos): del período actual (último mes o desde primer asiento)
 
         Args:
             tipo: Tipo de cuenta
@@ -560,13 +563,30 @@ class MLAnalyticsService:
         Returns:
             Saldo total (siempre positivo)
         """
-        transacciones = EmpresaTransaccion.objects.filter(
-            asiento__empresa=self.empresa,
-            asiento__estado=EstadoAsiento.CONFIRMADO,
-            asiento__anulado=False,
-            asiento__anula_a__isnull=True,
-            cuenta__tipo=tipo,
-        ).aggregate(
+        # Para cuentas de balance: usar todas las transacciones
+        # Para cuentas de resultados: usar solo del período
+        filtro = {
+            "asiento__empresa": self.empresa,
+            "asiento__estado": EstadoAsiento.CONFIRMADO,
+            "asiento__anulado": False,
+            "asiento__anula_a__isnull": True,
+            "cuenta__tipo": tipo,
+        }
+        
+        # Si es cuenta de resultados (Ingreso, Gasto, Costo), limitar al período
+        if tipo in [TipoCuenta.INGRESO, TipoCuenta.GASTO, TipoCuenta.COSTO]:
+            # Obtener fecha del primer asiento
+            from contabilidad.models import EmpresaAsiento
+            primer_asiento = EmpresaAsiento.objects.filter(
+                empresa=self.empresa,
+                estado=EstadoAsiento.CONFIRMADO,
+                anulado=False
+            ).order_by('fecha').first()
+            
+            if primer_asiento:
+                filtro["asiento__fecha__gte"] = primer_asiento.fecha
+        
+        transacciones = EmpresaTransaccion.objects.filter(**filtro).aggregate(
             total_debe=Sum("debe"),
             total_haber=Sum("haber"),
         )
@@ -574,10 +594,12 @@ class MLAnalyticsService:
         total_debe = transacciones["total_debe"] or Decimal("0")
         total_haber = transacciones["total_haber"] or Decimal("0")
 
-        # Para activos y gastos: debe - haber (naturaleza deudora)
-        # Para pasivos, patrimonio e ingresos: haber - debe (naturaleza acreedora)
-        # Retornar valor absoluto para evitar negativos
-        if tipo in [TipoCuenta.ACTIVO, TipoCuenta.GASTO]:
-            return abs(total_debe - total_haber)
+        # Naturaleza deudora (debe - haber): Activos, Gastos, Costos
+        # Naturaleza acreedora (haber - debe): Pasivos, Patrimonio, Ingresos
+        if tipo in [TipoCuenta.ACTIVO, TipoCuenta.GASTO, TipoCuenta.COSTO]:
+            saldo = total_debe - total_haber
         else:
-            return abs(total_haber - total_debe)
+            saldo = total_haber - total_debe
+        
+        # Retornar valor absoluto para métricas (siempre positivo)
+        return abs(saldo)
