@@ -363,9 +363,9 @@
                                         if (label) {
                                             label += ': ';
                                         }
-                                        label += new Intl.NumberFormat('es-CO', {
+                                        label += new Intl.NumberFormat('es-EC', {
                                             style: 'currency',
-                                            currency: 'COP',
+                                            currency: 'USD',
                                             minimumFractionDigits: 0
                                         }).format(context.parsed.y);
                                         return label;
@@ -395,9 +395,9 @@
                                     color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280',
                                     font: { size: 11 },
                                     callback: function(value) {
-                                        return new Intl.NumberFormat('es-CO', {
+                                        return new Intl.NumberFormat('es-EC', {
                                             style: 'currency',
-                                            currency: 'COP',
+                                            currency: 'USD',
                                             minimumFractionDigits: 0,
                                             notation: 'compact',
                                             compactDisplay: 'short'
@@ -426,11 +426,11 @@
                     const margenPromedio = totalIngresos > 0 ? ((resultadoNeto / totalIngresos) * 100) : 0;
 
                     document.getElementById('total-ingresos').textContent =
-                        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalIngresos);
+                        new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(totalIngresos);
                     document.getElementById('total-gastos').textContent =
-                        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(totalGastos);
+                        new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(totalGastos);
                     document.getElementById('margen-promedio').textContent =
-                        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(resultadoNeto);
+                        new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(resultadoNeto);
                     document.getElementById('margen-porcentaje').textContent = `${margenPromedio.toFixed(1)}% de margen`;
 
                     // Color dinámico según resultado
@@ -492,9 +492,9 @@
         const promedioGastos = series.reduce((sum, s) => sum + s.gastos, 0) / series.length;
 
         document.getElementById('promedio-ingresos').textContent =
-            new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(promedioIngresos);
+            new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(promedioIngresos);
         document.getElementById('promedio-gastos').textContent =
-            new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(promedioGastos);
+            new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(promedioGastos);
 
         // Mejor mes (mayor utilidad)
         let mejorMes = series[0];

@@ -291,7 +291,7 @@ function mostrarAnomalias(data, filterSeveridad) {
 
     const montoTotal = filtered.reduce((sum, a) => sum + a.monto, 0);
     document.getElementById('monto-afectado').textContent =
-        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(montoTotal);
+        new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(montoTotal);
 
     if (filtered.length === 0) {
         document.getElementById('empty-state').classList.remove('hidden');
@@ -349,7 +349,7 @@ function mostrarAnomalias(data, filterSeveridad) {
                         <div>
                             <p class="text-xs text-slate-600 dark:text-slate-300">Monto</p>
                             <p class="text-lg font-bold text-${severity.color}-600 dark:text-${severity.color}-400">
-                                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(anomalia.monto)}
+                                ${new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(anomalia.monto)}
                             </p>
                         </div>
                         <div>
