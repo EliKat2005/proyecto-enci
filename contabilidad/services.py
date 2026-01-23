@@ -455,119 +455,55 @@ class EstadosFinancierosService:
                 - detalle_costos: List[Dict]
                 - detalle_gastos: List[Dict]
         """
-        # Obtener TODAS las cuentas de resultado y ordenar por código (más específicas primero)
-        cuentas_ingreso = sorted(
-            empresa.cuentas.filter(tipo=TipoCuenta.INGRESO),
-            key=lambda c: (len(c.codigo.split('.')), c.codigo),
-            reverse=True
+        # Estrategia simple: Obtener cuentas auxiliares con transacciones en el periodo
+        from django.db.models import Q, Sum
+        
+        # Filtro de transacciones del periodo
+        filtro_periodo = Q(
+            empresatransaccion__asiento__fecha__gte=fecha_inicio,
+            empresatransaccion__asiento__fecha__lte=fecha_fin,
+            empresatransaccion__asiento__estado=EstadoAsiento.CONFIRMADO,
+            empresatransaccion__asiento__anulado=False,
+            empresatransaccion__asiento__anula_a__isnull=True
         )
-        cuentas_costo = sorted(
-            empresa.cuentas.filter(tipo=TipoCuenta.COSTO),
-            key=lambda c: (len(c.codigo.split('.')), c.codigo),
-            reverse=True
-        )
-        cuentas_gasto = sorted(
-            empresa.cuentas.filter(tipo=TipoCuenta.GASTO),
-            key=lambda c: (len(c.codigo.split('.')), c.codigo),
-            reverse=True
-        )
+        
+        # Obtener cuentas que tienen transacciones en el periodo
+        cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO).filter(filtro_periodo).distinct()
+        cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO).filter(filtro_periodo).distinct()
+        cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO).filter(filtro_periodo).distinct()
 
         # Calcular ingresos (naturaleza acreedora, el haber suma)
         ingresos_detalle = []
         total_ingresos = Decimal("0.00")
-        codigos_incluidos = set()
         
         for cuenta in cuentas_ingreso:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
             monto = saldos["haber"] - saldos["debe"]
-            
             if abs(monto) > Decimal("0.01"):
-                # Verificar si esta cuenta es padre de alguna ya incluida
-                es_padre_de_incluida = any(
-                    cod.startswith(cuenta.codigo + ".") for cod in codigos_incluidos
-                )
-                
-                if not es_padre_de_incluida:
-                    # Eliminar cualquier padre de esta cuenta que ya esté incluido
-                    codigos_a_remover = {
-                        cod for cod in codigos_incluidos 
-                        if cuenta.codigo.startswith(cod + ".")
-                    }
-                    if codigos_a_remover:
-                        # Remover los padres del detalle y del total
-                        ingresos_detalle = [
-                            item for item in ingresos_detalle 
-                            if item["cuenta"].codigo not in codigos_a_remover
-                        ]
-                        for cod in codigos_a_remover:
-                            # Recalcular total
-                            pass
-                        codigos_incluidos -= codigos_a_remover
-                    
-                    # Agregar esta cuenta
-                    codigos_incluidos.add(cuenta.codigo)
-                    ingresos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
-                    total_ingresos += abs(monto)
+                ingresos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
+                total_ingresos += abs(monto)
 
         # Calcular costos (naturaleza deudora, el debe suma)
         costos_detalle = []
         total_costos = Decimal("0.00")
-        codigos_incluidos = set()
         
         for cuenta in cuentas_costo:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
             monto = saldos["debe"] - saldos["haber"]
-            
             if abs(monto) > Decimal("0.01"):
-                es_padre_de_incluida = any(
-                    cod.startswith(cuenta.codigo + ".") for cod in codigos_incluidos
-                )
-                
-                if not es_padre_de_incluida:
-                    codigos_a_remover = {
-                        cod for cod in codigos_incluidos 
-                        if cuenta.codigo.startswith(cod + ".")
-                    }
-                    if codigos_a_remover:
-                        costos_detalle = [
-                            item for item in costos_detalle 
-                            if item["cuenta"].codigo not in codigos_a_remover
-                        ]
-                        codigos_incluidos -= codigos_a_remover
-                    
-                    codigos_incluidos.add(cuenta.codigo)
-                    costos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
-                    total_costos += abs(monto)
+                costos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
+                total_costos += abs(monto)
 
         # Calcular gastos (naturaleza deudora)
         gastos_detalle = []
         total_gastos = Decimal("0.00")
-        codigos_incluidos = set()
         
         for cuenta in cuentas_gasto:
             saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
             monto = saldos["debe"] - saldos["haber"]
-            
             if abs(monto) > Decimal("0.01"):
-                es_padre_de_incluida = any(
-                    cod.startswith(cuenta.codigo + ".") for cod in codigos_incluidos
-                )
-                
-                if not es_padre_de_incluida:
-                    codigos_a_remover = {
-                        cod for cod in codigos_incluidos 
-                        if cuenta.codigo.startswith(cod + ".")
-                    }
-                    if codigos_a_remover:
-                        gastos_detalle = [
-                            item for item in gastos_detalle 
-                            if item["cuenta"].codigo not in codigos_a_remover
-                        ]
-                        codigos_incluidos -= codigos_a_remover
-                    
-                    codigos_incluidos.add(cuenta.codigo)
-                    gastos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
-                    total_gastos += abs(monto)
+                gastos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
+                total_gastos += abs(monto)
 
         utilidad_bruta = total_ingresos - total_costos
         utilidad_neta = utilidad_bruta - total_gastos
