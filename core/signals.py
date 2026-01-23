@@ -125,7 +125,7 @@ def notify_admins_on_docente_create(sender, instance, created, **kwargs):
                 msg = EmailMultiAlternatives(subject, text, from_email, list(set(admin_emails)))
                 if html:
                     msg.attach_alternative(html, "text/html")
-                msg.send(fail_silently=False)
+                msg.send(fail_silently=True)
                 try:
                     AuditLog.objects.create(
                         actor=None,

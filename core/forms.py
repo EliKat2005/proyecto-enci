@@ -233,7 +233,7 @@ class RegistroForm(forms.ModelForm):
                                         )
                                         if admin_html:
                                             admin_msg.attach_alternative(admin_html, "text/html")
-                                        admin_msg.send(fail_silently=False)
+                                        admin_msg.send(fail_silently=True)
                                         try:
                                             AuditLog.objects.create(
                                                 actor=None,
@@ -293,7 +293,7 @@ class RegistroForm(forms.ModelForm):
                                         )
                                         if html_body:
                                             msg.attach_alternative(html_body, "text/html")
-                                        msg.send(fail_silently=False)
+                                        msg.send(fail_silently=True)
                                         try:
                                             AuditLog.objects.create(
                                                 actor=None,
