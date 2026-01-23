@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -542,14 +543,28 @@ def company_diario(request, empresa_id):
     ):
         return HttpResponseForbidden("No autorizado")
 
-    asientos = (
-        EmpresaAsiento.objects.filter(empresa=empresa)
+    # Obtener orden de asientos desde parámetro GET
+    orden = request.GET.get('orden', 'desc')  # 'asc' o 'desc'
+    orden_campo = 'numero_asiento' if orden == 'asc' else '-numero_asiento'
+    
+    # Separar asientos normales de anulados/contra-asientos
+    asientos_normales = (
+        EmpresaAsiento.objects.filter(empresa=empresa, anulado=False, anula_a__isnull=True)
         .select_related("creado_por")
         .prefetch_related("lineas__cuenta")
-        .order_by("-numero_asiento")
+        .order_by(orden_campo)
     )
     
-    # Procesar cada asiento para agregar información de cuentas agrupadas
+    asientos_anulados_contra = (
+        EmpresaAsiento.objects.filter(empresa=empresa)
+        .filter(Q(anulado=True) | Q(anula_a__isnull=False))
+        .select_related("creado_por", "anulado_mediante")
+        .prefetch_related("lineas__cuenta")
+        .order_by(orden_campo)
+    )
+    
+    # Combinar ambos querysets
+    asientos = list(asientos_normales) + list(asientos_anulados_contra)
     from collections import defaultdict
     from decimal import Decimal
     
@@ -605,11 +620,14 @@ def company_diario(request, empresa_id):
         {
             "empresa": empresa,
             "asientos": asientos,
+            "asientos_normales": asientos_normales,
+            "asientos_anulados_contra": asientos_anulados_contra,
             "comments": comments,
             "is_supervisor": is_supervisor,
             "is_docente": is_docente,
             "can_edit": can_edit,
             "cuentas_aux": cuentas_aux,
+            "orden": orden,
         },
     )
 
