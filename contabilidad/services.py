@@ -455,19 +455,30 @@ class EstadosFinancierosService:
                 - detalle_costos: List[Dict]
                 - detalle_gastos: List[Dict]
         """
-        # Estrategia simple: Obtener cuentas auxiliares con transacciones en el periodo
-        from django.db.models import Q, Sum
+        # Estrategia: Obtener cuentas con transacciones en el periodo
+        # EXCLUIR asientos de cierre (que afectan cuentas 3.1.4 - Resultados)
+        from django.db.models import Q, Sum, Exists, OuterRef
         
-        # Filtro de transacciones del periodo
+        # Identificar asientos de cierre: tienen transacciones en cuentas de Resultados (3.1.4)
+        asientos_cierre_ids = EmpresaTransaccion.objects.filter(
+            asiento__empresa=empresa,
+            asiento__fecha__gte=fecha_inicio,
+            asiento__fecha__lte=fecha_fin,
+            asiento__estado=EstadoAsiento.CONFIRMADO,
+            asiento__anulado=False,
+            cuenta__codigo__startswith='3.1.4'
+        ).values_list('asiento_id', flat=True)
+        
+        # Filtro de transacciones del periodo (excluyendo cierres)
         filtro_periodo = Q(
             empresatransaccion__asiento__fecha__gte=fecha_inicio,
             empresatransaccion__asiento__fecha__lte=fecha_fin,
             empresatransaccion__asiento__estado=EstadoAsiento.CONFIRMADO,
             empresatransaccion__asiento__anulado=False,
             empresatransaccion__asiento__anula_a__isnull=True
-        )
+        ) & ~Q(empresatransaccion__asiento_id__in=asientos_cierre_ids)
         
-        # Obtener cuentas que tienen transacciones en el periodo
+        # Obtener cuentas que tienen transacciones en el periodo (sin cierres)
         cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO).filter(filtro_periodo).distinct()
         cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO).filter(filtro_periodo).distinct()
         cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO).filter(filtro_periodo).distinct()
@@ -477,8 +488,22 @@ class EstadosFinancierosService:
         total_ingresos = Decimal("0.00")
         
         for cuenta in cuentas_ingreso:
-            saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            monto = saldos["haber"] - saldos["debe"]
+            # Calcular excluyendo asientos de cierre
+            transacciones = EmpresaTransaccion.objects.filter(
+                cuenta=cuenta,
+                asiento__fecha__gte=fecha_inicio,
+                asiento__fecha__lte=fecha_fin,
+                asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
+                asiento__anula_a__isnull=True
+            ).exclude(asiento_id__in=asientos_cierre_ids).aggregate(
+                debe=Sum("debe"),
+                haber=Sum("haber")
+            )
+            debe = transacciones["debe"] or Decimal("0.00")
+            haber = transacciones["haber"] or Decimal("0.00")
+            monto = haber - debe  # Para ingresos (acreedora)
+            
             if abs(monto) > Decimal("0.01"):
                 ingresos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
                 total_ingresos += abs(monto)
@@ -488,8 +513,21 @@ class EstadosFinancierosService:
         total_costos = Decimal("0.00")
         
         for cuenta in cuentas_costo:
-            saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            monto = saldos["debe"] - saldos["haber"]
+            transacciones = EmpresaTransaccion.objects.filter(
+                cuenta=cuenta,
+                asiento__fecha__gte=fecha_inicio,
+                asiento__fecha__lte=fecha_fin,
+                asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
+                asiento__anula_a__isnull=True
+            ).exclude(asiento_id__in=asientos_cierre_ids).aggregate(
+                debe=Sum("debe"),
+                haber=Sum("haber")
+            )
+            debe = transacciones["debe"] or Decimal("0.00")
+            haber = transacciones["haber"] or Decimal("0.00")
+            monto = debe - haber  # Para costos (deudora)
+            
             if abs(monto) > Decimal("0.01"):
                 costos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
                 total_costos += abs(monto)
@@ -499,8 +537,21 @@ class EstadosFinancierosService:
         total_gastos = Decimal("0.00")
         
         for cuenta in cuentas_gasto:
-            saldos = LibroMayorService.calcular_saldos_cuenta(cuenta, fecha_inicio, fecha_fin)
-            monto = saldos["debe"] - saldos["haber"]
+            transacciones = EmpresaTransaccion.objects.filter(
+                cuenta=cuenta,
+                asiento__fecha__gte=fecha_inicio,
+                asiento__fecha__lte=fecha_fin,
+                asiento__estado=EstadoAsiento.CONFIRMADO,
+                asiento__anulado=False,
+                asiento__anula_a__isnull=True
+            ).exclude(asiento_id__in=asientos_cierre_ids).aggregate(
+                debe=Sum("debe"),
+                haber=Sum("haber")
+            )
+            debe = transacciones["debe"] or Decimal("0.00")
+            haber = transacciones["haber"] or Decimal("0.00")
+            monto = debe - haber  # Para gastos (deudora)
+            
             if abs(monto) > Decimal("0.01"):
                 gastos_detalle.append({"cuenta": cuenta, "monto": abs(monto)})
                 total_gastos += abs(monto)
