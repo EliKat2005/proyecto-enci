@@ -199,8 +199,9 @@ class AnalyticsService:
                         DATE_FORMAT(a.fecha, '%%Y-%%m') as periodo,
                         c.tipo,
                         SUM(CASE
-                            WHEN c.naturaleza = 'Deudora' THEN t.debe - t.haber
-                            ELSE t.haber - t.debe
+                            WHEN c.tipo = 'Ingreso' THEN t.haber - t.debe
+                            WHEN c.tipo IN ('Gasto', 'Costo') THEN t.debe - t.haber
+                            ELSE 0
                         END) as monto
                     FROM contabilidad_empresa_transaccion t
                     INNER JOIN contabilidad_empresa_asiento a ON t.asiento_id = a.id
@@ -216,7 +217,7 @@ class AnalyticsService:
                     SELECT
                         periodo,
                         SUM(CASE WHEN tipo = 'Ingreso' THEN monto ELSE 0 END) as ingresos,
-                        SUM(CASE WHEN tipo IN ('Gasto', 'Costo') THEN ABS(monto) ELSE 0 END) as gastos
+                        SUM(CASE WHEN tipo IN ('Gasto', 'Costo') THEN monto ELSE 0 END) as gastos
                     FROM movimientos_mensuales
                     GROUP BY periodo
                 )
