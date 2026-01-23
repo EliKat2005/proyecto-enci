@@ -455,11 +455,32 @@ class EstadosFinancierosService:
                 - detalle_costos: List[Dict]
                 - detalle_gastos: List[Dict]
         """
-        # Obtener solo cuentas auxiliares de resultado (hojas del árbol)
-        # Las cuentas auxiliares son las únicas que pueden tener transacciones directas
-        cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO, es_auxiliar=True)
-        cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO, es_auxiliar=True)
-        cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO, es_auxiliar=True)
+        # Obtener TODAS las cuentas de resultado (auxiliares y no auxiliares)
+        # Luego filtraremos solo las que tengan transacciones en el periodo
+        cuentas_ingreso = empresa.cuentas.filter(tipo=TipoCuenta.INGRESO)
+        cuentas_costo = empresa.cuentas.filter(tipo=TipoCuenta.COSTO)
+        cuentas_gasto = empresa.cuentas.filter(tipo=TipoCuenta.GASTO)
+        
+        # Función auxiliar para eliminar duplicados (excluir padres si hay hijos)
+        def filtrar_sin_duplicados(cuentas):
+            """Excluye cuentas padre si sus hijos también están en la lista."""
+            codigos = set(c.codigo for c in cuentas)
+            resultado = []
+            for cuenta in cuentas:
+                # Verificar si hay una cuenta hija (código más largo que empieza con este)
+                tiene_hijos = any(
+                    cod.startswith(cuenta.codigo + ".") or 
+                    (cod.startswith(cuenta.codigo) and len(cod) > len(cuenta.codigo))
+                    for cod in codigos if cod != cuenta.codigo
+                )
+                if not tiene_hijos:
+                    resultado.append(cuenta)
+            return resultado
+        
+        # Filtrar para evitar duplicación
+        cuentas_ingreso = filtrar_sin_duplicados(list(cuentas_ingreso))
+        cuentas_costo = filtrar_sin_duplicados(list(cuentas_costo))
+        cuentas_gasto = filtrar_sin_duplicados(list(cuentas_gasto))
 
         # Calcular ingresos (naturaleza acreedora, el haber suma)
         ingresos_detalle = []
@@ -524,11 +545,31 @@ class EstadosFinancierosService:
                 - detalle_patrimonio: List[Dict]
                 - balanceado: bool
         """
-        # Obtener todas las cuentas de balance
-        # Filtrar para mostrar solo cuentas auxiliares (hojas del árbol)
-        cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO, es_auxiliar=True)
-        cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO, es_auxiliar=True)
-        cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO, es_auxiliar=True)
+        # Obtener TODAS las cuentas de balance
+        cuentas_activo = empresa.cuentas.filter(tipo=TipoCuenta.ACTIVO)
+        cuentas_pasivo = empresa.cuentas.filter(tipo=TipoCuenta.PASIVO)
+        cuentas_patrimonio = empresa.cuentas.filter(tipo=TipoCuenta.PATRIMONIO)
+        
+        # Función auxiliar para eliminar duplicados (excluir padres si hay hijos)
+        def filtrar_sin_duplicados(cuentas):
+            """Excluye cuentas padre si sus hijos también están en la lista."""
+            codigos = set(c.codigo for c in cuentas)
+            resultado = []
+            for cuenta in cuentas:
+                # Verificar si hay una cuenta hija (código más largo que empieza con este)
+                tiene_hijos = any(
+                    cod.startswith(cuenta.codigo + ".") or 
+                    (cod.startswith(cuenta.codigo) and len(cod) > len(cuenta.codigo))
+                    for cod in codigos if cod != cuenta.codigo
+                )
+                if not tiene_hijos:
+                    resultado.append(cuenta)
+            return resultado
+        
+        # Filtrar para evitar duplicación
+        cuentas_activo = filtrar_sin_duplicados(list(cuentas_activo))
+        cuentas_pasivo = filtrar_sin_duplicados(list(cuentas_pasivo))
+        cuentas_patrimonio = filtrar_sin_duplicados(list(cuentas_patrimonio))
 
         # Calcular activos (naturaleza deudora)
         activos_detalle = []
